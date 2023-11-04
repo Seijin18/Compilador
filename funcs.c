@@ -73,17 +73,79 @@ char get_next_char(Bloco *buffer, FILE *fp) {
 
 void get_next_lexema(Lexema *lex, Bloco *buffer, FILE *fp) {
   int i = 0;
+  int estado = 0;
   char c;
   do
     {
       c = get_next_char(buffer, fp);
+      switch (estado)
+      {
+      case 0:
+        {
+          if(c >= '0' && c <= '9')
+            {
+              estado = 1;
+            }
+          else if(c >= 'a' && c <= 'z')
+            {
+              estado = 2;
+            }
+          else
+            {
+              estado = 3;
+            }
+        } 
+        case 1:
+        {
+          if(c >= '0' && c <= '9')
+            {
+              estado = 1;
+            }
+          else
+            {
+              estado = 4;
+            }
+        }
+        case 2:
+        {
+          if((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
+            {
+              estado = 2;
+            }
+          else
+            {
+              estado = 4;
+            }
+        }
+      
+      default:
+        break;
+      }
       if (c == ' ' || c == '\n' || c == '\t' || c == EOF)
         {
           lex->item[i] = '\0';
+          lex->line = buffer->line;
+          switch (estado)
+          {
+          case 1:
+            {
+              strcpy(lex->token, "NUM");
+              break;
+            }
+          case 2:
+            {
+              strcpy(lex->token, "ID");
+              break;
+            }
+          case 3: // tabela de simbolos
+            {
+              strcpy(lex->token, );
+              break;
+            }
+          }
         }
       else
         lex->item[i] = c;
       i++;
     } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
-  
 }
