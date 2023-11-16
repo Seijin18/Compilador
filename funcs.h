@@ -9,6 +9,8 @@ typedef struct Bloco_Buffer Bloco;
 
 typedef struct Tabela_Simbolos Tabela;
 
+typedef struct BloomFilter BloomFilter;
+
 void allocate_buffer(Bloco **buffer);
 void deallocate_buffer(Bloco *buffer);
 void allocate_lexema(Lexema **lex);
@@ -28,6 +30,7 @@ struct Lexema_inst {
   char item[64];
   char token[64];
   int line;
+  int lex_sum;
 };
 
 struct Tabela_Simbolos {
@@ -35,6 +38,10 @@ struct Tabela_Simbolos {
   char token[64];
   int line;
   Tabela *next;
+};
+
+struct BloomFilter {
+    unsigned char* array;
 };
 
 #endif
