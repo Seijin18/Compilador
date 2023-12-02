@@ -11,13 +11,20 @@ typedef struct Tabela_Simbolos Tabela;
 
 typedef struct BloomFilter BloomFilter;
 
+int check_whitespace(char c);
+int check_special(char c);
+int check_special_with_following(char c);
+int check_number(char c);
+int check_letter(char c);
 void allocate_buffer(Bloco **buffer);
 void deallocate_buffer(Bloco *buffer);
 void allocate_lexema(Lexema **lex);
 void deallocate_lexema(Lexema *lex);
 void get_next_block(Bloco *buffer, FILE *fp);
 char get_next_char(Bloco *buffer, FILE *fp);
-void get_next_lexema(Lexema *lex, Bloco *buffer, FILE *fp);
+void retract(Bloco *buffer);
+int convert_char_to_table(char c);
+void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int **tabela);
 char identifica_lexema(Lexema *lex, Bloco *buffer, FILE *fp, char c);
 
 struct Bloco_Buffer {

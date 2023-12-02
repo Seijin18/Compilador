@@ -11,8 +11,10 @@ int main()
     FILE *fp;
     fp = fopen("teste.txt", "r");
     char c;
-    
-    get_next_lexema(lex, buffer, fp);
+    int tabela[24][19];
+    tabela[0][0] = 1;
+
+    get_next_lexema_tabela(lex, buffer, fp);
     printf("%s\n", lex->item);
     return 0;
 }
