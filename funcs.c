@@ -256,15 +256,15 @@ void retract(Bloco *buffer)
 
 int convert_char_to_table(char c)
 {
-  if(check_letter(c))
+  if (check_letter(c))
   {
     return 0;
   }
-  if(check_number(c))
+  if (check_number(c))
   {
     return 1;
   }
-  if(check_special(c))
+  if (check_special(c))
   {
     switch (c)
     {
@@ -470,7 +470,7 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int **tabela)
               }
             }
           }
-          
+
           break;
         }
         default: // ERRO
@@ -479,7 +479,7 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int **tabela)
           lex_sum = -1;
           break;
         }
-
+        }
       }
     }
     else
