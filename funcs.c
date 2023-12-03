@@ -307,7 +307,7 @@ int convert_char_to_table(char c)
 }
 
 /*Get lexema função dirigido por tabela*/
-void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int **tabela)
+void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19])
 {
   int i = 0;
   int estado = 0;
@@ -459,7 +459,7 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int **tabela)
                 break;
               }
             }
-            if (c == /)
+            if (c == '/')
             {
               c = get_next_char(buffer, fp);
               if (c == '*')
