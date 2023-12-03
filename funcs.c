@@ -318,28 +318,26 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
   do
   {
     c = get_next_char(buffer, fp);
-    lex_sum += c;
-    table_value = convert_char_to_table(c);
-    estado = tabela[estado][table_value];
-    if (estado == -1)
+    
+    while (check_whitespace(c)) // Ignora espaços em branco
     {
-      strcpy(lex->token, "ERRO");
-      strcpy(lex->item, "ERRO");
-      lex->line = buffer->line;
-      lex_sum = 0;
-      printf("ERROR AT LINE: %d\n", buffer->line);
-
-      return -1;
+      c = get_next_char(buffer, fp);
     }
-    if (check_whitespace(c) || check_special(c))
+    
+    lex->item[i] = c;
+    lex_sum += c;
+    table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
+    estado = tabela[estado][table_value];  // Pega o estado atual e o valor da tabela e retorna o novo estado
+
+    if (check_whitespace(c) || check_special(c)) // Se for espaço em branco ou caracter especial
     {
-      if (!(check_special_with_following(c) && (estado == 9 || estado == 10 || estado == 13 || estado == 14)))
+      if (!(check_special_with_following(c))) // Se não for um caracter especial com um seguinte
       {
         if (check_special(c) && i > 0)
         {
           retract(buffer);
         }
-        lex->item[i] = '\0';
+        lex->item[i + 1] = '\0';
         lex->line = buffer->line;
         lex->lex_sum = lex_sum;
         switch (estado)
@@ -460,9 +458,12 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
           while (c != EOF)
           {
             c = get_next_char(buffer, fp);
+            lex->item[i] = c;
+            i++;
             if (c == '*')
             {
               c = get_next_char(buffer, fp);
+              lex->item[i] = c;
               if (c == '/')
               {
                 strcpy(lex->token, "COMENTARIO");
@@ -473,6 +474,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
             if (c == '/')
             {
               c = get_next_char(buffer, fp);
+              lex->item[i] = c;
               if (c == '*')
               {
                 strcpy(lex->token, "ERRO");
@@ -481,7 +483,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
               }
             }
           }
-
+          lex->item[i + 1] = '\0';
           break;
         }
         default: // ERRO

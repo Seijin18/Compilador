@@ -35,7 +35,7 @@ int main()
     {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {-1,-1,-1,-1,26,27,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+    {23,23,23,23,26,27,23,23,23,23,23,23,23,23,23,23,23,23},
     {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {23,23,23,23,23,26,23,23,23,23,23,23,23,23,23,23,23,23},
     {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
@@ -43,6 +43,12 @@ int main()
 };
 
     get_next_lexema_tabela(lex, buffer, fp, tabela);
-    printf("%s\n", lex->item);
+    printf("item: %s\n", lex->item);
+    get_next_lexema_tabela(lex, buffer, fp, tabela);
+    printf("item: %s\n", lex->item);
+    get_next_lexema_tabela(lex, buffer, fp, tabela);
+    printf("item: %s\n", lex->item);
+    get_next_lexema_tabela(lex, buffer, fp, tabela);
+    printf("item: %s\n", lex->item);
     return 0;
 }
