@@ -321,7 +321,6 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     lex_sum += c;
     table_value = convert_char_to_table(c);
     estado = tabela[estado][table_value];
-    printf("char: %d\nestado: %d\n\n", table_value, estado);
     if (estado == -1)
     {
       strcpy(lex->token, "ERRO");
@@ -497,7 +496,6 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     else
     {
       lex->item[i] = c;
-      //printf("%s\n", lex->item);
     }
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
