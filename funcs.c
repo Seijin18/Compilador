@@ -99,6 +99,7 @@ void allocate_lexema(Lexema **lex)
     printf("Memory allocation failed for lexema.\n");
     exit(1);
   }
+  memset((*lex)->item, '\0', sizeof((*lex)->item));
   (*lex)->line = 0;
 }
 
@@ -307,7 +308,7 @@ int convert_char_to_table(char c)
 }
 
 /*Get lexema função dirigido por tabela*/
-void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19])
+int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][18])
 {
   int i = 0;
   int estado = 0;
@@ -320,6 +321,17 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28]
     lex_sum += c;
     table_value = convert_char_to_table(c);
     estado = tabela[estado][table_value];
+    printf("char: %d\nestado: %d\n\n", table_value, estado);
+    if (estado == -1)
+    {
+      strcpy(lex->token, "ERRO");
+      strcpy(lex->item, "ERRO");
+      lex->line = buffer->line;
+      lex_sum = 0;
+      printf("ERROR AT LINE: %d\n", buffer->line);
+
+      return -1;
+    }
     if (check_whitespace(c) || check_special(c))
     {
       if (!(check_special_with_following(c) && (estado == 9 || estado == 10 || estado == 13 || estado == 14)))
@@ -485,9 +497,11 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28]
     else
     {
       lex->item[i] = c;
+      //printf("%s\n", lex->item);
     }
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
+  return 1;
 }
 
 unsigned int hash(int lex_sum) // Divisão

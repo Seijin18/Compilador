@@ -24,7 +24,7 @@ void get_next_block(Bloco *buffer, FILE *fp);
 char get_next_char(Bloco *buffer, FILE *fp);
 void retract(Bloco *buffer);
 int convert_char_to_table(char c);
-void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19]);
+int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][18]);
 char identifica_lexema(Lexema *lex, Bloco *buffer, FILE *fp, char c);
 
 struct Bloco_Buffer {
