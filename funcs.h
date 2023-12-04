@@ -9,8 +9,6 @@ typedef struct Bloco_Buffer Bloco;
 
 typedef struct Tabela_Simbolos Tabela;
 
-typedef struct BloomFilter BFilter;
-
 typedef struct Lista_Hash Lista;
 
 typedef struct Lista_Node Node;
@@ -30,11 +28,8 @@ void retract(Bloco *buffer);
 int convert_char_to_table(char c);
 int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19], Lista *ht);
 unsigned int hash(int lex_sum);
-BFilter* allocate_BloomFilter();
-void deallocate_BloomFilter(BFilter* bf);
-void add_BloomFilter(BFilter* bf, char *item);
-int check_BloomFilter(BFilter* bf, int lex_sum);
 int Get_Char_Value(char *c);
+int Get_Token_Type(char *c);
 Node* Cria_Node(int key, char *item);
 void Lista_Inicia(Lista *Lista);
 void Lista_Insere(Lista *Lista, int key, char *item);
@@ -43,6 +38,7 @@ int Pesquisa_Hash(int chave, Lista *Tabela, int tamanho);
 int Insere_Hash(int chave, char *item, Lista *tabela, int tamanho);
 void Tabela_Inicia(Lista *tabela, int tamanho);
 void Deallocate_Tabela(Lista *tabela, int tamanho);
+
 
 struct Bloco_Buffer {
   char Buffer[256];
@@ -53,6 +49,7 @@ struct Bloco_Buffer {
 struct Lexema_inst {
   char item[64];
   char token[64];
+  int token_type;
   int line;
   int lex_sum;
 };
@@ -62,10 +59,6 @@ struct Tabela_Simbolos {
   char token[64];
   int line;
   Tabela *next;
-};
-
-struct BloomFilter {
-    unsigned char* array;
 };
 
 struct Lista_Hash{

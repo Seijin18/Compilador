@@ -1,4 +1,5 @@
 #include "funcs.h"
+#include "tokens.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -67,9 +68,11 @@ int main()
         allocate_lexema(&lex);
         
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
-
+        lex->token_type = Get_Token_Type(lex->token);
+        
         if (flag == 0)
         {
+
             printf("Erro lexico na linha %d\n", lex->line);
             return 0;
         }
@@ -77,10 +80,7 @@ int main()
         {
             return 0;
         }
-        printf("Token: %s\n", lex->token);
-        printf("Lexema: %s\n", lex->item);
-        printf("Linha: %d\n", lex->line);
-        printf("\n");
+        
         deallocate_lexema(lex);
     }
     return 0;

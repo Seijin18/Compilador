@@ -588,44 +588,6 @@ unsigned int hash(int lex_sum) // Divisão
   return lex_sum % bloom_size;
 }
 
-BFilter *allocate_BloomFilter()
-{
-  BFilter *filter = (BFilter *)malloc(sizeof(BFilter));
-  filter->array = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
-  return filter;
-}
-
-void deallocate_BloomFilter(BFilter *filter)
-{
-  free(filter->array);
-  free(filter);
-}
-
-void add_BloomFilter(BFilter *filter, char *lexema)
-{
-  int lex_sum = 0;
-  for (int i = 0; i < strlen(lexema); i++)
-  {
-    lex_sum += lexema[i];
-  }
-  unsigned int hash_value = hash(lex_sum);
-  filter->array[hash_value / 8] |= (1 << (hash_value % 8));
-}
-
-int check_BloomFilter(BFilter *filter, int lex_sum)
-{
-  unsigned int hash_value = hash(lex_sum);
-  if (!(filter->array[hash_value / 8] & (1 << (hash_value % 8))))
-  {
-    return 0;
-  }
-  return 1;
-}
-
-
-
-
-
 int Get_Char_Value(char *c)
 {
   int sum = 0;
@@ -638,6 +600,122 @@ int Get_Char_Value(char *c)
   return sum;
 }
 
+int Get_Token_Type(char *c)
+{
+  if (strcmp(c, "NUM") == 0)
+  {
+    return 256;
+  }
+  else if (strcmp(c, "ID") == 0)
+  {
+    return 257;
+  }
+  else if (strcmp(c, "IF") == 0)
+  {
+    return 258;
+  }
+  else if (strcmp(c, "ELSE") == 0)
+  {
+    return 259;
+  }
+  else if (strcmp(c, "WHILE") == 0)
+  {
+    return 260;
+  }
+  else if (strcmp(c, "INT") == 0)
+  {
+    return 261;
+  }
+  else if (strcmp(c, "RETURN") == 0)
+  {
+    return 262;
+  }
+  else if (strcmp(c, "VOID") == 0)
+  {
+    return 263;
+  }
+  else if (strcmp(c, "SOMA") == 0)
+  {
+    return 264;
+  }
+  else if (strcmp(c, "SUBTRACAO") == 0)
+  {
+    return 265;
+  }
+  else if (strcmp(c, "MULTIPLICACAO") == 0)
+  {
+    return 266;
+  }
+  else if (strcmp(c, "DIVISAO") == 0)
+  {
+    return 267;
+  }
+  else if (strcmp(c, "ATRIBUICAO") == 0)
+  {
+    return 268;
+  }
+  else if (strcmp(c, "IGUAL") == 0)
+  {
+    return 269;
+  }
+  else if (strcmp(c, "DIFERENTE") == 0)
+  {
+    return 270;
+  }
+  else if (strcmp(c, "MAIOR") == 0)
+  {
+    return 271;
+  }
+  else if (strcmp(c, "MENOR") == 0)
+  {
+    return 272;
+  }
+  else if (strcmp(c, "ABRE_PARENTESES") == 0)
+  {
+    return 273;
+  }
+  else if (strcmp(c, "FECHA_PARENTESES") == 0)
+  {
+    return 274;
+  }
+  else if (strcmp(c, "ABRE_CHAVES") == 0)
+  {
+    return 275;
+  }
+  else if (strcmp(c, "FECHA_CHAVES") == 0)
+  {
+    return 276;
+  }
+  else if (strcmp(c, "ABRE_COLCHETES") == 0)
+  {
+    return 277;
+  }
+  else if (strcmp(c, "FECHA_COLCHETES") == 0)
+  {
+    return 278;
+  }
+  else if (strcmp(c, "PONTO_VIRGULA") == 0)
+  {
+    return 279;
+  }
+  else if (strcmp(c, "VIRGULA") == 0)
+  {
+    return 280;
+  }
+  else if (strcmp(c, "COMENTARIO") == 0)
+  {
+    return 281;
+  }
+  else if (strcmp(c, "ERRO") == 0)
+  {
+    return 282;
+  }
+  else
+  {
+    return -1;
+  }
+}
+      
 
 //Função que cria nó com informação passada
 Node* Cria_Node(int key, char *item)
