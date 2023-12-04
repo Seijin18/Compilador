@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX 100
+
 int main()
 {
     Bloco *buffer;
@@ -9,14 +11,21 @@ int main()
 
     Lexema *lex;
 
-    BFilter *bf;
-    bf = allocate_BloomFilter();
-    add_BloomFilter(bf, "else");
-    add_BloomFilter(bf, "if");
-    add_BloomFilter(bf, "int");
-    add_BloomFilter(bf, "return");
-    add_BloomFilter(bf, "void");
-    add_BloomFilter(bf, "while");
+    Lista ht[MAX];
+    Tabela_Inicia(ht, MAX);
+    int Char_Value;
+    Char_Value = Get_Char_Value("if");
+    Insere_Hash(Char_Value, "IF", ht, MAX);
+    Char_Value = Get_Char_Value("else");
+    Insere_Hash(Char_Value, "ELSE", ht, MAX);
+    Char_Value = Get_Char_Value("while");
+    Insere_Hash(Char_Value, "WHILE", ht, MAX);
+    Char_Value = Get_Char_Value("return");
+    Insere_Hash(Char_Value, "RETURN", ht, MAX);
+    Char_Value = Get_Char_Value("int");
+    Insere_Hash(Char_Value, "INT", ht, MAX);
+    Char_Value = Get_Char_Value("void");
+    Insere_Hash(Char_Value, "VOID", ht, MAX);
 
     FILE *fp;
     fp = fopen("teste.txt", "r");
@@ -57,7 +66,7 @@ int main()
     {
         allocate_lexema(&lex);
         
-        flag = get_next_lexema_tabela(lex, buffer, fp, tabela, bf);
+        flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
 
         if (flag == 0)
         {

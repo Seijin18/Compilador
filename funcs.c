@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define tam 64
+#define tam 100
 #define bloom_size 100
 
 typedef enum
@@ -314,12 +314,13 @@ int convert_char_to_table(char c)
 }
 
 /*Get lexema função dirigido por tabela*/
-int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19], BFilter *bf)
+int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19], Lista *ht)
 {
   int i = 0;
   int estado = 0;
   char c;
   int lex_sum = 0;
+  int ht_position = -1;
   int table_value = -1;
 
   c = get_next_char(buffer, fp);
@@ -336,7 +337,6 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     c = get_next_char(buffer, fp);
 
     lex->item[i] = c;
-    lex_sum += c;
     table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
     estado = tabela[estado][table_value];   // Pega o estado atual e o valor da tabela e retorna o novo estado
 
@@ -350,9 +350,9 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       {
         retract(buffer);
       }
-      lex->item[i + 1] = '\0';
+      lex->item[i] = '\0';
       lex->line = buffer->line;
-      lex->lex_sum = lex_sum;
+      lex_sum = Get_Char_Value(lex->item);
 
       switch (estado)
       {
@@ -363,20 +363,21 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       }
       case 2:
       {
-        strcpy(lex->token, "VERIFICAR");
-        // if (check_BloomFilter(bf, lex_sum))
-        // {
-        //   strcpy(lex->token, "PALAVRA_RESERVADA");
-        // }
-        // else
-        // {
-        //   strcpy(lex->token, "ID");
-        // }
+        strcpy(lex->token, "ID");
         break;
       }
-      case 3: // ID with number
+      case 3: // ID sem numero
       {
-        strcpy(lex->token, "ID");
+        ht_position = Pesquisa_Hash(lex_sum, ht, tam);
+        if (ht_position == -1)
+        {
+          strcpy(lex->token, "ID");
+        }
+        else
+        {
+          strcpy(lex->token, ht[ht_position].Primeiro->Item);
+        }
+        
         break;
       }
       case 4: // SOMA
@@ -584,4 +585,114 @@ int check_BloomFilter(BFilter *filter, int lex_sum)
     return 0;
   }
   return 1;
+}
+
+
+
+
+
+int Get_Char_Value(char *c)
+{
+  int sum = 0;
+  int i;
+  int len = 0;
+  while (c[len] != '\0') {
+    sum += c[len];
+    len++;
+  }
+  return sum;
+}
+
+
+//Função que cria nó com informação passada
+Node* Cria_Node(int key, char *item)
+{
+  Node *node;
+  node = malloc(sizeof(Node));
+  node->Prox = NULL;
+  node->Value = key;
+  node->Item = item;
+  return node;
+}
+
+//Inicia Lista
+void Lista_Inicia(Lista *Lista)
+{
+  Node *Aux;
+  Lista->Tamanho = 0;
+  Lista->Primeiro = NULL;
+}
+
+//Função que insere elementos na lista como em fila
+void Lista_Insere(Lista *Lista, int key, char *item)
+{
+  Node *node;
+  node = Cria_Node(key, item);
+  if(Lista->Primeiro == NULL)
+    {
+        Lista_Inicia(Lista);
+        Lista->Primeiro = node;
+        Lista->Tamanho++;
+        return;
+    }
+  node->Prox = Lista->Primeiro;
+  Lista->Primeiro = node;
+  Lista->Tamanho ++;
+}
+
+int Seleciona_Chave(int chave, int tamanho)
+{
+    return chave % tamanho;
+}
+
+int Pesquisa_Hash(int chave, Lista *Tabela, int tamanho)
+{
+  int Position;
+  Position = Seleciona_Chave(chave, tamanho);
+  Node *Aux = Tabela[Position].Primeiro;
+  while(Aux != NULL)
+    {
+        if(Aux->Value == chave)
+            {
+                return Position;
+            }
+        Aux = Aux->Prox;
+    }
+  return -1;
+}
+
+int Insere_Hash(int chave, char *item, Lista *tabela, int tamanho)
+{
+    int Position;
+    Position = Seleciona_Chave(chave, tamanho);
+    if (&tabela[Position].Primeiro == NULL)
+        {
+            Lista_Inicia(&tabela[Position]);
+            Lista_Insere(&tabela[Position], chave, item);
+            return 1;
+        }
+    else
+        {
+            Lista_Insere(&tabela[Position], chave, item);
+            return 1;
+        }
+}
+
+void Tabela_Inicia(Lista *Tabela, int tamanho)
+{
+  int i;
+  for(i = 0; i < tamanho; i++)
+    {
+        Lista_Inicia(&Tabela[i]);
+    }
+}
+
+void Deallocate_Tabela(Lista *Tabela, int tamanho)
+{
+  int i;
+  for(i = 0; i < tamanho; i++)
+    {
+        free(Tabela[i].Primeiro);
+    }
+  free(Tabela);
 }
