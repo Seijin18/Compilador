@@ -340,9 +340,21 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
     estado = tabela[estado][table_value];   // Pega o estado atual e o valor da tabela e retorna o novo estado
 
-    printf("Caracter: %c\n", c);
-    printf("Table value: %d\n", table_value);
-    printf("Estado: %d\n", estado);
+    // if (c == EOF)
+    // {
+    //   printf("Caracter: EOF\n");
+    // }
+    // else if (c == '\0')
+    // {
+    //   printf("Caracter: \0\n");
+    // }
+    // else
+    // {
+    //   printf("Caracter: %c\n", c);
+    // }    
+    
+    // printf("Table value: %d\n", table_value);
+    // printf("Estado: %d\n\n", estado);
 
     if (check_whitespace(c) || check_special(c) || c == EOF) // Se for espaço em branco ou caracter especial
     {
@@ -350,7 +362,14 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       {
         retract(buffer);
       }
-      lex->item[i] = '\0';
+      if (!(estado == 1 || estado == 2 || estado == 3))
+      {
+        lex->item[i + 1] = '\0';
+      }
+      else
+      {
+        lex->item[i] = '\0';
+      }
       lex->line = buffer->line;
       lex_sum = Get_Char_Value(lex->item);
 
@@ -359,16 +378,28 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       case 1:
       {
         strcpy(lex->token, "NUM");
+        if (check_special(c))
+        {
+          retract(buffer);
+        }
         break;
       }
       case 2:
       {
         strcpy(lex->token, "ID");
+        if (check_special(c))
+        {
+          retract(buffer);
+        }
         break;
       }
       case 3: // ID sem numero
       {
         ht_position = Pesquisa_Hash(lex_sum, ht, tam);
+        if (check_special(c))
+        {
+          retract(buffer);
+        }
         if (ht_position == -1)
         {
           strcpy(lex->token, "ID");
@@ -377,7 +408,6 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
         {
           strcpy(lex->token, ht[ht_position].Primeiro->Item);
         }
-        
         break;
       }
       case 4: // SOMA
@@ -529,11 +559,16 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
 
       default: // ERRO
       {
+        if (c == EOF || c == '\0')
+        {
+          break;
+        }
         strcpy(lex->token, "ERRO");
         lex_sum = 0;
         break;
       }
       }
+      break;
     }
     else
     {
@@ -541,7 +576,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     }
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
-  if (c == EOF)
+  if (c == EOF || c == '\0')
     {
       return -1;
     }
