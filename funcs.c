@@ -62,6 +62,7 @@ int check_number(char c)
 {
   if (c >= '0' && c <= '9')
   {
+    printf("Numero: %c\n", c);
     return 1;
   }
   return 0;
@@ -305,7 +306,7 @@ int convert_char_to_table(char c)
       return -1;
     }
   }
-  if (c == EOF)
+  if (c == EOF || check_whitespace(c))
   {
     return 18;
   }
@@ -313,36 +314,46 @@ int convert_char_to_table(char c)
 }
 
 /*Get lexema função dirigido por tabela*/
-int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[29][19])
+int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19], BFilter *bf)
 {
   int i = 0;
   int estado = 0;
   char c;
   int lex_sum = 0;
   int table_value = -1;
-  do
-  {
-    c = get_next_char(buffer, fp);
 
-    while (check_whitespace(c)) // Ignora espaços em branco
+  c = get_next_char(buffer, fp);
+  if (check_whitespace(c))
+  {
+    while (check_whitespace(c))
     {
       c = get_next_char(buffer, fp);
     }
+  }
+  retract(buffer);
+  do
+  {
+    c = get_next_char(buffer, fp);
 
     lex->item[i] = c;
     lex_sum += c;
     table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
     estado = tabela[estado][table_value];   // Pega o estado atual e o valor da tabela e retorna o novo estado
 
+    printf("Caracter: %c\n", c);
+    printf("Table value: %d\n", table_value);
+    printf("Estado: %d\n", estado);
+
     if (check_whitespace(c) || check_special(c) || c == EOF) // Se for espaço em branco ou caracter especial
     {
-      if (check_special(c) && i > 0)
+      if (check_whitespace(c) || c == EOF)
       {
         retract(buffer);
       }
       lex->item[i + 1] = '\0';
       lex->line = buffer->line;
       lex->lex_sum = lex_sum;
+
       switch (estado)
       {
       case 1:
@@ -353,6 +364,14 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[29][
       case 2:
       {
         strcpy(lex->token, "VERIFICAR");
+        // if (check_BloomFilter(bf, lex_sum))
+        // {
+        //   strcpy(lex->token, "PALAVRA_RESERVADA");
+        // }
+        // else
+        // {
+        //   strcpy(lex->token, "ID");
+        // }
         break;
       }
       case 3: // ID with number
@@ -506,13 +525,6 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[29][
         lex->item[i + 1] = '\0';
         break;
       }
-      case 28: // EOF
-      {
-        strcpy(lex->token, "EOF");
-        strcpy(lex->item, "EOF");
-        lex_sum = 0;
-        break;
-      }
 
       default: // ERRO
       {
@@ -540,20 +552,31 @@ unsigned int hash(int lex_sum) // Divisão
   return lex_sum % bloom_size;
 }
 
-BloomFilter *allocate_BloomFilter()
+BFilter *allocate_BloomFilter()
 {
-  BloomFilter *filter = (BloomFilter *)malloc(sizeof(BloomFilter));
+  BFilter *filter = (BFilter *)malloc(sizeof(BFilter));
   filter->array = (unsigned char *)calloc(bloom_size, sizeof(unsigned char));
   return filter;
 }
 
-void add_BloomFilter(BloomFilter *filter, int lex_sum)
+void deallocate_BloomFilter(BFilter *filter)
 {
-  unsigned int hash_value = hash(lex_sum);
-  filter->array[hash_value / 8] |= 1 << (hash_value % 8);
+  free(filter->array);
+  free(filter);
 }
 
-int check_BloomFilter(BloomFilter *filter, int lex_sum)
+void add_BloomFilter(BFilter *filter, char *lexema)
+{
+  int lex_sum = 0;
+  for (int i = 0; i < strlen(lexema); i++)
+  {
+    lex_sum += lexema[i];
+  }
+  unsigned int hash_value = hash(lex_sum);
+  filter->array[hash_value / 8] |= (1 << (hash_value % 8));
+}
+
+int check_BloomFilter(BFilter *filter, int lex_sum)
 {
   unsigned int hash_value = hash(lex_sum);
   if (!(filter->array[hash_value / 8] & (1 << (hash_value % 8))))

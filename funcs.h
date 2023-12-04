@@ -9,7 +9,7 @@ typedef struct Bloco_Buffer Bloco;
 
 typedef struct Tabela_Simbolos Tabela;
 
-typedef struct BloomFilter BloomFilter;
+typedef struct BloomFilter BFilter;
 
 int check_whitespace(char c);
 int check_special(char c);
@@ -24,8 +24,13 @@ void get_next_block(Bloco *buffer, FILE *fp);
 char get_next_char(Bloco *buffer, FILE *fp);
 void retract(Bloco *buffer);
 int convert_char_to_table(char c);
-int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[29][19]);
-char identifica_lexema(Lexema *lex, Bloco *buffer, FILE *fp, char c);
+int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19], BFilter *bf);
+unsigned int hash(int lex_sum);
+BFilter* allocate_BloomFilter();
+void deallocate_BloomFilter(BFilter* bf);
+void add_BloomFilter(BFilter* bf, char *item);
+int check_BloomFilter(BFilter* bf, int lex_sum);
+
 
 struct Bloco_Buffer {
   char Buffer[256];
