@@ -99,6 +99,7 @@ void allocate_lexema(Lexema **lex)
     printf("Memory allocation failed for lexema.\n");
     exit(1);
   }
+  memset((*lex)->item, '\0', sizeof((*lex)->item));
   (*lex)->line = 0;
 }
 
@@ -307,7 +308,7 @@ int convert_char_to_table(char c)
 }
 
 /*Get lexema função dirigido por tabela*/
-void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][19])
+int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][18])
 {
   int i = 0;
   int estado = 0;
@@ -317,18 +318,26 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28]
   do
   {
     c = get_next_char(buffer, fp);
-    lex_sum += c;
-    table_value = convert_char_to_table(c);
-    estado = tabela[estado][table_value];
-    if (check_whitespace(c) || check_special(c))
+    
+    while (check_whitespace(c)) // Ignora espaços em branco
     {
-      if (!(check_special_with_following(c) && (estado == 9 || estado == 10 || estado == 13 || estado == 14)))
+      c = get_next_char(buffer, fp);
+    }
+    
+    lex->item[i] = c;
+    lex_sum += c;
+    table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
+    estado = tabela[estado][table_value];  // Pega o estado atual e o valor da tabela e retorna o novo estado
+
+    if (check_whitespace(c) || check_special(c)) // Se for espaço em branco ou caracter especial
+    {
+      if (!(check_special_with_following(c))) // Se não for um caracter especial com um seguinte
       {
         if (check_special(c) && i > 0)
         {
           retract(buffer);
         }
-        lex->item[i] = '\0';
+        lex->item[i + 1] = '\0';
         lex->line = buffer->line;
         lex->lex_sum = lex_sum;
         switch (estado)
@@ -449,9 +458,12 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28]
           while (c != EOF)
           {
             c = get_next_char(buffer, fp);
+            lex->item[i] = c;
+            i++;
             if (c == '*')
             {
               c = get_next_char(buffer, fp);
+              lex->item[i] = c;
               if (c == '/')
               {
                 strcpy(lex->token, "COMENTARIO");
@@ -462,6 +474,7 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28]
             if (c == '/')
             {
               c = get_next_char(buffer, fp);
+              lex->item[i] = c;
               if (c == '*')
               {
                 strcpy(lex->token, "ERRO");
@@ -470,7 +483,7 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28]
               }
             }
           }
-
+          lex->item[i + 1] = '\0';
           break;
         }
         default: // ERRO
@@ -488,6 +501,7 @@ void get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28]
     }
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
+  return 1;
 }
 
 unsigned int hash(int lex_sum) // Divisão
