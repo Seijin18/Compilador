@@ -279,220 +279,247 @@ int convert_char_to_table(char c)
       return 5;
     case '=':
       return 6;
-    case '!':
-      return 7;
-    case '<':
-      return 8;
-    case '>':
-      return 9;
-    case '(':
-      return 10;
-    case ')':
-      return 11;
-    case '{':
-      return 12;
-    case '}':
-      return 13;
-    case '[':
-      return 14;
-    case ']':
-      return 15;
-    case ';':
-      return 16;
     case ',':
+      return 7;
+    case ';':
+      return 8;
+    case '(':
+      return 9;
+    case ')':
+      return 10;
+    case '[':
+      return 11;
+    case ']':
+      return 12;
+    case '{':
+      return 13;
+    case '}':
+      return 14;
+    case '<':
+      return 15;
+    case '>':
+      return 16;
+    case '!':
       return 17;
     default:
       return -1;
     }
   }
+  if (c == EOF)
+  {
+    return 18;
+  }
+  return -1;
 }
 
 /*Get lexema função dirigido por tabela*/
-int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][18])
+int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[29][19])
 {
   int i = 0;
   int estado = 0;
   char c;
   int lex_sum = 0;
-  int table_value;
+  int table_value = -1;
   do
   {
     c = get_next_char(buffer, fp);
-    
+
     while (check_whitespace(c)) // Ignora espaços em branco
     {
       c = get_next_char(buffer, fp);
     }
-    
+
     lex->item[i] = c;
     lex_sum += c;
     table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
-    estado = tabela[estado][table_value];  // Pega o estado atual e o valor da tabela e retorna o novo estado
+    estado = tabela[estado][table_value];   // Pega o estado atual e o valor da tabela e retorna o novo estado
 
-    if (check_whitespace(c) || check_special(c)) // Se for espaço em branco ou caracter especial
+    if (check_whitespace(c) || check_special(c) || c == EOF) // Se for espaço em branco ou caracter especial
     {
-      if (!(check_special_with_following(c))) // Se não for um caracter especial com um seguinte
+      if (check_special(c) && i > 0)
       {
-        if (check_special(c) && i > 0)
-        {
-          retract(buffer);
-        }
-        lex->item[i + 1] = '\0';
-        lex->line = buffer->line;
-        lex->lex_sum = lex_sum;
-        switch (estado)
-        {
-        case 1:
-        {
-          strcpy(lex->token, "NUM");
-          break;
-        }
-        case 2:
-        {
-          strcpy(lex->token, "VERIFICAR");
-          break;
-        }
-        case 3: // ID with number
-        {
-          strcpy(lex->token, "ID");
-          break;
-        }
-        case 4: // SOMA
-        {
-          strcpy(lex->token, "SOMA");
-          break;
-        }
-        case 5: // SUBTRACAO
-        {
-          strcpy(lex->token, "SUBTRACAO");
-          break;
-        }
-        case 6: // MULTIPLICACAO
-        {
-          strcpy(lex->token, "MULTIPLICACAO");
+        retract(buffer);
+      }
+      lex->item[i + 1] = '\0';
+      lex->line = buffer->line;
+      lex->lex_sum = lex_sum;
+      switch (estado)
+      {
+      case 1:
+      {
+        strcpy(lex->token, "NUM");
+        break;
+      }
+      case 2:
+      {
+        strcpy(lex->token, "VERIFICAR");
+        break;
+      }
+      case 3: // ID with number
+      {
+        strcpy(lex->token, "ID");
+        break;
+      }
+      case 4: // SOMA
+      {
+        strcpy(lex->token, "SOMA");
+        break;
+      }
+      case 5: // SUBTRACAO
+      {
+        strcpy(lex->token, "SUBTRACAO");
+        break;
+      }
+      case 6: // MULTIPLICACAO
+      {
+        strcpy(lex->token, "MULTIPLICACAO");
 
-          break;
-        }
-        case 7: // DIVISAO
-        {
-          strcpy(lex->token, "DIVISAO");
-          break;
-        }
-        case 8: // ATRIBUICAO
-        {
-          strcpy(lex->token, "ATRIBUICAO");
-          break;
-        }
-        case 9: // IGUAL
+        break;
+      }
+      case 7: // DIVISAO
+      {
+        strcpy(lex->token, "DIVISAO");
+        break;
+      }
+      case 8: // ATRIBUICAO
+      {
+        c = get_next_char(buffer, fp);
+        if (c == '=')
         {
           strcpy(lex->token, "IGUAL");
-          break;
         }
-        case 10: // DIFERENTE
+        else
         {
-          strcpy(lex->token, "DIFERENTE");
-          break;
+          strcpy(lex->token, "ATRIBUICAO");
+          retract(buffer);
         }
-        case 11: // MAIOR
-        {
-          strcpy(lex->token, "MAIOR");
-          break;
-        }
-        case 12: // MENOR
-        {
-          strcpy(lex->token, "MENOR");
-          break;
-        }
-        case 13: // MAIOR_IGUAL
+        break;
+      }
+      case 9: // IGUAL
+      {
+        strcpy(lex->token, "IGUAL");
+        break;
+      }
+      case 10: // DIFERENTE
+      {
+        strcpy(lex->token, "DIFERENTE");
+        break;
+      }
+      case 11: // MAIOR
+      {
+        c = get_next_char(buffer, fp);
+        if (c == '=')
         {
           strcpy(lex->token, "MAIOR_IGUAL");
-          break;
         }
-        case 14: // MENOR_IGUAL
+        else
+        {
+          strcpy(lex->token, "MAIOR");
+          retract(buffer);
+        }
+        break;
+      }
+      case 12: // MENOR
+      {
+        c = get_next_char(buffer, fp);
+        if (c == '=')
         {
           strcpy(lex->token, "MENOR_IGUAL");
-          break;
         }
-        case 15: // ABRE_PARENTES
+        else
         {
-          strcpy(lex->token, "ABRE_PARENTES");
-          break;
+          strcpy(lex->token, "MENOR");
+          retract(buffer);
         }
-        case 16: // FECHA_PARENTES
+        break;
+      }
+      case 15: // ABRE_PARENTES
+      {
+        strcpy(lex->token, "ABRE_PARENTES");
+        break;
+      }
+      case 16: // FECHA_PARENTES
+      {
+        strcpy(lex->token, "FECHA_PARENTES");
+        break;
+      }
+      case 17: // ABRE_CHAVES
+      {
+        strcpy(lex->token, "ABRE_CHAVES");
+        break;
+      }
+      case 18: // FECHA_CHAVES
+      {
+        strcpy(lex->token, "FECHA_CHAVES");
+        break;
+      }
+      case 19: // ABRE_COLCHETES
+      {
+        strcpy(lex->token, "ABRE_COLCHETES");
+        break;
+      }
+      case 20: // FECHA_COLCHETES
+      {
+        strcpy(lex->token, "FECHA_COLCHETES");
+        break;
+      }
+      case 21: // PONTO_VIRGULA
+      {
+        strcpy(lex->token, "PONTO_VIRGULA");
+        break;
+      }
+      case 22: // VIRGULA
+      {
+        strcpy(lex->token, "VIRGULA");
+        break;
+      }
+      case 23: // COMENTARIO
+      {
+        while (c != EOF)
         {
-          strcpy(lex->token, "FECHA_PARENTES");
-          break;
-        }
-        case 17: // ABRE_CHAVES
-        {
-          strcpy(lex->token, "ABRE_CHAVES");
-          break;
-        }
-        case 18: // FECHA_CHAVES
-        {
-          strcpy(lex->token, "FECHA_CHAVES");
-          break;
-        }
-        case 19: // ABRE_COLCHETES
-        {
-          strcpy(lex->token, "ABRE_COLCHETES");
-          break;
-        }
-        case 20: // FECHA_COLCHETES
-        {
-          strcpy(lex->token, "FECHA_COLCHETES");
-          break;
-        }
-        case 21: // PONTO_VIRGULA
-        {
-          strcpy(lex->token, "PONTO_VIRGULA");
-          break;
-        }
-        case 22: // VIRGULA
-        {
-          strcpy(lex->token, "VIRGULA");
-          break;
-        }
-        case 23: // COMENTARIO
-        {
-          while (c != EOF)
+          c = get_next_char(buffer, fp);
+          lex->item[i] = c;
+          i++;
+          if (c == '*')
           {
             c = get_next_char(buffer, fp);
             lex->item[i] = c;
-            i++;
-            if (c == '*')
-            {
-              c = get_next_char(buffer, fp);
-              lex->item[i] = c;
-              if (c == '/')
-              {
-                strcpy(lex->token, "COMENTARIO");
-                lex_sum = -1;
-                break;
-              }
-            }
             if (c == '/')
             {
-              c = get_next_char(buffer, fp);
-              lex->item[i] = c;
-              if (c == '*')
-              {
-                strcpy(lex->token, "ERRO");
-                lex_sum = -1;
-                break;
-              }
+              strcpy(lex->token, "COMENTARIO");
+              lex_sum = -1;
+              break;
             }
           }
-          lex->item[i + 1] = '\0';
-          break;
+          if (c == '/')
+          {
+            c = get_next_char(buffer, fp);
+            lex->item[i] = c;
+            if (c == '*')
+            {
+              strcpy(lex->token, "ERRO");
+              lex_sum = -1;
+              break;
+            }
+          }
         }
-        default: // ERRO
-        {
-          strcpy(lex->token, "ERRO");
-          lex_sum = -1;
-          break;
-        }
-        }
+        lex->item[i + 1] = '\0';
+        break;
+      }
+      case 28: // EOF
+      {
+        strcpy(lex->token, "EOF");
+        strcpy(lex->item, "EOF");
+        lex_sum = 0;
+        break;
+      }
+
+      default: // ERRO
+      {
+        strcpy(lex->token, "ERRO");
+        lex_sum = 0;
+        break;
+      }
       }
     }
     else
@@ -501,6 +528,10 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     }
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
+  if (c == EOF)
+    {
+      return -1;
+    }
   return 1;
 }
 
