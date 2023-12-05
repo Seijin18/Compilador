@@ -46,10 +46,9 @@ ASTNode* newASTNodeValue(char* type, char* value) {
 %token <intValue> NUM
 %token <stringValue> ID
 %token IF ELSE WHILE INT RETURN VOID SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO IGUAL DIFERENTE MAIOR MENOR ABRE_PARENTESE FECHA_PARENTESE ABRE_CHAVES FECHA_CHAVES ABRE_COLCHETE FECHA_COLCHETE PONTO_VIRGULA VIRGULA   MAIOR_IGUAL MENOR_IGUAL
-%token 
 
-%left '+' '-'
-%left '*' '/'
+%left SOMA SUBTRACAO
+%left MULTIPLICACAO DIVISAO
 
 %type <nodeValue> programa
 %type <nodeValue> declaracao_lista
@@ -185,7 +184,7 @@ relacional: MENOR_IGUAL
 
 soma_expressao: soma_expressao SOMA termo
     { $$ = newASTNode("soma_expressao", $1, $3); }
-    | soma_expressao SOMA termo
+    | soma_expressao SUBTRACAO termo
     { $$ = newASTNode("soma_expressao", $1, $3); }
     | termo
     ;
