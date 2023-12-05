@@ -54,7 +54,7 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    NUM = 258,                     /* NUM  */
+    NUMERO = 258,                  /* NUMERO  */
     ID = 259,                      /* ID  */
     IF = 260,                      /* IF  */
     ELSE = 261,                    /* ELSE  */
@@ -89,7 +89,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 126 "bison.y"
+#line 130 "bison.y"
 
     int intValue;
     char* stringValue;

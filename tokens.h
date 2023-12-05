@@ -3,7 +3,7 @@
 #define TOKENS_H
 
 // Definições dos tokens
-#define NUM 258
+#define NUMERO 258
 #define ID 259
 #define IF 260
 #define ELSE 261

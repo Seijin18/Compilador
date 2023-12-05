@@ -379,7 +379,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       {
       case 1:
       {
-        strcpy(lex->token, "NUM");
+        strcpy(lex->token, "NUMERO");
         if (check_special(c))
         {
           retract(buffer);
@@ -604,7 +604,7 @@ int Get_Char_Value(char *c)
 
 int Get_Token_Type(char *c)
 {
-  if (strcmp(c, "NUM") == 0)
+  if (strcmp(c, "NUMERO") == 0)
   {
     return 258;
   }

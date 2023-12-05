@@ -31,6 +31,10 @@ ASTNode* newASTNodeValue(char* type, char* value) {
     return node;
 }
 
+int yylineno;
+int yylval;
+char yytext;
+
 int yyerror(char *s) {
     fprintf(stderr, "Error on line %d: %s\n", yylineno, s);
     fprintf(stderr, "error: %s\n", s);
@@ -110,12 +114,12 @@ int yylex(void) {
         return 0;
     }
 
-    int yylineno = lex->line;
-    if (check_number(&lex->token))
+    yylineno = lex->line;
+    if (Get_Token_Type(lex->token) == 258)
     {
-        int yylval = lex->token - '0';
+        yylval = lex->token - '0';
     }
-    char yytext = lex->item;
+    yytext = lex->item;
 
     deallocate_lexema(lex);
 
@@ -137,7 +141,7 @@ int yylex(void) {
 %token SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO PONTO_VIRGULA VIRGULA ABRE_PARENTESE FECHA_PARENTESE ABRE_COLCHETE FECHA_COLCHETE ABRE_CHAVES FECHA_CHAVES
 %token '*' '/' */
 
-%token <intValue> NUM
+%token <stringValue> NUMERO
 %token <stringValue> ID
 %token IF ELSE WHILE INT RETURN VOID SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO IGUAL DIFERENTE MAIOR MENOR ABRE_PARENTESE FECHA_PARENTESE ABRE_CHAVES FECHA_CHAVES ABRE_COLCHETE FECHA_COLCHETE PONTO_VIRGULA VIRGULA   MAIOR_IGUAL MENOR_IGUAL
 
@@ -169,7 +173,7 @@ declaracao: var_declaracao { $$ = newASTNode("declaracao", $1, NULL); }
           ;
 
 var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
-              | tipo_especificador ID ABRE_COLCHETE NUM ABRE_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
+              | tipo_especificador ID ABRE_COLCHETE NUMERO ABRE_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
               ;
 
 tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int"); }
@@ -294,7 +298,7 @@ fator: ABRE_PARENTESE expressao FECHA_PARENTESE
     { $$ = newASTNode("fator", $2, NULL); }
     | var
     | ativacao
-    | NUM
+    | NUMERO
     { $$ = newASTNodeValue("fator", $1); }
     ;
 
