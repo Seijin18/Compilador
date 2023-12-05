@@ -567,6 +567,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
         }
         strcpy(lex->token, "ERRO");
         lex_sum = 0;
+        return 0;
         break;
       }
       }
