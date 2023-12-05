@@ -314,7 +314,7 @@ int yylex(void) {
     yylineno = lex->line;
     if (Get_Token_Type(lex->token) == 258)
     {
-        yyval.intValue = *(lex->item) - '0';
+        yylval.intValue = *(lex->item) - '0';
     }
     //yytext = lex->item;
     strcpy(yytext, lex->item);
