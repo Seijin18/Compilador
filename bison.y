@@ -3,6 +3,9 @@
 #include "tokens.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#define MAX 100
+
 typedef struct ASTNode {
     char* type;
     char* value;
@@ -26,6 +29,97 @@ ASTNode* newASTNodeValue(char* type, char* value) {
     node->left = NULL;
     node->right = NULL;
     return node;
+}
+
+int yyerror(char *s) {
+    fprintf(stderr, "Error on line %d: %s\n", yylineno, s);
+    fprintf(stderr, "error: %s\n", s);
+    return 0;
+}
+
+int yylex(void) {
+    Bloco *buffer;
+    allocate_buffer(&buffer);
+
+    Lexema *lex;
+    allocate_lexema(&lex);
+
+    Lista ht[MAX];
+    Tabela_Inicia(ht, MAX);
+    int Char_Value;
+    Char_Value = Get_Char_Value("if");
+    Insere_Hash(Char_Value, "IF", ht, MAX);
+    Char_Value = Get_Char_Value("else");
+    Insere_Hash(Char_Value, "ELSE", ht, MAX);
+    Char_Value = Get_Char_Value("while");
+    Insere_Hash(Char_Value, "WHILE", ht, MAX);
+    Char_Value = Get_Char_Value("return");
+    Insere_Hash(Char_Value, "RETURN", ht, MAX);
+    Char_Value = Get_Char_Value("int");
+    Insere_Hash(Char_Value, "INT", ht, MAX);
+    Char_Value = Get_Char_Value("void");
+    Insere_Hash(Char_Value, "VOID", ht, MAX);
+
+    FILE *fp;
+    fp = fopen("teste.txt", "r");
+
+    char c;
+    int flag = 1;
+    int tabela[28][19] = {
+        { 3, 1, 4, 5, 6, 7, 8,22,21,15,16,19,20,17,18,12,11,21, 0},
+        {-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+        { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+        { 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 4},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 5},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 6},
+        {-1,-1,-1,-1,23,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 7},
+        {-1,-1,-1,-1,-1,-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 8},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 9},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10},
+        {-1,-1,-1,-1,-1,-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,11},
+        {-1,-1,-1,-1,-1,-1,14,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,12},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,13},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,14},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,15},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,16},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,18},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,19},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,20},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,21},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,22},
+        {23,23,23,23,26,27,23,23,23,23,23,23,23,23,23,23,23,23,23},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,24},
+        {23,23,23,23,23,26,23,23,23,23,23,23,23,23,23,23,23,23,25},
+        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,26},
+        {23,23,23,23,-1,23,23,23,23,23,23,23,23,23,23,23,23,23,27}};
+
+    do{
+        flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
+        lex->token_type = Get_Token_Type(lex->token);
+    }while(lex->token_type != 281 && flag != -1 && flag != 0);
+        
+    if (flag == 0)
+    {
+        printf("Erro lexico na linha %d\n", lex->line);
+        return -1;
+    }
+    else if (flag == -1)
+    {
+        return 0;
+    }
+
+    int yylineno = lex->line;
+    if (check_number(&lex->token))
+    {
+        int yylval = lex->token - '0';
+    }
+    char yytext = lex->item;
+
+    deallocate_lexema(lex);
+
+    return lex->token_type;
 }
 %}
 
@@ -219,97 +313,6 @@ arg_lista: arg_lista VIRGULA expressao
     | expressao
     ;
 %%
-
-int yyerror(char *s) {
-    fprintf(stderr, "Error on line %d: %s\n", yylineno, s);
-    fprintf(stderr, "error: %s\n", s);
-    return 0;
-}
-
-int yylex(void) {
-    Bloco *buffer;
-    allocate_buffer(&buffer);
-
-    Lexema *lex;
-    allocate_lexema(&lex);
-
-    Lista ht[MAX];
-    Tabela_Inicia(ht, MAX);
-    int Char_Value;
-    Char_Value = Get_Char_Value("if");
-    Insere_Hash(Char_Value, "IF", ht, MAX);
-    Char_Value = Get_Char_Value("else");
-    Insere_Hash(Char_Value, "ELSE", ht, MAX);
-    Char_Value = Get_Char_Value("while");
-    Insere_Hash(Char_Value, "WHILE", ht, MAX);
-    Char_Value = Get_Char_Value("return");
-    Insere_Hash(Char_Value, "RETURN", ht, MAX);
-    Char_Value = Get_Char_Value("int");
-    Insere_Hash(Char_Value, "INT", ht, MAX);
-    Char_Value = Get_Char_Value("void");
-    Insere_Hash(Char_Value, "VOID", ht, MAX);
-
-    FILE *fp;
-    fp = fopen("teste.txt", "r");
-
-    char c;
-    int flag = 1;
-    int tabela[28][19] = {
-        { 3, 1, 4, 5, 6, 7, 8,22,21,15,16,19,20,17,18,12,11,21, 0},
-        {-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-        { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
-        { 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 4},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 5},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 6},
-        {-1,-1,-1,-1,23,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 7},
-        {-1,-1,-1,-1,-1,-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 8},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 9},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10},
-        {-1,-1,-1,-1,-1,-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,11},
-        {-1,-1,-1,-1,-1,-1,14,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,12},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,13},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,14},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,15},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,16},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,18},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,19},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,20},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,21},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,22},
-        {23,23,23,23,26,27,23,23,23,23,23,23,23,23,23,23,23,23,23},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,24},
-        {23,23,23,23,23,26,23,23,23,23,23,23,23,23,23,23,23,23,25},
-        {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,26},
-        {23,23,23,23,-1,23,23,23,23,23,23,23,23,23,23,23,23,23,27}};
-
-    do{
-        flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
-        lex->token_type = Get_Token_Type(lex->token);
-    }while(lex->token_type != 281 && flag != -1 && flag != 0);
-        
-    if (flag == 0)
-    {
-        printf("Erro lexico na linha %d\n", lex->line);
-        return -1;
-    }
-    else if (flag == -1)
-    {
-        return 0;
-    }
-
-    yylineno = lex->line;
-    if (check_number(lex->token))
-    {
-        yylval = lex->token - '0';
-    }
-    yytext = lex->item;
-
-    deallocate_lexema(lex);
-
-    return lex->token_type;
-}
 
 int main(void) {
     yyparse();
