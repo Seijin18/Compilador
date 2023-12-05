@@ -340,24 +340,24 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     lex->item[i] = c;
     table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
     estado = tabela[estado][table_value];   // Pega o estado atual e o valor da tabela e retorna o novo estado
-
-    // if (c == EOF)
-    // {
-    //   printf("Caracter: EOF\n");
-    // }
-    // else if (c == '\0')
-    // {
-    //   printf("Caracter: \0\n");
-    // }
-    // else
-    // {
-    //   printf("Caracter: %c\n", c);
-    // }    
+    /*
+    if (c == EOF)
+    {
+      printf("Caracter: EOF\n");
+    }
+    else if (c == '\0')
+    {
+      printf("Caracter: \0\n");
+    }
+    else
+    {
+      printf("Caracter: %c\n", c);
+    }    
     
-    // printf("Table value: %d\n", table_value);
-    // printf("Estado: %d\n\n", estado);
+    printf("Table value: %d\n", table_value);
+    printf("Estado: %d\n\n", estado);*/
 
-    if (check_whitespace(c) || check_special(c) || c == EOF) // Se for espaço em branco ou caracter especial
+    if (check_whitespace(c) || check_special(c) || c == EOF || estado == -1) // Se for espaço em branco ou caracter especial
     {
       if (check_whitespace(c) || c == EOF)
       {
@@ -562,6 +562,8 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       {
         if (c == EOF || c == '\0')
         {
+          strcpy(lex->token, "EOF");
+          return -1;
           break;
         }
         strcpy(lex->token, "ERRO");
@@ -578,7 +580,6 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     }
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
-  printf("aaaaaaaaaa");
   if (c == EOF || c == '\0')
     {
       return -1;

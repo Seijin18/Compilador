@@ -57,7 +57,7 @@ int yylex(void);
 
 %token <stringValue> NUMERO
 %token <stringValue> ID
-%token IF ELSE WHILE INT RETURN VOID IGUAL DIFERENTE MAIOR MENOR MAIOR_IGUAL MENOR_IGUAL
+%token IF ELSE WHILE INT RETURN VOID IGUAL DIFERENTE MAIOR MENOR MAIOR_IGUAL MENOR_IGUAL YYEOF
 
 %left '+' '-'
 %left '*' '/'
@@ -76,7 +76,7 @@ int yylex(void);
 
 %%
 
-programa: declaracao_lista { $$ = newASTNode("programa", $1, NULL); };
+programa: declaracao_lista YYEOF { $$ = newASTNode("programa", $1, NULL); };
 
 declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista", $1, $2); }
                 | declaracao { $$ = newASTNode("declaracao_lista", $1, NULL); }
@@ -87,14 +87,14 @@ declaracao: var_declaracao { $$ = newASTNode("declaracao", $1, NULL); }
           ;
 
 var_declaracao: tipo_especificador ID ';' { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
-              | tipo_especificador ID '[' NUMERO '[' ';' { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
+              | tipo_especificador ID '[' NUMERO ']' ';' { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
               ;
 
 tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int"); }
                   | VOID { $$ = newASTNodeValue("tipo_especificador", "void"); }
                   ;
 
-fun_declaracao: tipo_especificador ID '(' params '(' composto_decl
+fun_declaracao: tipo_especificador ID '(' params ')' composto_decl
     { $$ = newASTNode("fun_declaracao", $1, newASTNodeValue("ID", $2)); }
     ;
 
@@ -171,7 +171,7 @@ expressao: var '=' expressao
 
 var: ID
     { $$ = newASTNodeValue("var", $1); }
-    | ID '[' expressao '['
+    | ID '[' expressao ']'
     { $$ = newASTNode("var", newASTNodeValue("ID", $1), $3); }
     ;
 
@@ -234,7 +234,7 @@ arg_lista: arg_lista ',' expressao
 
 int yyerror(char *s) {
     fprintf(stderr, "Error on line %d: %s\n", yylineno, s);
-    fprintf(stderr, "error: %s\n", s);
+    fprintf(stderr, "Unexpected token: %s\n", yytext);
     return 0;
 }
 
@@ -299,17 +299,18 @@ int yylex(void) {
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
         lex->token_type = Get_Token_Type(lex->token);
         printf("Lexema: %s\n", lex->item);
-        printf("Token: %d\n", lex->token_type);
-        printf("Token: %s\n\n", lex->token);
+        printf("Token_Num: %d\n", lex->token_type);
+        printf("Token: %s\n", lex->token);
+        printf("Flag: %d\n\n", flag);
     }while(lex->token_type != 284 && flag != -1 && flag != 0);
     if (flag == 0)
     {
         yyerror (YY_("lexical error"));
-        printf("Erro lexico na linha %d\n", lex->line);
         return -1;
     }
     else if (flag == -1)
     {
+        printf("E todo mundo morreu\n");
         return 0;
     }
 
