@@ -324,7 +324,6 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
   int lex_sum = 0;
   int ht_position = -1;
   int table_value = -1;
-
   c = get_next_char(buffer, fp);
   if (check_whitespace(c))
   {
@@ -579,6 +578,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     }
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
+  printf("aaaaaaaaaa");
   if (c == EOF || c == '\0')
     {
       return -1;

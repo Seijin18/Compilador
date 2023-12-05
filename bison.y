@@ -295,18 +295,16 @@ int yylex(void) {
         {23,23,23,23,23,26,23,23,23,23,23,23,23,23,23,23,23,23,25},
         {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,26},
         {23,23,23,23,-1,23,23,23,23,23,23,23,23,23,23,23,23,23,27}};
-
     do{
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
         lex->token_type = Get_Token_Type(lex->token);
         printf("Lexema: %s\n", lex->item);
         printf("Token: %d\n", lex->token_type);
         printf("Token: %s\n\n", lex->token);
-    }while(lex->token_type != 281 && flag != -1 && flag != 0);
-        
+    }while(lex->token_type != 284 && flag != -1 && flag != 0);
     if (flag == 0)
     {
-        yyerror("Lexical");
+        yyerror (YY_("lexical error"));
         printf("Erro lexico na linha %d\n", lex->line);
         return -1;
     }
