@@ -29,16 +29,36 @@ ASTNode* newASTNodeValue(char* type, char* value) {
     node->value = value;
     node->left = NULL;
     node->right = NULL;
+    printf("New ASTNode: %s: %s\n", type, value);
     return node;
+}
+
+void printAST(ASTNode* node, int depth) {
+    for (int i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    if (node->value != NULL) {
+        printf("%s: %s\n", node->type, node->value);
+    } else {
+        printf("%s\n", node->type);
+    }
+    if (node->left != NULL) {
+        printAST(node->left, depth + 1);
+    }
+    if (node->right != NULL) {
+        printAST(node->right, depth + 1);
+    }
 }
 
 int yylineno;
 int valyy;
 char yytext[64];
+ASTNode* root; // Declare a global variable to store the root node
 
 int yyerror(char *s);
 
 int yylex(void);
+
 %}
 
 %union {
@@ -52,15 +72,15 @@ int yylex(void);
 %token INT VOID
 %token <stringValue> IF ELSE WHILE RETURN
 %token <stringValue> LE LT GT GE EQ NE
-%token '+' '-' '*' '/' '=' ';' ',' '(' ')' '[' ']' '{' '}'
-%token '*' '/' */
+%token SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO PONTO_VIRGULA VIRGULA ABRE_PARENTESE FECHA_PARENTESE ABRE_COLCHETE FECHA_COLCHETE ABRE_CHAVES FECHA_CHAVES
+%token MULTIPLICACAO DIVISAO */
 
 %token <stringValue> NUMERO
 %token <stringValue> ID
-%token IF ELSE WHILE INT RETURN VOID IGUAL DIFERENTE MAIOR MENOR MAIOR_IGUAL MENOR_IGUAL YYEOF
+%token IF ELSE WHILE INT RETURN VOID IGUAL DIFERENTE MAIOR MENOR MAIOR_IGUAL MENOR_IGUAL SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO PONTO_VIRGULA VIRGULA ABRE_PARENTESE FECHA_PARENTESE ABRE_COLCHETE FECHA_COLCHETE ABRE_CHAVES FECHA_CHAVES YYEOF
 
-%left '+' '-'
-%left '*' '/'
+%left SOMA SUBTRACAO
+%left MULTIPLICACAO DIVISAO
 
 %type <nodeValue> programa
 %type <nodeValue> declaracao_lista
@@ -76,7 +96,7 @@ int yylex(void);
 
 %%
 
-programa: declaracao_lista YYEOF { $$ = newASTNode("programa", $1, NULL); };
+programa: declaracao_lista YYEOF { $$ = newASTNode("programa", $1, NULL); root = $$; };
 
 declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista", $1, $2); }
                 | declaracao { $$ = newASTNode("declaracao_lista", $1, NULL); }
@@ -86,15 +106,15 @@ declaracao: var_declaracao { $$ = newASTNode("declaracao", $1, NULL); }
           | fun_declaracao { $$ = newASTNode("declaracao", $1, NULL); }
           ;
 
-var_declaracao: tipo_especificador ID ';' { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
-              | tipo_especificador ID '[' NUMERO ']' ';' { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
+var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
+              | tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
               ;
 
 tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int"); }
                   | VOID { $$ = newASTNodeValue("tipo_especificador", "void"); }
                   ;
 
-fun_declaracao: tipo_especificador ID '(' params ')' composto_decl
+fun_declaracao: tipo_especificador ID ABRE_PARENTESE params FECHA_PARENTESE composto_decl
     { $$ = newASTNode("fun_declaracao", $1, newASTNodeValue("ID", $2)); }
     ;
 
@@ -104,18 +124,18 @@ params: param_lista
     { $$ = newASTNodeValue("params", "void"); }
     ;
 
-param_lista: param_lista ',' param
+param_lista: param_lista VIRGULA param
     { $$ = newASTNode("param_lista", $1, $3); }
     | param
     ;
 
 param: tipo_especificador ID
     { $$ = newASTNode("param", $1, newASTNodeValue("ID", $2)); }
-    | tipo_especificador ID '[' ']'
+    | tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE
     { $$ = newASTNode("param", $1, newASTNodeValue("ID", $2)); }
     ;
 
-composto_decl: '{' local_declaracoes statement_lista '}'
+composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES
     { $$ = newASTNode("composto_decl", $2, $3); }
     ;
 
@@ -143,35 +163,35 @@ statement: expressao_decl
     { $$ = newASTNode("statement", $1, NULL); }
     ;
 
-expressao_decl: expressao ';'
+expressao_decl: expressao PONTO_VIRGULA
     { $$ = newASTNode("expressao_decl", $1, NULL); }
-    | ';'
+    | PONTO_VIRGULA
     { $$ = newASTNodeValue("expressao_decl", ";"); }
     ;
 
-selecao_decl: IF '(' expressao ')' statement
+selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement
     { $$ = newASTNode("selecao_decl", $3, $5); }
-    | IF '(' expressao ')' statement ELSE statement
+    | IF ABRE_PARENTESE expressao FECHA_PARENTESE statement ELSE statement
     { $$ = newASTNode("selecao_decl", $3, newASTNode("else", $5, $7)); }
     ;
-iteracao_decl: WHILE '(' expressao ')' statement
+iteracao_decl: WHILE ABRE_PARENTESE expressao FECHA_PARENTESE statement
     { $$ = newASTNode("iteracao_decl", $3, $5); }
     ;
 
-retorno_decl: RETURN ';'
+retorno_decl: RETURN PONTO_VIRGULA
     { $$ = newASTNodeValue("retorno_decl", "return"); }
-    | RETURN expressao ';'
+    | RETURN expressao PONTO_VIRGULA
     { $$ = newASTNode("retorno_decl", $2, NULL); }
     ;
 
-expressao: var '=' expressao
+expressao: var ATRIBUICAO expressao
     { $$ = newASTNode("expressao", $1, $3); }
     | simples_expressao
     ;
 
 var: ID
     { $$ = newASTNodeValue("var", $1); }
-    | ID '[' expressao ']'
+    | ID ABRE_COLCHETE expressao FECHA_COLCHETE
     { $$ = newASTNode("var", newASTNodeValue("ID", $1), $3); }
     ;
 
@@ -194,21 +214,21 @@ relacional: MENOR_IGUAL
     { $$ = newASTNodeValue("relacional", "!="); }
     ;
 
-soma_expressao: soma_expressao '+' termo
+soma_expressao: soma_expressao SOMA termo
     { $$ = newASTNode("soma_expressao", $1, $3); }
-    | soma_expressao '-' termo
+    | soma_expressao SUBTRACAO termo
     { $$ = newASTNode("soma_expressao", $1, $3); }
     | termo
     ;
 
-termo: termo '*' fator
+termo: termo MULTIPLICACAO fator
     { $$ = newASTNode("termo", $1, $3); }
-    | termo '/' fator
+    | termo DIVISAO fator
     { $$ = newASTNode("termo", $1, $3); }
     | fator
     ;
 
-fator: '(' expressao ')'
+fator: ABRE_PARENTESE expressao FECHA_PARENTESE
     { $$ = newASTNode("fator", $2, NULL); }
     | var
     | ativacao
@@ -216,7 +236,7 @@ fator: '(' expressao ')'
     { $$ = newASTNodeValue("fator", $1); }
     ;
 
-ativacao: ID '(' args ')'
+ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE
     { $$ = newASTNode("ativacao", newASTNodeValue("ID", $1), $3); }
     ;
 
@@ -226,7 +246,7 @@ args: arg_lista
     { $$ = NULL; }
     ;
 
-arg_lista: arg_lista ',' expressao
+arg_lista: arg_lista VIRGULA expressao
     { $$ = newASTNode("arg_lista", $1, $3); }
     | expressao
     ;
@@ -298,19 +318,19 @@ int yylex(void) {
     do{
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
         lex->token_type = Get_Token_Type(lex->token);
-        printf("Lexema: %s\n", lex->item);
+        /* printf("Lexema: %s\n", lex->item);
         printf("Token_Num: %d\n", lex->token_type);
         printf("Token: %s\n", lex->token);
-        printf("Flag: %d\n\n", flag);
-    }while(lex->token_type != 284 && flag != -1 && flag != 0);
+        printf("Flag: %d\n\n", flag); */
+    }while(lex->token_type == 285);
     if (flag == 0)
     {
         yyerror (YY_("lexical error"));
-        return -1;
+        return 256;
     }
     else if (flag == -1)
     {
-        printf("E todo mundo morreu\n");
+        //printf("E todo mundo morreu\n");
         return 0;
     }
 
@@ -329,5 +349,6 @@ int yylex(void) {
 
 int main(void) {
     yyparse();
+    printAST(root, 0);
     return 0;
 }

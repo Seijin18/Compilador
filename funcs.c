@@ -352,8 +352,8 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     else
     {
       printf("Caracter: %c\n", c);
-    }    
-    
+    }
+
     printf("Table value: %d\n", table_value);
     printf("Estado: %d\n\n", estado);*/
 
@@ -429,7 +429,45 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       }
       case 7: // DIVISAO
       {
-        strcpy(lex->token, "DIVISAO");
+        c = get_next_char(buffer, fp);
+        if (c == '*')
+        {
+          while (c != EOF)
+          {
+            c = get_next_char(buffer, fp);
+            lex->item[i] = c;
+            i++;
+            if (c == '*')
+            {
+              c = get_next_char(buffer, fp);
+              lex->item[i] = c;
+              if (c == '/')
+              {
+                strcpy(lex->token, "COMENTARIO");
+                lex_sum = -1;
+                break;
+              }
+            }
+            if (c == '/')
+            {
+              c = get_next_char(buffer, fp);
+              lex->item[i] = c;
+              if (c == '*')
+              {
+                strcpy(lex->token, "ERRO");
+                lex_sum = -1;
+                break;
+              }
+            }
+          }
+          lex->item[i + 1] = '\0';
+          break;
+        }
+        else
+        {
+          strcpy(lex->token, "DIVISAO");
+          retract(buffer);
+        }
         break;
       }
       case 8: // ATRIBUICAO
@@ -581,9 +619,9 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     i++;
   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
   if (c == EOF || c == '\0')
-    {
-      return -1;
-    }
+  {
+    return -1;
+  }
   return 1;
 }
 
@@ -597,7 +635,8 @@ int Get_Char_Value(char *c)
   int sum = 0;
   int i;
   int len = 0;
-  while (c[len] != '\0') {
+  while (c[len] != '\0')
+  {
     sum += c[len];
     len++;
   }
@@ -606,7 +645,19 @@ int Get_Char_Value(char *c)
 
 int Get_Token_Type(char *c)
 {
-  if (strcmp(c, "NUMERO") == 0)
+  if (strcmp(c, "YYEOF") == 0)
+  {
+    return 0;
+  }
+  else if (strcmp(c, "YYerror") == 0)
+  {
+    return 256;
+  }
+  else if (strcmp(c, "YYUNDEF") == 0)
+  {
+    return 257;
+  }
+  else if (strcmp(c, "NUMERO") == 0)
   {
     return 258;
   }
@@ -638,29 +689,9 @@ int Get_Token_Type(char *c)
   {
     return 265;
   }
-  else if (strcmp(c, "SOMA") == 0)
-  {
-    return 266;
-  }
-  else if (strcmp(c, "SUBTRACAO") == 0)
-  {
-    return 273;
-  }
-  else if (strcmp(c, "MULTIPLICACAO") == 0)
-  {
-    return 274;
-  }
-  else if (strcmp(c, "DIVISAO") == 0)
-  {
-    return 275;
-  }
-  else if (strcmp(c, "ATRIBUICAO") == 0)
-  {
-    return 270;
-  }
   else if (strcmp(c, "IGUAL") == 0)
   {
-    return 272;
+    return 266;
   }
   else if (strcmp(c, "DIFERENTE") == 0)
   {
@@ -682,55 +713,74 @@ int Get_Token_Type(char *c)
   {
     return 271;
   }
-  else if (strcmp(c, "ABRE_PARENTESE") == 0)
+  else if (strcmp(c, "SOMA") == 0)
+  {
+    return 272;
+  }
+  else if (strcmp(c, "SUBTRACAO") == 0)
+  {
+    return 273;
+  }
+  else if (strcmp(c, "MULTIPLICACAO") == 0)
+  {
+    return 274;
+  }
+  else if (strcmp(c, "DIVISAO") == 0)
+  {
+    return 275;
+  }
+  else if (strcmp(c, "ATRIBUICAO") == 0)
   {
     return 276;
   }
-  else if (strcmp(c, "FECHA_PARENTESE") == 0)
+  else if (strcmp(c, "PONTO_VIRGULA") == 0)
   {
     return 277;
   }
-  else if (strcmp(c, "ABRE_CHAVES") == 0)
+  else if (strcmp(c, "VIRGULA") == 0)
   {
     return 278;
   }
-  else if (strcmp(c, "FECHA_CHAVES") == 0)
+  else if (strcmp(c, "ABRE_PARENTESE") == 0)
   {
     return 279;
   }
-  else if (strcmp(c, "ABRE_COLCHETE") == 0)
+  else if (strcmp(c, "FECHA_PARENTESE") == 0)
   {
     return 280;
   }
-  else if (strcmp(c, "FECHA_COLCHETE") == 0)
+  else if (strcmp(c, "ABRE_COLCHETE") == 0)
   {
     return 281;
   }
-  else if (strcmp(c, "PONTO_VIRGULA") == 0)
+  else if (strcmp(c, "FECHA_COLCHETE") == 0)
   {
     return 282;
   }
-  else if (strcmp(c, "VIRGULA") == 0)
+  else if (strcmp(c, "ABRE_CHAVES") == 0)
   {
     return 283;
   }
-  else if (strcmp(c, "COMENTARIO") == 0)
+  else if (strcmp(c, "FECHA_CHAVES") == 0)
   {
     return 284;
   }
-  else if (strcmp(c, "ERRO") == 0)
+  else if (strcmp(c, "COMENTARIO") == 0)
   {
     return 285;
   }
+  else if (strcmp(c, "ERRO") == 0)
+  {
+    return 256;
+  }
   else
   {
-    return -1;
+    return 0;
   }
 }
-      
 
-//Função que cria nó com informação passada
-Node* Cria_Node(int key, char *item)
+// Função que cria nó com informação passada
+Node *Cria_Node(int key, char *item)
 {
   Node *node;
   node = malloc(sizeof(Node));
@@ -740,7 +790,7 @@ Node* Cria_Node(int key, char *item)
   return node;
 }
 
-//Inicia Lista
+// Inicia Lista
 void Lista_Inicia(Lista *Lista)
 {
   Node *Aux;
@@ -748,26 +798,26 @@ void Lista_Inicia(Lista *Lista)
   Lista->Primeiro = NULL;
 }
 
-//Função que insere elementos na lista como em fila
+// Função que insere elementos na lista como em fila
 void Lista_Insere(Lista *Lista, int key, char *item)
 {
   Node *node;
   node = Cria_Node(key, item);
-  if(Lista->Primeiro == NULL)
-    {
-        Lista_Inicia(Lista);
-        Lista->Primeiro = node;
-        Lista->Tamanho++;
-        return;
-    }
+  if (Lista->Primeiro == NULL)
+  {
+    Lista_Inicia(Lista);
+    Lista->Primeiro = node;
+    Lista->Tamanho++;
+    return;
+  }
   node->Prox = Lista->Primeiro;
   Lista->Primeiro = node;
-  Lista->Tamanho ++;
+  Lista->Tamanho++;
 }
 
 int Seleciona_Chave(int chave, int tamanho)
 {
-    return chave % tamanho;
+  return chave % tamanho;
 }
 
 int Pesquisa_Hash(int chave, Lista *Tabela, int tamanho)
@@ -775,49 +825,49 @@ int Pesquisa_Hash(int chave, Lista *Tabela, int tamanho)
   int Position;
   Position = Seleciona_Chave(chave, tamanho);
   Node *Aux = Tabela[Position].Primeiro;
-  while(Aux != NULL)
+  while (Aux != NULL)
+  {
+    if (Aux->Value == chave)
     {
-        if(Aux->Value == chave)
-            {
-                return Position;
-            }
-        Aux = Aux->Prox;
+      return Position;
     }
+    Aux = Aux->Prox;
+  }
   return -1;
 }
 
 int Insere_Hash(int chave, char *item, Lista *tabela, int tamanho)
 {
-    int Position;
-    Position = Seleciona_Chave(chave, tamanho);
-    if (&tabela[Position].Primeiro == NULL)
-        {
-            Lista_Inicia(&tabela[Position]);
-            Lista_Insere(&tabela[Position], chave, item);
-            return 1;
-        }
-    else
-        {
-            Lista_Insere(&tabela[Position], chave, item);
-            return 1;
-        }
+  int Position;
+  Position = Seleciona_Chave(chave, tamanho);
+  if (&tabela[Position].Primeiro == NULL)
+  {
+    Lista_Inicia(&tabela[Position]);
+    Lista_Insere(&tabela[Position], chave, item);
+    return 1;
+  }
+  else
+  {
+    Lista_Insere(&tabela[Position], chave, item);
+    return 1;
+  }
 }
 
 void Tabela_Inicia(Lista *Tabela, int tamanho)
 {
   int i;
-  for(i = 0; i < tamanho; i++)
-    {
-        Lista_Inicia(&Tabela[i]);
-    }
+  for (i = 0; i < tamanho; i++)
+  {
+    Lista_Inicia(&Tabela[i]);
+  }
 }
 
 void Deallocate_Tabela(Lista *Tabela, int tamanho)
 {
   int i;
-  for(i = 0; i < tamanho; i++)
-    {
-        free(Tabela[i].Primeiro);
-    }
+  for (i = 0; i < tamanho; i++)
+  {
+    free(Tabela[i].Primeiro);
+  }
   free(Tabela);
 }

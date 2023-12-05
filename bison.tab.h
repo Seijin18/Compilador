@@ -67,7 +67,20 @@ extern int yydebug;
     MAIOR = 268,                   /* MAIOR  */
     MENOR = 269,                   /* MENOR  */
     MAIOR_IGUAL = 270,             /* MAIOR_IGUAL  */
-    MENOR_IGUAL = 271              /* MENOR_IGUAL  */
+    MENOR_IGUAL = 271,             /* MENOR_IGUAL  */
+    SOMA = 272,                    /* SOMA  */
+    SUBTRACAO = 273,               /* SUBTRACAO  */
+    MULTIPLICACAO = 274,           /* MULTIPLICACAO  */
+    DIVISAO = 275,                 /* DIVISAO  */
+    ATRIBUICAO = 276,              /* ATRIBUICAO  */
+    PONTO_VIRGULA = 277,           /* PONTO_VIRGULA  */
+    VIRGULA = 278,                 /* VIRGULA  */
+    ABRE_PARENTESE = 279,          /* ABRE_PARENTESE  */
+    FECHA_PARENTESE = 280,         /* FECHA_PARENTESE  */
+    ABRE_COLCHETE = 281,           /* ABRE_COLCHETE  */
+    FECHA_COLCHETE = 282,          /* FECHA_COLCHETE  */
+    ABRE_CHAVES = 283,             /* ABRE_CHAVES  */
+    FECHA_CHAVES = 284             /* FECHA_CHAVES  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -76,13 +89,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 44 "bison.y"
+#line 64 "bison.y"
 
     int intValue;
     char* stringValue;
     ASTNode* nodeValue;
 
-#line 86 "bison.tab.h"
+#line 99 "bison.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
