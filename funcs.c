@@ -643,15 +643,15 @@ int Get_Token_Type(char *c)
   }
   else if (strcmp(c, "SUBTRACAO") == 0)
   {
-    return 267;
+    return 273;
   }
   else if (strcmp(c, "MULTIPLICACAO") == 0)
   {
-    return 268;
+    return 274;
   }
   else if (strcmp(c, "DIVISAO") == 0)
   {
-    return 269;
+    return 275;
   }
   else if (strcmp(c, "ATRIBUICAO") == 0)
   {
@@ -659,59 +659,67 @@ int Get_Token_Type(char *c)
   }
   else if (strcmp(c, "IGUAL") == 0)
   {
-    return 271;
+    return 272;
   }
   else if (strcmp(c, "DIFERENTE") == 0)
   {
-    return 272;
+    return 267;
   }
   else if (strcmp(c, "MAIOR") == 0)
   {
-    return 273;
+    return 268;
   }
   else if (strcmp(c, "MENOR") == 0)
   {
-    return 274;
+    return 269;
+  }
+  else if (strcmp(c, "MAIOR_IGUAL") == 0)
+  {
+    return 270;
+  }
+  else if (strcmp(c, "MENOR_IGUAL") == 0)
+  {
+    return 271;
   }
   else if (strcmp(c, "ABRE_PARENTESE") == 0)
   {
-    return 275;
+    return 276;
   }
   else if (strcmp(c, "FECHA_PARENTESE") == 0)
   {
-    return 276;
+    return 277;
   }
   else if (strcmp(c, "ABRE_CHAVES") == 0)
   {
-    return 277;
+    return 278;
   }
   else if (strcmp(c, "FECHA_CHAVES") == 0)
   {
-    return 278;
+    return 279;
   }
   else if (strcmp(c, "ABRE_COLCHETE") == 0)
   {
-    return 279;
+    return 280;
   }
   else if (strcmp(c, "FECHA_COLCHETE") == 0)
   {
-    return 280;
+    return 281;
   }
   else if (strcmp(c, "PONTO_VIRGULA") == 0)
   {
-    return 281;
+    return 282;
   }
   else if (strcmp(c, "VIRGULA") == 0)
   {
-    return 282;
+    return 283;
   }
   else if (strcmp(c, "COMENTARIO") == 0)
   {
-    return 283;
+    return 284;
   }
   else if (strcmp(c, "ERRO") == 0)
   {
-    return 284;
+    return 285;
   }
   else
   {
