@@ -1,4 +1,4 @@
-/* tokens.h */
+/* token.h */
 #ifndef TOKENS_H
 #define TOKENS_H
 
@@ -30,6 +30,8 @@
 #define VIRGULA 280
 #define COMENTARIO 281
 #define ERRO 282
+#define MAIOR_IGUAL 283
+#define MENOR_IGUAL 284
 
 
 #endif /* TOKENS_H */

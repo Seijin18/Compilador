@@ -62,7 +62,6 @@ int check_number(char c)
 {
   if (c >= '0' && c <= '9')
   {
-    printf("Numero: %c\n", c);
     return 1;
   }
   return 0;
@@ -102,6 +101,9 @@ void allocate_lexema(Lexema **lex)
   }
   memset((*lex)->item, '\0', sizeof((*lex)->item));
   (*lex)->line = 0;
+  (*lex)->lex_sum = 0;
+  memset((*lex)->token, '\0', sizeof((*lex)->token));
+  (*lex)->token_type = 0;
 }
 
 void deallocate_lexema(Lexema *lex) { free(lex); }
@@ -670,11 +672,11 @@ int Get_Token_Type(char *c)
   {
     return 272;
   }
-  else if (strcmp(c, "ABRE_PARENTESES") == 0)
+  else if (strcmp(c, "ABRE_PARENTESE") == 0)
   {
     return 273;
   }
-  else if (strcmp(c, "FECHA_PARENTESES") == 0)
+  else if (strcmp(c, "FECHA_PARENTESE") == 0)
   {
     return 274;
   }
@@ -686,11 +688,11 @@ int Get_Token_Type(char *c)
   {
     return 276;
   }
-  else if (strcmp(c, "ABRE_COLCHETES") == 0)
+  else if (strcmp(c, "ABRE_COLCHETE") == 0)
   {
     return 277;
   }
-  else if (strcmp(c, "FECHA_COLCHETES") == 0)
+  else if (strcmp(c, "FECHA_COLCHETE") == 0)
   {
     return 278;
   }
