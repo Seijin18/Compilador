@@ -487,12 +487,12 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       }
       case 15: // ABRE_PARENTES
       {
-        strcpy(lex->token, "ABRE_PARENTES");
+        strcpy(lex->token, "ABRE_PARENTESE");
         break;
       }
       case 16: // FECHA_PARENTES
       {
-        strcpy(lex->token, "FECHA_PARENTES");
+        strcpy(lex->token, "FECHA_PARENTESE");
         break;
       }
       case 17: // ABRE_CHAVES
@@ -507,12 +507,12 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       }
       case 19: // ABRE_COLCHETES
       {
-        strcpy(lex->token, "ABRE_COLCHETES");
+        strcpy(lex->token, "ABRE_COLCHETE");
         break;
       }
       case 20: // FECHA_COLCHETES
       {
-        strcpy(lex->token, "FECHA_COLCHETES");
+        strcpy(lex->token, "FECHA_COLCHETE");
         break;
       }
       case 21: // PONTO_VIRGULA

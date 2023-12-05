@@ -1798,6 +1798,9 @@ int yylex(void) {
     do{
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
         lex->token_type = Get_Token_Type(lex->token);
+        printf("Lexema: %s\n", lex->item);
+        printf("Token: %d\n", lex->token_type);
+        printf("Token: %s\n\n", lex->token);
     }while(lex->token_type != 281 && flag != -1 && flag != 0);
         
     if (flag == 0)

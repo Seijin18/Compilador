@@ -1,1 +1,13 @@
-049375632asigbosadi = isdufboasiudfboiusbdf
+/* Comentario */
+
+int gcd (int u, int v)
+{   if (v == 0) return u;
+    else return gcd(v, u-u/v*v);
+    /* Comentario */
+}
+
+void main(void a)
+{   int x; int y
+    x = input(); y = input();
+    output(gcd(x,y));
+}
