@@ -1802,6 +1802,7 @@ int yylex(void) {
         
     if (flag == 0)
     {
+        yyerror("Lexical");
         printf("Erro lexico na linha %d\n", lex->line);
         return -1;
     }
