@@ -1813,10 +1813,10 @@ int yylex(void) {
     yylineno = lex->line;
     if (Get_Token_Type(lex->token) == 258)
     {
-        valyy.intValue = *(lex->token) - '0';
+        yyval.intValue = *(lex->item) - '0';
     }
     //yytext = lex->item;
-    strcpy(yytext, lex->token);
+    strcpy(yytext, lex->item);
 
     deallocate_lexema(lex);
 
