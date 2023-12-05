@@ -62,25 +62,12 @@ extern int yydebug;
     INT = 263,                     /* INT  */
     RETURN = 264,                  /* RETURN  */
     VOID = 265,                    /* VOID  */
-    SOMA = 266,                    /* SOMA  */
-    SUBTRACAO = 267,               /* SUBTRACAO  */
-    MULTIPLICACAO = 268,           /* MULTIPLICACAO  */
-    DIVISAO = 269,                 /* DIVISAO  */
-    ATRIBUICAO = 270,              /* ATRIBUICAO  */
-    IGUAL = 271,                   /* IGUAL  */
-    DIFERENTE = 272,               /* DIFERENTE  */
-    MAIOR = 273,                   /* MAIOR  */
-    MENOR = 274,                   /* MENOR  */
-    ABRE_PARENTESE = 275,          /* ABRE_PARENTESE  */
-    FECHA_PARENTESE = 276,         /* FECHA_PARENTESE  */
-    ABRE_CHAVES = 277,             /* ABRE_CHAVES  */
-    FECHA_CHAVES = 278,            /* FECHA_CHAVES  */
-    ABRE_COLCHETE = 279,           /* ABRE_COLCHETE  */
-    FECHA_COLCHETE = 280,          /* FECHA_COLCHETE  */
-    PONTO_VIRGULA = 281,           /* PONTO_VIRGULA  */
-    VIRGULA = 282,                 /* VIRGULA  */
-    MAIOR_IGUAL = 283,             /* MAIOR_IGUAL  */
-    MENOR_IGUAL = 284              /* MENOR_IGUAL  */
+    IGUAL = 266,                   /* IGUAL  */
+    DIFERENTE = 267,               /* DIFERENTE  */
+    MAIOR = 268,                   /* MAIOR  */
+    MENOR = 269,                   /* MENOR  */
+    MAIOR_IGUAL = 270,             /* MAIOR_IGUAL  */
+    MENOR_IGUAL = 271              /* MENOR_IGUAL  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -95,7 +82,7 @@ union YYSTYPE
     char* stringValue;
     ASTNode* nodeValue;
 
-#line 99 "bison.tab.h"
+#line 86 "bison.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
