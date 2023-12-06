@@ -10,49 +10,108 @@
 typedef struct ASTNode {
     char* type;
     char* value;
-    struct ASTNode* left;
-    struct ASTNode* right;
+    struct ASTNode* children;
+    struct ASTNode* sibling;
 } ASTNode;
 
-ASTNode* newASTNode(char* type, ASTNode* left, ASTNode* right) {
-    ASTNode* node = malloc(sizeof(ASTNode));
+ASTNode* newASTNode(char* type) {
+    ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
     node->type = type;
     node->value = NULL;
-    node->left = left;
-    node->right = right;
+    node->children = NULL;
+    node->sibling = NULL;
     return node;
 }
 
 ASTNode* newASTNodeValue(char* type, char* value) {
-    ASTNode* node = malloc(sizeof(ASTNode));
+    ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
     node->type = type;
     node->value = value;
-    node->left = NULL;
-    node->right = NULL;
-    printf("New ASTNode: %s: %s\n", type, value);
+    node->children = NULL;
+    node->sibling = NULL;
+    return node;
+}
+
+ASTNode* addASTNode(ASTNode* node, ASTNode* child) {
+    if (node->children == NULL) {
+        node->children = child;
+    } else {
+        ASTNode* sibling = node->children;
+        while (sibling->sibling != NULL) {
+            sibling = sibling->sibling;
+        }
+        sibling->sibling = child;
+    }
     return node;
 }
 
 void printAST(ASTNode* node, int depth) {
     for (int i = 0; i < depth; i++) {
-        printf("  ");
+        printf(" ");
     }
     if (node->value != NULL) {
         printf("%s: %s\n", node->type, node->value);
     } else {
         printf("%s\n", node->type);
     }
-    if (node->left != NULL) {
-        printAST(node->left, depth + 1);
+    if (node->children != NULL) {
+        printAST(node->children, depth + 1);
     }
-    if (node->right != NULL) {
-        printAST(node->right, depth + 1);
+    if (node->sibling != NULL) {
+        printAST(node->sibling, depth);
+    }
+}
+/*
+void buildSymbolTable(ASTNode* node, SymbolTable* table) {
+    if (node->type == NODE_DECLARATION) {
+        // Add the identifier to the symbol table
+        addSymbol(table, node->children->value, node->sibling->type);
+    } else if (node->type == NODE_USAGE) {
+        // Look up the identifier in the symbol table
+        Symbol* symbol = getSymbol(table, node->value);
+        if (symbol == NULL) {
+            printf("Error: Variable %s has not been declared\n", node->value);
+            exit(1);
+        }
+    }
+    // Recursively build the symbol table for the children of the node
+    if (node->children != NULL) {
+        buildSymbolTable(node->children, table);
+    }
+    if (node->sibling != NULL) {
+        buildSymbolTable(node->sibling, table);
     }
 }
 
+void checkSemantics(ASTNode* node) {
+    if (node->type == NODE_ASSIGNMENT) {
+        // Check that the variable has been declared
+        if (!isDeclared(node->children->value)) {
+            printf("Error: Variable %s has not been declared\n", node->children->value);
+            exit(1);
+        }
+        // Check that the types are compatible
+        if (!areTypesCompatible(node->children->type, node->sibling->type)) {
+            printf("Error: Incompatible types in assignment\n");
+            exit(1);
+        }
+    }
+    // Recursively check the children of the node
+    if (node->children != NULL) {
+        checkSemantics(node->children);
+    }
+    if (node->sibling != NULL) {
+        checkSemantics(node->sibling);
+    }
+}*/
+
+FILE *fp;
+Bloco *buffer = NULL;
+int openned = 0;
 int yylineno;
 int valyy;
 char yytext[64];
+
 ASTNode* root; // Declare a global variable to store the root node
 
 int yyerror(char *s);
@@ -96,107 +155,108 @@ int yylex(void);
 
 %%
 
-programa: declaracao_lista YYEOF { $$ = newASTNode("programa", $1, NULL); root = $$; };
+programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); }
+        ;
 
-declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista", $1, $2); }
-                | declaracao { $$ = newASTNode("declaracao_lista", $1, NULL); }
+declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista"); addASTNode($$, $1); addASTNode($$, $2); }
+                | declaracao { $$ = newASTNode("declaracao_lista"); addASTNode($$, $1); }
                 ;
 
-declaracao: var_declaracao { $$ = newASTNode("declaracao", $1, NULL); }
-          | fun_declaracao { $$ = newASTNode("declaracao", $1, NULL); }
+declaracao: var_declaracao { $$ = newASTNode("declaracao"); addASTNode($$, $1); }
+          | fun_declaracao { $$ = newASTNode("declaracao"); addASTNode($$, $1); }
           ;
 
-var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
-              | tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao", $1, newASTNodeValue("ID", $2)); }
+var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, newASTNodeValue("ID", $2)); }
+              | tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, newASTNodeValue("ID", $2)); }
               ;
 
-tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int"); }
+tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int");}
                   | VOID { $$ = newASTNodeValue("tipo_especificador", "void"); }
                   ;
 
 fun_declaracao: tipo_especificador ID ABRE_PARENTESE params FECHA_PARENTESE composto_decl
-    { $$ = newASTNode("fun_declaracao", $1, newASTNodeValue("ID", $2)); }
+    { $$ = newASTNode("fun_declaracao"); addASTNode($$, newASTNodeValue("ID", $2)); addASTNode($$, $4); addASTNode($$, $6);}
     ;
 
 params: param_lista
-    { $$ = newASTNode("params", $1, NULL); }
+    { $$ = newASTNode("params"); addASTNode($$, $1); }
     | VOID
     { $$ = newASTNodeValue("params", "void"); }
     ;
 
 param_lista: param_lista VIRGULA param
-    { $$ = newASTNode("param_lista", $1, $3); }
+    { $$ = newASTNode("param_lista"); addASTNode($$, $1); addASTNode($$, $3); }
     | param
     ;
 
 param: tipo_especificador ID
-    { $$ = newASTNode("param", $1, newASTNodeValue("ID", $2)); }
+    { $$ = newASTNode("param"); addASTNode($$, newASTNodeValue("ID", $2)); }
     | tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE
-    { $$ = newASTNode("param", $1, newASTNodeValue("ID", $2)); }
+    { $$ = newASTNode("param"); addASTNode($$, newASTNodeValue("ID", $2)); }
     ;
 
 composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES
-    { $$ = newASTNode("composto_decl", $2, $3); }
+    { $$ = newASTNode("composto_decl"); addASTNode($$, $2); addASTNode($$, $3); }
     ;
 
 local_declaracoes: local_declaracoes var_declaracao
-    { $$ = newASTNode("local_declaracoes", $1, $2); }
+    { $$ = newASTNode("local_declaracoes"); addASTNode($$, $1); addASTNode($$, $2); }
     | /* empty */
     { $$ = NULL; }
     ;
 
 statement_lista: statement_lista statement
-    { $$ = newASTNode("statement_lista", $1, $2); }
+    { $$ = newASTNode("statement_lista"); addASTNode($$, $1); addASTNode($$, $2); }
     | /* empty */
     { $$ = NULL; }
     ;
 
 statement: expressao_decl
-    { $$ = newASTNode("statement", $1, NULL); }
+    { $$ = newASTNode("statement"); addASTNode($$, $1); }
     | composto_decl
-    { $$ = newASTNode("statement", $1, NULL); }
+    { $$ = newASTNode("statement"); addASTNode($$, $1); }
     | selecao_decl
-    { $$ = newASTNode("statement", $1, NULL); }
+    { $$ = newASTNode("statement"); addASTNode($$, $1); }
     | iteracao_decl
-    { $$ = newASTNode("statement", $1, NULL); }
+    { $$ = newASTNode("statement"); addASTNode($$, $1); }
     | retorno_decl
-    { $$ = newASTNode("statement", $1, NULL); }
+    { $$ = newASTNode("statement"); addASTNode($$, $1); }
     ;
 
 expressao_decl: expressao PONTO_VIRGULA
-    { $$ = newASTNode("expressao_decl", $1, NULL); }
+    { $$ = newASTNode("expressao_decl"); addASTNode($$, $1); }
     | PONTO_VIRGULA
     { $$ = newASTNodeValue("expressao_decl", ";"); }
     ;
 
 selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement
-    { $$ = newASTNode("selecao_decl", $3, $5); }
+    { $$ = newASTNode("selecao_decl"); addASTNode($$, $3); addASTNode($$, $5); }
     | IF ABRE_PARENTESE expressao FECHA_PARENTESE statement ELSE statement
-    { $$ = newASTNode("selecao_decl", $3, newASTNode("else", $5, $7)); }
+    { $$ = newASTNode("selecao_decl"); addASTNode($$, $3); addASTNode($$, $5); addASTNode($$, $7); }
     ;
 iteracao_decl: WHILE ABRE_PARENTESE expressao FECHA_PARENTESE statement
-    { $$ = newASTNode("iteracao_decl", $3, $5); }
+    { $$ = newASTNode("iteracao_decl"); addASTNode($$, $3); addASTNode($$, $5); }
     ;
 
 retorno_decl: RETURN PONTO_VIRGULA
     { $$ = newASTNodeValue("retorno_decl", "return"); }
     | RETURN expressao PONTO_VIRGULA
-    { $$ = newASTNode("retorno_decl", $2, NULL); }
+    { $$ = newASTNode("retorno_decl"); addASTNode($$, $2); }
     ;
 
 expressao: var ATRIBUICAO expressao
-    { $$ = newASTNode("expressao", $1, $3); }
+    { $$ = newASTNode("expressao"); addASTNode($$, $1); addASTNode($$, $3); }
     | simples_expressao
     ;
 
 var: ID
     { $$ = newASTNodeValue("var", $1); }
     | ID ABRE_COLCHETE expressao FECHA_COLCHETE
-    { $$ = newASTNode("var", newASTNodeValue("ID", $1), $3); }
+    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", $1)); addASTNode($$, $3); }
     ;
 
 simples_expressao: soma_expressao relacional soma_expressao
-    { $$ = newASTNode("simples_expressao", $1, $3); }
+    { $$ = newASTNode("simples_expressao"); addASTNode($$, $1); addASTNode($$, $2); addASTNode($$, $3); }
     | soma_expressao
     ;
 
@@ -215,21 +275,21 @@ relacional: MENOR_IGUAL
     ;
 
 soma_expressao: soma_expressao SOMA termo
-    { $$ = newASTNode("soma_expressao", $1, $3); }
+    { $$ = newASTNode("soma_expressao"); addASTNode($$, $1); addASTNode($$, $3); }
     | soma_expressao SUBTRACAO termo
-    { $$ = newASTNode("soma_expressao", $1, $3); }
+    { $$ = newASTNode("soma_expressao"); addASTNode($$, $1); addASTNode($$, $3); }
     | termo
     ;
 
 termo: termo MULTIPLICACAO fator
-    { $$ = newASTNode("termo", $1, $3); }
+    { $$ = newASTNode("termo"); addASTNode($$, $1); addASTNode($$, $3); }
     | termo DIVISAO fator
-    { $$ = newASTNode("termo", $1, $3); }
+    { $$ = newASTNode("termo"); addASTNode($$, $1); addASTNode($$, $3); }
     | fator
     ;
 
 fator: ABRE_PARENTESE expressao FECHA_PARENTESE
-    { $$ = newASTNode("fator", $2, NULL); }
+    { $$ = newASTNode("fator"); addASTNode($$, $2); }
     | var
     | ativacao
     | NUMERO
@@ -237,17 +297,17 @@ fator: ABRE_PARENTESE expressao FECHA_PARENTESE
     ;
 
 ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE
-    { $$ = newASTNode("ativacao", newASTNodeValue("ID", $1), $3); }
+    { $$ = newASTNode("ativacao"); addASTNode($$, newASTNodeValue("ID", $1)); addASTNode($$, $3); }
     ;
 
 args: arg_lista
-    { $$ = newASTNode("args", $1, NULL); }
+    { $$ = newASTNode("args"); addASTNode($$, $1); }
     | /* empty */
     { $$ = NULL; }
     ;
 
 arg_lista: arg_lista VIRGULA expressao
-    { $$ = newASTNode("arg_lista", $1, $3); }
+    { $$ = newASTNode("arg_lista"); addASTNode($$, $1); addASTNode($$, $3); }
     | expressao
     ;
 %%
@@ -259,8 +319,10 @@ int yyerror(char *s) {
 }
 
 int yylex(void) {
-    Bloco *buffer;
-    allocate_buffer(&buffer);
+    if (buffer == NULL)
+    {
+        allocate_buffer(&buffer);
+    }
 
     Lexema *lex;
     allocate_lexema(&lex);
@@ -280,12 +342,16 @@ int yylex(void) {
     Insere_Hash(Char_Value, "INT", ht, MAX);
     Char_Value = Get_Char_Value("void");
     Insere_Hash(Char_Value, "VOID", ht, MAX);
-
-    FILE *fp;
-    fp = fopen("teste.txt", "r");
+    
+    if (openned == 0)
+    {
+        fp = fopen("teste.txt", "r");
+        openned = 1;
+    }
 
     char c;
     int flag = 1;
+    int tokentype;
     int tabela[28][19] = {
         { 3, 1, 4, 5, 6, 7, 8,22,21,15,16,19,20,17,18,12,11,21, 0},
         {-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -318,11 +384,14 @@ int yylex(void) {
     do{
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
         lex->token_type = Get_Token_Type(lex->token);
-        /* printf("Lexema: %s\n", lex->item);
-        printf("Token_Num: %d\n", lex->token_type);
+        tokentype = lex->token_type;
+        /* printf("\nLexema: %s\n", lex->item);
+        printf("Token_type: %d\n", lex->token_type);
         printf("Token: %s\n", lex->token);
-        printf("Flag: %d\n\n", flag); */
-    }while(lex->token_type == 285);
+        printf("Flag: %d\n\n", flag);  */
+        yylineno = lex->line;
+    }while(flag == 1 && tokentype == 285);
+    //printf("\nacabou\n\n");
     if (flag == 0)
     {
         yyerror (YY_("lexical error"));
@@ -335,7 +404,7 @@ int yylex(void) {
     }
 
     yylineno = lex->line;
-    if (Get_Token_Type(lex->token) == 258)
+    if (tokentype == 258)
     {
         yylval.intValue = *(lex->item) - '0';
     }
@@ -344,11 +413,13 @@ int yylex(void) {
 
     deallocate_lexema(lex);
 
-    return lex->token_type;
+    //printf("Token: %d\n", tokentype);
+    return tokentype;
 }
 
 int main(void) {
     yyparse();
+    //checkSemantics(root);
     printAST(root, 0);
     return 0;
 }

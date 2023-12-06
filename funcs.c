@@ -6,31 +6,6 @@
 #define tam 100
 #define bloom_size 100
 
-typedef enum
-{
-  SOMA = 1,
-  SUBTRACAO = 2,
-  MULTIPLICACAO = 3,
-  DIVISAO = 4,
-  ATRIBUICAO = 5,
-  IGUAL = 6,
-  DIFERENTE = 7,
-  MAIOR = 8,
-  MENOR = 9,
-  MAIOR_IGUAL = 10,
-  MENOR_IGUAL = 11,
-  ABRE_PARENTES = 12,
-  FECHA_PARENTES = 13,
-  ABRE_CHAVES = 14,
-  FECHA_CHAVES = 15,
-  ABRE_COLCHETES = 16,
-  FECHA_COLCHETES = 17,
-  PONTO_VIRGULA = 18,
-  VIRGULA = 19,
-  ABRE_COMENTARIO = 20,
-  FECHA_COMENTARIO = 21,
-} Token;
-
 int check_whitespace(char c)
 {
   if (c == ' ' || c == '\n' || c == '\t')
@@ -340,22 +315,22 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     lex->item[i] = c;
     table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
     estado = tabela[estado][table_value];   // Pega o estado atual e o valor da tabela e retorna o novo estado
-    /*
-    if (c == EOF)
-    {
-      printf("Caracter: EOF\n");
-    }
-    else if (c == '\0')
-    {
-      printf("Caracter: \0\n");
-    }
-    else
-    {
-      printf("Caracter: %c\n", c);
-    }
+    
+    // if (c == EOF)
+    // {
+    //   printf("Caracter: EOF\n");
+    // }
+    // else if (c == '\0')
+    // {
+    //   printf("Caracter: \0\n");
+    // }
+    // else
+    // {
+    //   printf("Caracter: %c\n", c);
+    // }
 
-    printf("Table value: %d\n", table_value);
-    printf("Estado: %d\n\n", estado);*/
+    // printf("Table value: %d\n", table_value);
+    // printf("Estado: %d\n\n", estado);
 
     if (check_whitespace(c) || check_special(c) || c == EOF || estado == -1) // Se for espaço em branco ou caracter especial
     {
@@ -430,8 +405,10 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       case 7: // DIVISAO
       {
         c = get_next_char(buffer, fp);
+        lex->item[i] = c;
         if (c == '*')
         {
+          i = 0;
           while (c != EOF)
           {
             c = get_next_char(buffer, fp);
@@ -444,6 +421,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
               if (c == '/')
               {
                 strcpy(lex->token, "COMENTARIO");
+                lex->item[i - 1] = '\0';
                 lex_sum = -1;
                 break;
               }
