@@ -70,39 +70,72 @@
 #line 1 "bison.y"
 
 #include "funcs.h"
-//#include "tokens.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define MAX 100
 
+FILE *fp;
+Bloco *buffer = NULL;
+int openned = 0;
+int yylineno;
+int valyy;
+char yytext[64];
+
+
 typedef struct ASTNode {
     char* type;
     char* value;
+    int line;
     struct ASTNode* children;
     struct ASTNode* sibling;
 } ASTNode;
 
+typedef struct SymbolTable {
+    char* id;
+    char* type;
+    struct SymbolTable* next;
+} SymbolTable;
+
 ASTNode* newASTNode(char* type) {
+    /**
+     * Creates a new AST node with the given type.
+     * @param type The type of the AST node.
+     * @return The newly created AST node.
+     */
     ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
     node->type = type;
     node->value = NULL;
+    node->line = yylineno;
     node->children = NULL;
     node->sibling = NULL;
     return node;
 }
 
 ASTNode* newASTNodeValue(char* type, char* value) {
+    /**
+     * Creates a new AST node with the given type and value.
+     * @param type The type of the AST node.
+     * @param value The value of the AST node.
+     * @return The newly created AST node.
+     */
     ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
     node->type = type;
     node->value = value;
+    node->line = yylineno;
     node->children = NULL;
     node->sibling = NULL;
     return node;
 }
 
 ASTNode* addASTNode(ASTNode* node, ASTNode* child) {
+    /**
+     * Adds a child node to the given AST node.
+     * @param node The AST node to add the child to.
+     * @param child The child node to add.
+     * @return The updated AST node.
+     */
     if (node->children == NULL) {
         node->children = child;
     } else {
@@ -115,9 +148,116 @@ ASTNode* addASTNode(ASTNode* node, ASTNode* child) {
     return node;
 }
 
+SymbolTable* table;
+
+SymbolTable* createSymbolTable() {
+    /**
+     * Creates an empty symbol table.
+     * @return The created symbol table.
+     */
+    return NULL;
+}
+
+SymbolTable* addSymbol(SymbolTable* table, char* id, char* type) {
+    /**
+     * Adds a symbol to the symbol table.
+     * @param table The symbol table to add the symbol to.
+     * @param id The identifier of the symbol.
+     * @param type The type of the symbol.
+     * @return The updated symbol table.
+     */
+    SymbolTable* newSymbol = (SymbolTable*) malloc(sizeof(SymbolTable));
+    newSymbol->id = strdup(id);
+    newSymbol->type = strdup(type);
+    newSymbol->next = table;
+    return newSymbol;
+}
+
+void generateSymbolTable(ASTNode* node, SymbolTable** table) {
+    /**
+     * Generates the symbol table from the AST.
+     * @param node The current node in the AST.
+     * @param table The symbol table.
+     */
+    if (node == NULL) {
+        return;
+    }
+
+    if (strcmp(node->type, "var_declaracao") == 0) {
+        *table = addSymbol(*table, node->value, node->children->value);
+    }
+
+    ASTNode* child = node->children;
+    while (child != NULL) {
+        generateSymbolTable(child, table);
+        child = child->sibling;
+    }
+}
+
+void semanticAnalysis(ASTNode* node, SymbolTable** table) {
+    /**
+     * Performs semantic analysis on the AST.
+     * @param node The current node in the AST.
+     * @param table The symbol table.
+     */
+    if (node == NULL) {
+        return;
+    }
+
+    if (strcmp(node->type, "var_declaracao") == 0) {
+        if (node->children == NULL || node->children->value == NULL) {
+            printf("Error: Variable declaration without type on line %d\n", node->line);
+            return;
+        }
+
+        SymbolTable* symbol = *table;
+        while (symbol != NULL) {
+            if (strcmp(symbol->id, node->value) == 0) {
+                printf("Error: Duplicate declaration of variable %s on line %d\n", node->value, node->line);
+                return;
+            }
+            symbol = symbol->next;
+        }
+
+        *table = addSymbol(*table, node->value, node->children->value);
+    }
+
+    if (strcmp(node->type, "atribuicao") == 0) {
+        SymbolTable* symbol = *table;
+        while (symbol != NULL) {
+            if (strcmp(symbol->id, node->children->value) == 0) {
+                if (strcmp(symbol->type, node->children->sibling->type) != 0) {
+                    printf("Error: Type mismatch in assignment to variable %s on line\n", node->children->value, node->line);
+                    return;
+                }
+                break;
+            }
+            symbol = symbol->next;
+        }
+    }
+
+    if (strcmp(node->type, "if") == 0 || strcmp(node->type, "while") == 0) {
+        if (node->children == NULL || strcmp(node->children->type, "boolean") != 0) {
+            printf("Error: Non-boolean expression in flow control statement\n on line %d", node->line);
+            return;
+        }
+    }
+
+    ASTNode* child = node->children;
+    while (child != NULL) {
+        semanticAnalysis(child, table);
+        child = child->sibling;
+    }
+}
+
 void printAST(ASTNode* node, int depth) {
+    /**
+     * Prints the AST.
+     * @param node The current node in the AST.
+     * @param depth The depth of the current node.
+     */
     for (int i = 0; i < depth; i++) {
-        printf(" ");
+        printf("  ");
     }
     if (node->value != NULL) {
         printf("%s: %s\n", node->type, node->value);
@@ -131,65 +271,15 @@ void printAST(ASTNode* node, int depth) {
         printAST(node->sibling, depth);
     }
 }
-/*
-void buildSymbolTable(ASTNode* node, SymbolTable* table) {
-    if (node->type == NODE_DECLARATION) {
-        // Add the identifier to the symbol table
-        addSymbol(table, node->children->value, node->sibling->type);
-    } else if (node->type == NODE_USAGE) {
-        // Look up the identifier in the symbol table
-        Symbol* symbol = getSymbol(table, node->value);
-        if (symbol == NULL) {
-            printf("Error: Variable %s has not been declared\n", node->value);
-            exit(1);
-        }
-    }
-    // Recursively build the symbol table for the children of the node
-    if (node->children != NULL) {
-        buildSymbolTable(node->children, table);
-    }
-    if (node->sibling != NULL) {
-        buildSymbolTable(node->sibling, table);
-    }
-}
 
-void checkSemantics(ASTNode* node) {
-    if (node->type == NODE_ASSIGNMENT) {
-        // Check that the variable has been declared
-        if (!isDeclared(node->children->value)) {
-            printf("Error: Variable %s has not been declared\n", node->children->value);
-            exit(1);
-        }
-        // Check that the types are compatible
-        if (!areTypesCompatible(node->children->type, node->sibling->type)) {
-            printf("Error: Incompatible types in assignment\n");
-            exit(1);
-        }
-    }
-    // Recursively check the children of the node
-    if (node->children != NULL) {
-        checkSemantics(node->children);
-    }
-    if (node->sibling != NULL) {
-        checkSemantics(node->sibling);
-    }
-}*/
-
-FILE *fp;
-Bloco *buffer = NULL;
-int openned = 0;
-int yylineno;
-int valyy;
-char yytext[64];
-
-ASTNode* root; // Declare a global variable to store the root node
+ASTNode* root; 
 
 int yyerror(char *s);
 
 int yylex(void);
 
 
-#line 193 "bison.tab.c"
+#line 283 "bison.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -663,13 +753,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   158,   158,   161,   162,   165,   166,   169,   170,   173,
-     174,   177,   181,   183,   187,   189,   192,   194,   198,   202,
-     205,   208,   211,   214,   216,   218,   220,   222,   226,   228,
-     232,   234,   237,   241,   243,   247,   249,   252,   254,   258,
-     260,   263,   265,   267,   269,   271,   273,   277,   279,   281,
-     284,   286,   288,   291,   293,   294,   295,   299,   303,   306,
-     309,   311
+       0,   240,   240,   243,   244,   247,   248,   251,   252,   255,
+     256,   259,   263,   265,   269,   271,   274,   276,   280,   284,
+     287,   290,   293,   296,   298,   300,   302,   304,   308,   310,
+     314,   316,   319,   323,   325,   329,   331,   334,   336,   340,
+     342,   345,   347,   349,   351,   353,   355,   359,   361,   363,
+     366,   368,   370,   373,   375,   376,   377,   381,   385,   388,
+     391,   393
 };
 #endif
 
@@ -1302,319 +1392,319 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* programa: declaracao_lista $end  */
-#line 158 "bison.y"
-                                 { (yyval.nodeValue) = newASTNode("programa"); root = (yyval.nodeValue); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
-#line 1308 "bison.tab.c"
-    break;
-
-  case 3: /* declaracao_lista: declaracao_lista declaracao  */
-#line 161 "bison.y"
-                                              { (yyval.nodeValue) = newASTNode("declaracao_lista"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
-#line 1314 "bison.tab.c"
-    break;
-
-  case 4: /* declaracao_lista: declaracao  */
-#line 162 "bison.y"
-                             { (yyval.nodeValue) = newASTNode("declaracao_lista"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
-#line 1320 "bison.tab.c"
-    break;
-
-  case 5: /* declaracao: var_declaracao  */
-#line 165 "bison.y"
-                           { (yyval.nodeValue) = newASTNode("declaracao"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
-#line 1326 "bison.tab.c"
-    break;
-
-  case 6: /* declaracao: fun_declaracao  */
-#line 166 "bison.y"
-                           { (yyval.nodeValue) = newASTNode("declaracao"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
-#line 1332 "bison.tab.c"
-    break;
-
-  case 7: /* var_declaracao: tipo_especificador ID PONTO_VIRGULA  */
-#line 169 "bison.y"
-                                                    { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-1].stringValue))); }
-#line 1338 "bison.tab.c"
-    break;
-
-  case 8: /* var_declaracao: tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA  */
-#line 170 "bison.y"
-                                                                                        { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-4].stringValue))); }
-#line 1344 "bison.tab.c"
-    break;
-
-  case 9: /* tipo_especificador: INT  */
-#line 173 "bison.y"
-                        { (yyval.nodeValue) = newASTNodeValue("tipo_especificador", "int");}
-#line 1350 "bison.tab.c"
-    break;
-
-  case 10: /* tipo_especificador: VOID  */
-#line 174 "bison.y"
-                         { (yyval.nodeValue) = newASTNodeValue("tipo_especificador", "void"); }
-#line 1356 "bison.tab.c"
-    break;
-
-  case 11: /* fun_declaracao: tipo_especificador ID ABRE_PARENTESE params FECHA_PARENTESE composto_decl  */
-#line 178 "bison.y"
-    { (yyval.nodeValue) = newASTNode("fun_declaracao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-4].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue));}
-#line 1362 "bison.tab.c"
-    break;
-
-  case 12: /* params: param_lista  */
-#line 182 "bison.y"
-    { (yyval.nodeValue) = newASTNode("params"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
-#line 1368 "bison.tab.c"
-    break;
-
-  case 13: /* params: VOID  */
-#line 184 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("params", "void"); }
-#line 1374 "bison.tab.c"
-    break;
-
-  case 14: /* param_lista: param_lista VIRGULA param  */
-#line 188 "bison.y"
-    { (yyval.nodeValue) = newASTNode("param_lista"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
-#line 1380 "bison.tab.c"
-    break;
-
-  case 16: /* param: tipo_especificador ID  */
-#line 193 "bison.y"
-    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[0].stringValue))); }
-#line 1386 "bison.tab.c"
-    break;
-
-  case 17: /* param: tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE  */
-#line 195 "bison.y"
-    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-2].stringValue))); }
-#line 1392 "bison.tab.c"
-    break;
-
-  case 18: /* composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES  */
-#line 199 "bison.y"
-    { (yyval.nodeValue) = newASTNode("composto_decl"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+#line 240 "bison.y"
+                                 { (yyval.nodeValue) = newASTNode("programa"); root = (yyval.nodeValue); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); generateSymbolTable(root, &table); }
 #line 1398 "bison.tab.c"
     break;
 
-  case 19: /* local_declaracoes: local_declaracoes var_declaracao  */
-#line 203 "bison.y"
-    { (yyval.nodeValue) = newASTNode("local_declaracoes"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 3: /* declaracao_lista: declaracao_lista declaracao  */
+#line 243 "bison.y"
+                                              { (yyval.nodeValue) = newASTNode("declaracao_lista"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1404 "bison.tab.c"
     break;
 
-  case 20: /* local_declaracoes: %empty  */
-#line 205 "bison.y"
-    { (yyval.nodeValue) = NULL; }
+  case 4: /* declaracao_lista: declaracao  */
+#line 244 "bison.y"
+                             { (yyval.nodeValue) = newASTNode("declaracao_lista"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1410 "bison.tab.c"
     break;
 
-  case 21: /* statement_lista: statement_lista statement  */
-#line 209 "bison.y"
-    { (yyval.nodeValue) = newASTNode("statement_lista"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 5: /* declaracao: var_declaracao  */
+#line 247 "bison.y"
+                           { (yyval.nodeValue) = newASTNode("declaracao"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1416 "bison.tab.c"
     break;
 
-  case 22: /* statement_lista: %empty  */
-#line 211 "bison.y"
-    { (yyval.nodeValue) = NULL; }
+  case 6: /* declaracao: fun_declaracao  */
+#line 248 "bison.y"
+                           { (yyval.nodeValue) = newASTNode("declaracao"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1422 "bison.tab.c"
     break;
 
-  case 23: /* statement: expressao_decl  */
-#line 215 "bison.y"
-    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 7: /* var_declaracao: tipo_especificador ID PONTO_VIRGULA  */
+#line 251 "bison.y"
+                                                    { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-1].stringValue))); }
 #line 1428 "bison.tab.c"
     break;
 
-  case 24: /* statement: composto_decl  */
-#line 217 "bison.y"
-    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 8: /* var_declaracao: tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA  */
+#line 252 "bison.y"
+                                                                                        { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-4].stringValue))); }
 #line 1434 "bison.tab.c"
     break;
 
-  case 25: /* statement: selecao_decl  */
-#line 219 "bison.y"
-    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 9: /* tipo_especificador: INT  */
+#line 255 "bison.y"
+                        { (yyval.nodeValue) = newASTNodeValue("tipo_especificador", "int");}
 #line 1440 "bison.tab.c"
     break;
 
-  case 26: /* statement: iteracao_decl  */
-#line 221 "bison.y"
-    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 10: /* tipo_especificador: VOID  */
+#line 256 "bison.y"
+                         { (yyval.nodeValue) = newASTNodeValue("tipo_especificador", "void"); }
 #line 1446 "bison.tab.c"
     break;
 
-  case 27: /* statement: retorno_decl  */
-#line 223 "bison.y"
-    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 11: /* fun_declaracao: tipo_especificador ID ABRE_PARENTESE params FECHA_PARENTESE composto_decl  */
+#line 260 "bison.y"
+    { (yyval.nodeValue) = newASTNode("fun_declaracao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-4].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue));}
 #line 1452 "bison.tab.c"
     break;
 
-  case 28: /* expressao_decl: expressao PONTO_VIRGULA  */
-#line 227 "bison.y"
-    { (yyval.nodeValue) = newASTNode("expressao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+  case 12: /* params: param_lista  */
+#line 264 "bison.y"
+    { (yyval.nodeValue) = newASTNode("params"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1458 "bison.tab.c"
     break;
 
-  case 29: /* expressao_decl: PONTO_VIRGULA  */
-#line 229 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("expressao_decl", ";"); }
+  case 13: /* params: VOID  */
+#line 266 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("params", "void"); }
 #line 1464 "bison.tab.c"
     break;
 
-  case 30: /* selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement  */
-#line 233 "bison.y"
-    { (yyval.nodeValue) = newASTNode("selecao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 14: /* param_lista: param_lista VIRGULA param  */
+#line 270 "bison.y"
+    { (yyval.nodeValue) = newASTNode("param_lista"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1470 "bison.tab.c"
     break;
 
-  case 31: /* selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement ELSE statement  */
-#line 235 "bison.y"
-    { (yyval.nodeValue) = newASTNode("selecao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-4].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 16: /* param: tipo_especificador ID  */
+#line 275 "bison.y"
+    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[0].stringValue))); }
 #line 1476 "bison.tab.c"
     break;
 
-  case 32: /* iteracao_decl: WHILE ABRE_PARENTESE expressao FECHA_PARENTESE statement  */
-#line 238 "bison.y"
-    { (yyval.nodeValue) = newASTNode("iteracao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 17: /* param: tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE  */
+#line 277 "bison.y"
+    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-2].stringValue))); }
 #line 1482 "bison.tab.c"
     break;
 
-  case 33: /* retorno_decl: RETURN PONTO_VIRGULA  */
-#line 242 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("retorno_decl", "return"); }
+  case 18: /* composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES  */
+#line 281 "bison.y"
+    { (yyval.nodeValue) = newASTNode("composto_decl"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
 #line 1488 "bison.tab.c"
     break;
 
-  case 34: /* retorno_decl: RETURN expressao PONTO_VIRGULA  */
-#line 244 "bison.y"
-    { (yyval.nodeValue) = newASTNode("retorno_decl"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+  case 19: /* local_declaracoes: local_declaracoes var_declaracao  */
+#line 285 "bison.y"
+    { (yyval.nodeValue) = newASTNode("local_declaracoes"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1494 "bison.tab.c"
     break;
 
-  case 35: /* expressao: var ATRIBUICAO expressao  */
-#line 248 "bison.y"
-    { (yyval.nodeValue) = newASTNode("expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 20: /* local_declaracoes: %empty  */
+#line 287 "bison.y"
+    { (yyval.nodeValue) = NULL; }
 #line 1500 "bison.tab.c"
     break;
 
-  case 37: /* var: ID  */
-#line 253 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("var", (yyvsp[0].stringValue)); }
+  case 21: /* statement_lista: statement_lista statement  */
+#line 291 "bison.y"
+    { (yyval.nodeValue) = newASTNode("statement_lista"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1506 "bison.tab.c"
     break;
 
-  case 38: /* var: ID ABRE_COLCHETE expressao FECHA_COLCHETE  */
-#line 255 "bison.y"
-    { (yyval.nodeValue) = newASTNode("var"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-3].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+  case 22: /* statement_lista: %empty  */
+#line 293 "bison.y"
+    { (yyval.nodeValue) = NULL; }
 #line 1512 "bison.tab.c"
     break;
 
-  case 39: /* simples_expressao: soma_expressao relacional soma_expressao  */
-#line 259 "bison.y"
-    { (yyval.nodeValue) = newASTNode("simples_expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 23: /* statement: expressao_decl  */
+#line 297 "bison.y"
+    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1518 "bison.tab.c"
     break;
 
-  case 41: /* relacional: MENOR_IGUAL  */
-#line 264 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("relacional", "<="); }
+  case 24: /* statement: composto_decl  */
+#line 299 "bison.y"
+    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1524 "bison.tab.c"
     break;
 
-  case 42: /* relacional: MENOR  */
-#line 266 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("relacional", "<"); }
+  case 25: /* statement: selecao_decl  */
+#line 301 "bison.y"
+    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1530 "bison.tab.c"
     break;
 
-  case 43: /* relacional: MAIOR  */
-#line 268 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("relacional", ">"); }
+  case 26: /* statement: iteracao_decl  */
+#line 303 "bison.y"
+    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1536 "bison.tab.c"
     break;
 
-  case 44: /* relacional: MAIOR_IGUAL  */
-#line 270 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("relacional", ">="); }
+  case 27: /* statement: retorno_decl  */
+#line 305 "bison.y"
+    { (yyval.nodeValue) = newASTNode("statement"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1542 "bison.tab.c"
     break;
 
-  case 45: /* relacional: IGUAL  */
-#line 272 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("relacional", "=="); }
+  case 28: /* expressao_decl: expressao PONTO_VIRGULA  */
+#line 309 "bison.y"
+    { (yyval.nodeValue) = newASTNode("expressao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
 #line 1548 "bison.tab.c"
     break;
 
-  case 46: /* relacional: DIFERENTE  */
-#line 274 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("relacional", "!="); }
+  case 29: /* expressao_decl: PONTO_VIRGULA  */
+#line 311 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("expressao_decl", ";"); }
 #line 1554 "bison.tab.c"
     break;
 
-  case 47: /* soma_expressao: soma_expressao SOMA termo  */
-#line 278 "bison.y"
-    { (yyval.nodeValue) = newASTNode("soma_expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 30: /* selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement  */
+#line 315 "bison.y"
+    { (yyval.nodeValue) = newASTNode("selecao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1560 "bison.tab.c"
     break;
 
-  case 48: /* soma_expressao: soma_expressao SUBTRACAO termo  */
-#line 280 "bison.y"
-    { (yyval.nodeValue) = newASTNode("soma_expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 31: /* selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement ELSE statement  */
+#line 317 "bison.y"
+    { (yyval.nodeValue) = newASTNode("selecao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-4].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1566 "bison.tab.c"
     break;
 
-  case 50: /* termo: termo MULTIPLICACAO fator  */
-#line 285 "bison.y"
-    { (yyval.nodeValue) = newASTNode("termo"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 32: /* iteracao_decl: WHILE ABRE_PARENTESE expressao FECHA_PARENTESE statement  */
+#line 320 "bison.y"
+    { (yyval.nodeValue) = newASTNode("iteracao_decl"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1572 "bison.tab.c"
     break;
 
-  case 51: /* termo: termo DIVISAO fator  */
-#line 287 "bison.y"
-    { (yyval.nodeValue) = newASTNode("termo"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 33: /* retorno_decl: RETURN PONTO_VIRGULA  */
+#line 324 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("retorno_decl", "return"); }
 #line 1578 "bison.tab.c"
     break;
 
-  case 53: /* fator: ABRE_PARENTESE expressao FECHA_PARENTESE  */
-#line 292 "bison.y"
-    { (yyval.nodeValue) = newASTNode("fator"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+  case 34: /* retorno_decl: RETURN expressao PONTO_VIRGULA  */
+#line 326 "bison.y"
+    { (yyval.nodeValue) = newASTNode("retorno_decl"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
 #line 1584 "bison.tab.c"
     break;
 
-  case 56: /* fator: NUMERO  */
-#line 296 "bison.y"
-    { (yyval.nodeValue) = newASTNodeValue("fator", (yyvsp[0].stringValue)); }
+  case 35: /* expressao: var ATRIBUICAO expressao  */
+#line 330 "bison.y"
+    { (yyval.nodeValue) = newASTNode("expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1590 "bison.tab.c"
     break;
 
-  case 57: /* ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE  */
-#line 300 "bison.y"
-    { (yyval.nodeValue) = newASTNode("ativacao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-3].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+  case 37: /* var: ID  */
+#line 335 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("var", (yyvsp[0].stringValue)); }
 #line 1596 "bison.tab.c"
     break;
 
-  case 58: /* args: arg_lista  */
-#line 304 "bison.y"
-    { (yyval.nodeValue) = newASTNode("args"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 38: /* var: ID ABRE_COLCHETE expressao FECHA_COLCHETE  */
+#line 337 "bison.y"
+    { (yyval.nodeValue) = newASTNode("var"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-3].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
 #line 1602 "bison.tab.c"
     break;
 
-  case 59: /* args: %empty  */
-#line 306 "bison.y"
-    { (yyval.nodeValue) = NULL; }
+  case 39: /* simples_expressao: soma_expressao relacional soma_expressao  */
+#line 341 "bison.y"
+    { (yyval.nodeValue) = newASTNode("simples_expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
 #line 1608 "bison.tab.c"
     break;
 
-  case 60: /* arg_lista: arg_lista VIRGULA expressao  */
-#line 310 "bison.y"
-    { (yyval.nodeValue) = newASTNode("arg_lista"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+  case 41: /* relacional: MENOR_IGUAL  */
+#line 346 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("relacional", "<="); }
 #line 1614 "bison.tab.c"
     break;
 
+  case 42: /* relacional: MENOR  */
+#line 348 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("relacional", "<"); }
+#line 1620 "bison.tab.c"
+    break;
 
-#line 1618 "bison.tab.c"
+  case 43: /* relacional: MAIOR  */
+#line 350 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("relacional", ">"); }
+#line 1626 "bison.tab.c"
+    break;
+
+  case 44: /* relacional: MAIOR_IGUAL  */
+#line 352 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("relacional", ">="); }
+#line 1632 "bison.tab.c"
+    break;
+
+  case 45: /* relacional: IGUAL  */
+#line 354 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("relacional", "=="); }
+#line 1638 "bison.tab.c"
+    break;
+
+  case 46: /* relacional: DIFERENTE  */
+#line 356 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("relacional", "!="); }
+#line 1644 "bison.tab.c"
+    break;
+
+  case 47: /* soma_expressao: soma_expressao SOMA termo  */
+#line 360 "bison.y"
+    { (yyval.nodeValue) = newASTNode("soma_expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+#line 1650 "bison.tab.c"
+    break;
+
+  case 48: /* soma_expressao: soma_expressao SUBTRACAO termo  */
+#line 362 "bison.y"
+    { (yyval.nodeValue) = newASTNode("soma_expressao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+#line 1656 "bison.tab.c"
+    break;
+
+  case 50: /* termo: termo MULTIPLICACAO fator  */
+#line 367 "bison.y"
+    { (yyval.nodeValue) = newASTNode("termo"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+#line 1662 "bison.tab.c"
+    break;
+
+  case 51: /* termo: termo DIVISAO fator  */
+#line 369 "bison.y"
+    { (yyval.nodeValue) = newASTNode("termo"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+#line 1668 "bison.tab.c"
+    break;
+
+  case 53: /* fator: ABRE_PARENTESE expressao FECHA_PARENTESE  */
+#line 374 "bison.y"
+    { (yyval.nodeValue) = newASTNode("fator"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+#line 1674 "bison.tab.c"
+    break;
+
+  case 56: /* fator: NUMERO  */
+#line 378 "bison.y"
+    { (yyval.nodeValue) = newASTNodeValue("fator", (yyvsp[0].stringValue)); }
+#line 1680 "bison.tab.c"
+    break;
+
+  case 57: /* ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE  */
+#line 382 "bison.y"
+    { (yyval.nodeValue) = newASTNode("ativacao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-3].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+#line 1686 "bison.tab.c"
+    break;
+
+  case 58: /* args: arg_lista  */
+#line 386 "bison.y"
+    { (yyval.nodeValue) = newASTNode("args"); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+#line 1692 "bison.tab.c"
+    break;
+
+  case 59: /* args: %empty  */
+#line 388 "bison.y"
+    { (yyval.nodeValue) = NULL; }
+#line 1698 "bison.tab.c"
+    break;
+
+  case 60: /* arg_lista: arg_lista VIRGULA expressao  */
+#line 392 "bison.y"
+    { (yyval.nodeValue) = newASTNode("arg_lista"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), (yyvsp[0].nodeValue)); }
+#line 1704 "bison.tab.c"
+    break;
+
+
+#line 1708 "bison.tab.c"
 
       default: break;
     }
@@ -1807,7 +1897,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 313 "bison.y"
+#line 395 "bison.y"
 
 
 int yyerror(char *s) {
@@ -1883,13 +1973,8 @@ int yylex(void) {
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
         lex->token_type = Get_Token_Type(lex->token);
         tokentype = lex->token_type;
-        /* printf("\nLexema: %s\n", lex->item);
-        printf("Token_type: %d\n", lex->token_type);
-        printf("Token: %s\n", lex->token);
-        printf("Flag: %d\n\n", flag);  */
         yylineno = lex->line;
     }while(flag == 1 && tokentype == 285);
-    //printf("\nacabou\n\n");
     if (flag == 0)
     {
         yyerror (YY_("lexical error"));
@@ -1897,7 +1982,6 @@ int yylex(void) {
     }
     else if (flag == -1)
     {
-        //printf("E todo mundo morreu\n");
         return 0;
     }
 
@@ -1906,18 +1990,16 @@ int yylex(void) {
     {
         yylval.intValue = *(lex->item) - '0';
     }
-    //yytext = lex->item;
     strcpy(yytext, lex->item);
 
     deallocate_lexema(lex);
 
-    //printf("Token: %d\n", tokentype);
     return tokentype;
 }
 
 int main(void) {
     yyparse();
-    //checkSemantics(root);
     printAST(root, 0);
+    semanticAnalysis(root, &table);    
     return 0;
 }

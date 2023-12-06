@@ -149,89 +149,6 @@ void retract(Bloco *buffer)
   }
 }
 
-// void get_next_lexema(Lexema *lex, Bloco *buffer, FILE *fp)
-// {
-//   int i = 0;
-//   int estado = 0;
-//   char c;
-//   int lex_sum = 0;
-//   do
-//   {
-//     c = get_next_char(buffer, fp);
-//     lex_sum += c;
-//     switch (estado)
-//     {
-//     case 0:
-//     {
-//       if (c >= '0' && c <= '9')
-//       {
-//         estado = 1;
-//       }
-//       else if (c >= 'a' && c <= 'z')
-//       {
-//         estado = 2;
-//       }
-//       else
-//       {
-//         estado = 3;
-//       }
-//     }
-//     case 1:
-//     {
-//       if (c >= '0' && c <= '9')
-//       {
-//         estado = 1;
-//       }
-//       else
-//       {
-//         estado = 4;
-//       }
-//     }
-//     case 2:
-//     {
-//       if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
-//       {
-//         estado = 2;
-//       }
-//       else
-//       {
-//         estado = 4;
-//       }
-//     }
-
-//     default:
-//       break;
-//     }
-//     if (c == ' ' || c == '\n' || c == '\t' || c == EOF)
-//     {
-//       lex->item[i] = '\0';
-//       lex->line = buffer->line;
-//       switch (estado)
-//       {
-//       case 1:
-//       {
-//         strcpy(lex->token, "NUM");
-//         break;
-//       }
-//       case 2:
-//       {
-//         strcpy(lex->token, "ID");
-//         break;
-//       }
-//       case 3: // tabela de simbolos
-//       {
-//         strcpy(lex->token, );
-//         break;
-//       }
-//       }
-//     }
-//     else
-//       lex->item[i] = c;
-//     i++;
-//   } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
-
-//   lex->lex_sum = lex_sum;
-// }
 
 int convert_char_to_table(char c)
 {
@@ -313,26 +230,11 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     c = get_next_char(buffer, fp);
 
     lex->item[i] = c;
-    table_value = convert_char_to_table(c); // Converte o char para o valor da tabela
-    estado = tabela[estado][table_value];   // Pega o estado atual e o valor da tabela e retorna o novo estado
-    
-    // if (c == EOF)
-    // {
-    //   printf("Caracter: EOF\n");
-    // }
-    // else if (c == '\0')
-    // {
-    //   printf("Caracter: \0\n");
-    // }
-    // else
-    // {
-    //   printf("Caracter: %c\n", c);
-    // }
+    table_value = convert_char_to_table(c); 
+    estado = tabela[estado][table_value];   
 
-    // printf("Table value: %d\n", table_value);
-    // printf("Estado: %d\n\n", estado);
 
-    if (check_whitespace(c) || check_special(c) || c == EOF || estado == -1) // Se for espaço em branco ou caracter especial
+    if (check_whitespace(c) || check_special(c) || c == EOF || estado == -1) 
     {
       if (check_whitespace(c) || c == EOF)
       {

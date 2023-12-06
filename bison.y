@@ -1,38 +1,71 @@
 %{
 #include "funcs.h"
-//#include "tokens.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define MAX 100
 
+FILE *fp;
+Bloco *buffer = NULL;
+int openned = 0;
+int yylineno;
+int valyy;
+char yytext[64];
+
+
 typedef struct ASTNode {
     char* type;
     char* value;
+    int line;
     struct ASTNode* children;
     struct ASTNode* sibling;
 } ASTNode;
 
+typedef struct SymbolTable {
+    char* id;
+    char* type;
+    struct SymbolTable* next;
+} SymbolTable;
+
 ASTNode* newASTNode(char* type) {
+    /**
+     * Creates a new AST node with the given type.
+     * @param type The type of the AST node.
+     * @return The newly created AST node.
+     */
     ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
     node->type = type;
     node->value = NULL;
+    node->line = yylineno;
     node->children = NULL;
     node->sibling = NULL;
     return node;
 }
 
 ASTNode* newASTNodeValue(char* type, char* value) {
+    /**
+     * Creates a new AST node with the given type and value.
+     * @param type The type of the AST node.
+     * @param value The value of the AST node.
+     * @return The newly created AST node.
+     */
     ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
     node->type = type;
     node->value = value;
+    node->line = yylineno;
     node->children = NULL;
     node->sibling = NULL;
     return node;
 }
 
 ASTNode* addASTNode(ASTNode* node, ASTNode* child) {
+    /**
+     * Adds a child node to the given AST node.
+     * @param node The AST node to add the child to.
+     * @param child The child node to add.
+     * @return The updated AST node.
+     */
     if (node->children == NULL) {
         node->children = child;
     } else {
@@ -45,9 +78,116 @@ ASTNode* addASTNode(ASTNode* node, ASTNode* child) {
     return node;
 }
 
+SymbolTable* table;
+
+SymbolTable* createSymbolTable() {
+    /**
+     * Creates an empty symbol table.
+     * @return The created symbol table.
+     */
+    return NULL;
+}
+
+SymbolTable* addSymbol(SymbolTable* table, char* id, char* type) {
+    /**
+     * Adds a symbol to the symbol table.
+     * @param table The symbol table to add the symbol to.
+     * @param id The identifier of the symbol.
+     * @param type The type of the symbol.
+     * @return The updated symbol table.
+     */
+    SymbolTable* newSymbol = (SymbolTable*) malloc(sizeof(SymbolTable));
+    newSymbol->id = strdup(id);
+    newSymbol->type = strdup(type);
+    newSymbol->next = table;
+    return newSymbol;
+}
+
+void generateSymbolTable(ASTNode* node, SymbolTable** table) {
+    /**
+     * Generates the symbol table from the AST.
+     * @param node The current node in the AST.
+     * @param table The symbol table.
+     */
+    if (node == NULL) {
+        return;
+    }
+
+    if (strcmp(node->type, "var_declaracao") == 0) {
+        *table = addSymbol(*table, node->value, node->children->value);
+    }
+
+    ASTNode* child = node->children;
+    while (child != NULL) {
+        generateSymbolTable(child, table);
+        child = child->sibling;
+    }
+}
+
+void semanticAnalysis(ASTNode* node, SymbolTable** table) {
+    /**
+     * Performs semantic analysis on the AST.
+     * @param node The current node in the AST.
+     * @param table The symbol table.
+     */
+    if (node == NULL) {
+        return;
+    }
+
+    if (strcmp(node->type, "var_declaracao") == 0) {
+        if (node->children == NULL || node->children->value == NULL) {
+            printf("Error: Variable declaration without type on line %d\n", node->line);
+            return;
+        }
+
+        SymbolTable* symbol = *table;
+        while (symbol != NULL) {
+            if (strcmp(symbol->id, node->value) == 0) {
+                printf("Error: Duplicate declaration of variable %s on line %d\n", node->value, node->line);
+                return;
+            }
+            symbol = symbol->next;
+        }
+
+        *table = addSymbol(*table, node->value, node->children->value);
+    }
+
+    if (strcmp(node->type, "atribuicao") == 0) {
+        SymbolTable* symbol = *table;
+        while (symbol != NULL) {
+            if (strcmp(symbol->id, node->children->value) == 0) {
+                if (strcmp(symbol->type, node->children->sibling->type) != 0) {
+                    printf("Error: Type mismatch in assignment to variable %s on line\n", node->children->value, node->line);
+                    return;
+                }
+                break;
+            }
+            symbol = symbol->next;
+        }
+    }
+
+    if (strcmp(node->type, "if") == 0 || strcmp(node->type, "while") == 0) {
+        if (node->children == NULL || strcmp(node->children->type, "boolean") != 0) {
+            printf("Error: Non-boolean expression in flow control statement\n on line %d", node->line);
+            return;
+        }
+    }
+
+    ASTNode* child = node->children;
+    while (child != NULL) {
+        semanticAnalysis(child, table);
+        child = child->sibling;
+    }
+}
+
 void printAST(ASTNode* node, int depth) {
+    /**
+     * Prints the AST.
+     * @param node The current node in the AST.
+     * @param depth The depth of the current node.
+     */
     for (int i = 0; i < depth; i++) {
-        printf(" ");
+        printf("  ");
     }
     if (node->value != NULL) {
         printf("%s: %s\n", node->type, node->value);
@@ -61,58 +201,8 @@ void printAST(ASTNode* node, int depth) {
         printAST(node->sibling, depth);
     }
 }
-/*
-void buildSymbolTable(ASTNode* node, SymbolTable* table) {
-    if (node->type == NODE_DECLARATION) {
-        // Add the identifier to the symbol table
-        addSymbol(table, node->children->value, node->sibling->type);
-    } else if (node->type == NODE_USAGE) {
-        // Look up the identifier in the symbol table
-        Symbol* symbol = getSymbol(table, node->value);
-        if (symbol == NULL) {
-            printf("Error: Variable %s has not been declared\n", node->value);
-            exit(1);
-        }
-    }
-    // Recursively build the symbol table for the children of the node
-    if (node->children != NULL) {
-        buildSymbolTable(node->children, table);
-    }
-    if (node->sibling != NULL) {
-        buildSymbolTable(node->sibling, table);
-    }
-}
 
-void checkSemantics(ASTNode* node) {
-    if (node->type == NODE_ASSIGNMENT) {
-        // Check that the variable has been declared
-        if (!isDeclared(node->children->value)) {
-            printf("Error: Variable %s has not been declared\n", node->children->value);
-            exit(1);
-        }
-        // Check that the types are compatible
-        if (!areTypesCompatible(node->children->type, node->sibling->type)) {
-            printf("Error: Incompatible types in assignment\n");
-            exit(1);
-        }
-    }
-    // Recursively check the children of the node
-    if (node->children != NULL) {
-        checkSemantics(node->children);
-    }
-    if (node->sibling != NULL) {
-        checkSemantics(node->sibling);
-    }
-}*/
-
-FILE *fp;
-Bloco *buffer = NULL;
-int openned = 0;
-int yylineno;
-int valyy;
-char yytext[64];
-
-ASTNode* root; // Declare a global variable to store the root node
+ASTNode* root; 
 
 int yyerror(char *s);
 
@@ -125,14 +215,6 @@ int yylex(void);
     char* stringValue;
     ASTNode* nodeValue;
 }
-
-/* %token <stringValue> ID
-%token <intValue> NUM
-%token INT VOID
-%token <stringValue> IF ELSE WHILE RETURN
-%token <stringValue> LE LT GT GE EQ NE
-%token SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO PONTO_VIRGULA VIRGULA ABRE_PARENTESE FECHA_PARENTESE ABRE_COLCHETE FECHA_COLCHETE ABRE_CHAVES FECHA_CHAVES
-%token MULTIPLICACAO DIVISAO */
 
 %token <stringValue> NUMERO
 %token <stringValue> ID
@@ -155,7 +237,7 @@ int yylex(void);
 
 %%
 
-programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); }
+programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); generateSymbolTable(root, &table); }
         ;
 
 declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista"); addASTNode($$, $1); addASTNode($$, $2); }
@@ -201,13 +283,13 @@ composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES
 
 local_declaracoes: local_declaracoes var_declaracao
     { $$ = newASTNode("local_declaracoes"); addASTNode($$, $1); addASTNode($$, $2); }
-    | /* empty */
+    |
     { $$ = NULL; }
     ;
 
 statement_lista: statement_lista statement
     { $$ = newASTNode("statement_lista"); addASTNode($$, $1); addASTNode($$, $2); }
-    | /* empty */
+    |
     { $$ = NULL; }
     ;
 
@@ -302,7 +384,7 @@ ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE
 
 args: arg_lista
     { $$ = newASTNode("args"); addASTNode($$, $1); }
-    | /* empty */
+    |
     { $$ = NULL; }
     ;
 
@@ -385,13 +467,8 @@ int yylex(void) {
         flag = get_next_lexema_tabela(lex, buffer, fp, tabela, ht);
         lex->token_type = Get_Token_Type(lex->token);
         tokentype = lex->token_type;
-        /* printf("\nLexema: %s\n", lex->item);
-        printf("Token_type: %d\n", lex->token_type);
-        printf("Token: %s\n", lex->token);
-        printf("Flag: %d\n\n", flag);  */
         yylineno = lex->line;
     }while(flag == 1 && tokentype == 285);
-    //printf("\nacabou\n\n");
     if (flag == 0)
     {
         yyerror (YY_("lexical error"));
@@ -399,7 +476,6 @@ int yylex(void) {
     }
     else if (flag == -1)
     {
-        //printf("E todo mundo morreu\n");
         return 0;
     }
 
@@ -408,18 +484,16 @@ int yylex(void) {
     {
         yylval.intValue = *(lex->item) - '0';
     }
-    //yytext = lex->item;
     strcpy(yytext, lex->item);
 
     deallocate_lexema(lex);
 
-    //printf("Token: %d\n", tokentype);
     return tokentype;
 }
 
 int main(void) {
     yyparse();
-    //checkSemantics(root);
     printAST(root, 0);
+    semanticAnalysis(root, &table);    
     return 0;
 }
