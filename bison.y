@@ -78,8 +78,6 @@ ASTNode* addASTNode(ASTNode* node, ASTNode* child) {
     return node;
 }
 
-SymbolTable* table;
-
 SymbolTable* createSymbolTable() {
     /**
      * Creates an empty symbol table.
@@ -88,10 +86,10 @@ SymbolTable* createSymbolTable() {
     return NULL;
 }
 
-SymbolTable* addSymbol(SymbolTable* table, char* id, char* type) {
+SymbolTable* addSymbol(SymbolTable* TabelaSimbolo, char* id, char* type) {
     /**
      * Adds a symbol to the symbol table.
-     * @param table The symbol table to add the symbol to.
+     * @param TabelaSimbolo The symbol table to add the symbol to.
      * @param id The identifier of the symbol.
      * @param type The type of the symbol.
      * @return The updated symbol table.
@@ -99,36 +97,36 @@ SymbolTable* addSymbol(SymbolTable* table, char* id, char* type) {
     SymbolTable* newSymbol = (SymbolTable*) malloc(sizeof(SymbolTable));
     newSymbol->id = strdup(id);
     newSymbol->type = strdup(type);
-    newSymbol->next = table;
+    newSymbol->next = TabelaSimbolo;
     return newSymbol;
 }
 
-void generateSymbolTable(ASTNode* node, SymbolTable** table) {
+void generateSymbolTable(ASTNode* node, SymbolTable** TabelaSimbolo) {
     /**
      * Generates the symbol table from the AST.
      * @param node The current node in the AST.
-     * @param table The symbol table.
+     * @param TabelaSimbolo The symbol table.
      */
     if (node == NULL) {
         return;
     }
 
     if (strcmp(node->type, "var_declaracao") == 0) {
-        *table = addSymbol(*table, node->value, node->children->value);
+        *TabelaSimbolo = addSymbol(*TabelaSimbolo, node->value, node->children->value);
     }
 
     ASTNode* child = node->children;
     while (child != NULL) {
-        generateSymbolTable(child, table);
+        generateSymbolTable(child, TabelaSimbolo);
         child = child->sibling;
     }
 }
 
-void semanticAnalysis(ASTNode* node, SymbolTable** table) {
+void semanticAnalysis(ASTNode* node, SymbolTable** TabelaSimbolo) {
     /**
      * Performs semantic analysis on the AST.
      * @param node The current node in the AST.
-     * @param table The symbol table.
+     * @param TabelaSimbolo The symbol table.
      */
     if (node == NULL) {
         return;
@@ -140,7 +138,7 @@ void semanticAnalysis(ASTNode* node, SymbolTable** table) {
             return;
         }
 
-        SymbolTable* symbol = *table;
+        SymbolTable* symbol = *TabelaSimbolo;
         while (symbol != NULL) {
             if (strcmp(symbol->id, node->value) == 0) {
                 printf("Error: Duplicate declaration of variable %s on line %d\n", node->value, node->line);
@@ -149,11 +147,11 @@ void semanticAnalysis(ASTNode* node, SymbolTable** table) {
             symbol = symbol->next;
         }
 
-        *table = addSymbol(*table, node->value, node->children->value);
+        *TabelaSimbolo = addSymbol(*TabelaSimbolo, node->value, node->children->value);
     }
 
     if (strcmp(node->type, "atribuicao") == 0) {
-        SymbolTable* symbol = *table;
+        SymbolTable* symbol = *TabelaSimbolo;
         while (symbol != NULL) {
             if (strcmp(symbol->id, node->children->value) == 0) {
                 if (strcmp(symbol->type, node->children->sibling->type) != 0) {
@@ -175,7 +173,7 @@ void semanticAnalysis(ASTNode* node, SymbolTable** table) {
 
     ASTNode* child = node->children;
     while (child != NULL) {
-        semanticAnalysis(child, table);
+        semanticAnalysis(child, TabelaSimbolo);
         child = child->sibling;
     }
 }
@@ -202,6 +200,7 @@ void printAST(ASTNode* node, int depth) {
     }
 }
 
+SymbolTable* TabelaSimbolos;
 ASTNode* root; 
 
 int yyerror(char *s);
@@ -237,7 +236,7 @@ int yylex(void);
 
 %%
 
-programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); generateSymbolTable(root, &table); }
+programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); generateSymbolTable(root, &TabelaSimbolo); }
         ;
 
 declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista"); addASTNode($$, $1); addASTNode($$, $2); }
@@ -494,6 +493,6 @@ int yylex(void) {
 int main(void) {
     yyparse();
     printAST(root, 0);
-    semanticAnalysis(root, &table);    
+    semanticAnalysis(root, &TabelaSimbolo);    
     return 0;
 }
