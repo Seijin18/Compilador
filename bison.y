@@ -155,7 +155,7 @@ void semanticAnalysis(ASTNode* node, SymbolTable** TabelaSimbolo) {
         while (symbol != NULL) {
             if (strcmp(symbol->id, node->children->value) == 0) {
                 if (strcmp(symbol->type, node->children->sibling->type) != 0) {
-                    printf("Error: Type mismatch in assignment to variable %s on line\n", node->children->value, node->line);
+                    printf("Error: Type mismatch in assignment to variable %s on line %d\n", node->children->value, node->line);
                     return;
                 }
                 break;
@@ -187,16 +187,18 @@ void printAST(ASTNode* node, int depth) {
     for (int i = 0; i < depth; i++) {
         printf("  ");
     }
-    if (node->value != NULL) {
-        printf("%s: %s\n", node->type, node->value);
-    } else {
-        printf("%s\n", node->type);
-    }
-    if (node->children != NULL) {
-        printAST(node->children, depth + 1);
-    }
-    if (node->sibling != NULL) {
-        printAST(node->sibling, depth);
+    if(node != NULL){
+        if (node->value != NULL) {
+            printf("%s: %s\n", node->type, node->value);
+        } else {
+            printf("%s\n", node->type);
+        }
+        if (node->children != NULL) {
+            printAST(node->children, depth + 1);
+        }
+        if (node->sibling != NULL) {
+            printAST(node->sibling, depth);
+        }
     }
 }
 
@@ -236,7 +238,7 @@ int yylex(void);
 
 %%
 
-programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); generateSymbolTable(root, &TabelaSimbolo); }
+programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); generateSymbolTable(root, &TabelaSimbolos); }
         ;
 
 declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista"); addASTNode($$, $1); addASTNode($$, $2); }
@@ -493,6 +495,6 @@ int yylex(void) {
 int main(void) {
     yyparse();
     printAST(root, 0);
-    semanticAnalysis(root, &TabelaSimbolo);    
+    semanticAnalysis(root, &TabelaSimbolos);    
     return 0;
 }
