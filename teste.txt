@@ -1,4 +1,4 @@
-/* come /* ntario */         /*comentario*/
+/* comentario */         /*comentario*/
 
 int gcd (int u, int v)
 {   

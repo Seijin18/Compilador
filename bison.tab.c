@@ -1925,7 +1925,7 @@ yyreturnlab:
 
 int yyerror(char *s) {
     fprintf(stderr, "Error on line %d: %s\n", yylineno, s);
-    fprintf(stderr, "Unexpected token: %s\n", yytext);
+    fprintf(stderr, "Unexpected token at position: %d\n", buffer->charposition);
     return 0;
 }
 
@@ -2004,12 +2004,12 @@ int yylex(void) {
     printf("Token Type: %d\n", lex->token_type);
     printf("Line: %d\n\n", lex->line); */
 
-    if (flag == 0)
+    if (flag == -1)
     {
         yyerror (YY_("lexical error"));
         return 256;
     }
-    else if (flag == -1)
+    else if (flag == 0)
     {
         return 0;
     }
@@ -2029,6 +2029,6 @@ int yylex(void) {
 int main(void) {
     yyparse();
     printAST(root, 0);
-    //semanticAnalysis(root, &TabelaSimbolos);    
+    semanticAnalysis(root, &TabelaSimbolos);    
     return 0;
 }
