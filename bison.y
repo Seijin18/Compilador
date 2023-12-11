@@ -95,8 +95,23 @@ SymbolTable* addSymbol(SymbolTable* TabelaSimbolo, char* id, char* type) {
      * @return The updated symbol table.
      */
     SymbolTable* newSymbol = (SymbolTable*) malloc(sizeof(SymbolTable));
-    newSymbol->id = strdup(id);
-    newSymbol->type = strdup(type);
+    if (newSymbol == NULL) {
+        // handle error
+        printf("Failed to allocate memory for newSymbol\n");
+    }
+
+    if (id == NULL) {
+        // handle error
+        printf("id is NULL\n");
+    }
+    newSymbol->id = malloc(strlen(id) + 1);
+    if (newSymbol->id != NULL) {
+        strcpy(newSymbol->id, id);
+    }
+    newSymbol->type = malloc(strlen(type) + 1);
+    if (newSymbol->type != NULL) {
+        strcpy(newSymbol->type, type);
+    }
     newSymbol->next = TabelaSimbolo;
     return newSymbol;
 }
@@ -219,7 +234,10 @@ int yylex(void);
 
 %token <stringValue> NUMERO
 %token <stringValue> ID
-%token IF ELSE WHILE INT RETURN VOID IGUAL DIFERENTE MAIOR MENOR MAIOR_IGUAL MENOR_IGUAL SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO PONTO_VIRGULA VIRGULA ABRE_PARENTESE FECHA_PARENTESE ABRE_COLCHETE FECHA_COLCHETE ABRE_CHAVES FECHA_CHAVES YYEOF
+%token IF ELSE WHILE INT RETURN VOID IGUAL DIFERENTE MAIOR MENOR MAIOR_IGUAL
+%token MENOR_IGUAL SOMA SUBTRACAO MULTIPLICACAO DIVISAO ATRIBUICAO
+%token PONTO_VIRGULA VIRGULA ABRE_PARENTESE FECHA_PARENTESE ABRE_COLCHETE 
+%token FECHA_COLCHETE ABRE_CHAVES FECHA_CHAVES YYEOF
 
 %left SOMA SUBTRACAO
 %left MULTIPLICACAO DIVISAO
@@ -231,14 +249,14 @@ int yylex(void);
 %type <nodeValue> tipo_especificador
 %type <nodeValue> fun_declaracao params param_lista param composto_decl
 %type <nodeValue> local_declaracoes statement_lista statement expressao_decl
-%type <nodeValue> selecao_decl iteracao_decl retorno_decl expressao var
-%type <nodeValue> simples_expressao relacional soma_expressao termo
-%type <nodeValue> fator ativacao args arg_lista
+%type <nodeValue> selecao_decl selecao_decl_else iteracao_decl retorno_decl
+%type <nodeValue> expressao var simples_expressao relacional soma_expressao 
+%type <nodeValue> termo fator ativacao args arg_lista
 
 
 %%
 
-programa: declaracao_lista YYEOF { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); generateSymbolTable(root, &TabelaSimbolos); }
+programa: declaracao_lista { $$ = newASTNode("programa"); root = $$; addASTNode($$, $1); } //generateSymbolTable(root, &TabelaSimbolos); }
         ;
 
 declaracao_lista: declaracao_lista declaracao { $$ = newASTNode("declaracao_lista"); addASTNode($$, $1); addASTNode($$, $2); }
@@ -312,11 +330,16 @@ expressao_decl: expressao PONTO_VIRGULA
     { $$ = newASTNodeValue("expressao_decl", ";"); }
     ;
 
-selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement
-    { $$ = newASTNode("selecao_decl"); addASTNode($$, $3); addASTNode($$, $5); }
-    | IF ABRE_PARENTESE expressao FECHA_PARENTESE statement ELSE statement
-    { $$ = newASTNode("selecao_decl"); addASTNode($$, $3); addASTNode($$, $5); addASTNode($$, $7); }
+selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement selecao_decl_else
+    { $$ = newASTNode("selecao_decl"); addASTNode($$, $3); addASTNode($$, $5); addASTNode($$, $6); }
     ;
+
+selecao_decl_else: ELSE statement
+    { $$ = newASTNode("selecao_decl_else"); addASTNode($$, $2); }
+    | /* empty */
+    { $$ = NULL; }
+    ;
+
 iteracao_decl: WHILE ABRE_PARENTESE expressao FECHA_PARENTESE statement
     { $$ = newASTNode("iteracao_decl"); addASTNode($$, $3); addASTNode($$, $5); }
     ;
@@ -470,6 +493,12 @@ int yylex(void) {
         tokentype = lex->token_type;
         yylineno = lex->line;
     }while(flag == 1 && tokentype == 285);
+
+    /* printf("\nFlag: %d\n", flag);
+    printf("Token: %s\n", lex->token);
+    printf("Token Type: %d\n", lex->token_type);
+    printf("Line: %d\n\n", lex->line); */
+
     if (flag == 0)
     {
         yyerror (YY_("lexical error"));
@@ -495,6 +524,6 @@ int yylex(void) {
 int main(void) {
     yyparse();
     printAST(root, 0);
-    semanticAnalysis(root, &TabelaSimbolos);    
+    //semanticAnalysis(root, &TabelaSimbolos);    
     return 0;
 }

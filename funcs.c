@@ -8,7 +8,7 @@
 
 int check_whitespace(char c)
 {
-  if (c == ' ' || c == '\n' || c == '\t')
+  if (c == ' ' || c == '\n' || c == '\t' || c == '\0' || c == '\r' || c == '\v' || c == '\f' || c == '\b')
   {
     return 1;
   }
@@ -233,13 +233,8 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
     table_value = convert_char_to_table(c); 
     estado = tabela[estado][table_value];   
 
-
     if (check_whitespace(c) || check_special(c) || c == EOF || estado == -1) 
-    {
-      if (check_whitespace(c) || c == EOF)
-      {
-        retract(buffer);
-      }
+    {      
       if (!(estado == 1 || estado == 2 || estado == 3))
       {
         lex->item[i + 1] = '\0';
@@ -478,7 +473,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
 
       default: // ERRO
       {
-        if (c == EOF || c == '\0')
+        if (c == EOF)
         {
           strcpy(lex->token, "EOF");
           return -1;
@@ -497,8 +492,9 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
       lex->item[i] = c;
     }
     i++;
-  } while (c != ' ' && c != '\n' && c != '\t' && c != EOF);
-  if (c == EOF || c == '\0')
+  } while (c != ' ' || c != '\n' || c != '\t' || c != EOF);
+
+  if (c == EOF)
   {
     return -1;
   }
