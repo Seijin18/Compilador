@@ -267,8 +267,8 @@ declaracao: var_declaracao { $$ = newASTNode("declaracao"); addASTNode($$, $1); 
           | fun_declaracao { $$ = newASTNode("declaracao"); addASTNode($$, $1); }
           ;
 
-var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
-              | tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
+var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $2)); }
+              | tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $2)); }
               ;
 
 tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int");}
@@ -291,9 +291,9 @@ param_lista: param_lista VIRGULA param
     ;
 
 param: tipo_especificador ID
-    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
+    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $1)); }
     | tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE
-    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
+    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $1)); }
     ;
 
 composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES
@@ -356,9 +356,9 @@ expressao: var ATRIBUICAO expressao
     ;
 
 var: ID
-    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", yytext)); }
+    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", $1)); }
     | ID ABRE_COLCHETE expressao FECHA_COLCHETE
-    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", yytext)); addASTNode($$, $3); }
+    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", $1)); addASTNode($$, $3); }
     ;
 
 simples_expressao: soma_expressao relacional soma_expressao
@@ -403,7 +403,7 @@ fator: ABRE_PARENTESE expressao FECHA_PARENTESE
     ;
 
 ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE
-    { $$ = newASTNode("ativacao"); addASTNode($$, newASTNodeValue("ID", yytext)); addASTNode($$, $3); }
+    { $$ = newASTNode("ativacao"); addASTNode($$, newASTNodeValue("ID", $1)); addASTNode($$, $3); }
     ;
 
 args: arg_lista
