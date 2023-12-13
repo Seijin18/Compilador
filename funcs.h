@@ -13,6 +13,12 @@ typedef struct Lista_Hash Lista;
 
 typedef struct Lista_Node Node;
 
+typedef struct ASTNode ASTNode;
+
+typedef struct SymbolTable SymbolTable;
+
+extern int yylineno;
+
 int check_whitespace(char c);
 int check_special(char c);
 int check_special_with_following(char c);
@@ -38,6 +44,16 @@ int Pesquisa_Hash(int chave, Lista *Tabela, int tamanho);
 int Insere_Hash(int chave, char *item, Lista *tabela, int tamanho);
 void Tabela_Inicia(Lista *tabela, int tamanho);
 void Deallocate_Tabela(Lista *tabela, int tamanho);
+ASTNode* newASTNode(char* type);
+ASTNode* newASTNodeValue(char* type, char* value);
+ASTNode* addASTNode(ASTNode* node, ASTNode* child);
+SymbolTable* createSymbolTable();
+SymbolTable* addSymbol(SymbolTable* TabelaSimbolo, char* id, char* type);
+void generateSymbolTable(ASTNode* node, SymbolTable** TabelaSimbolo);
+void semanticAnalysis(ASTNode* node, SymbolTable** TabelaSimbolo);
+
+
+void printAST(ASTNode* node, int depth);
 
 
 struct Bloco_Buffer {
@@ -70,6 +86,20 @@ struct Lista_Node{
   int Value;
   char *Item;
   Node *Prox;
+};
+
+struct ASTNode {
+    char* type;
+    char* value;
+    int line;
+    struct ASTNode* children;
+    struct ASTNode* sibling;
+};
+
+struct SymbolTable {
+    char* id;
+    char* type;
+    struct SymbolTable* next;
 };
 
 #endif

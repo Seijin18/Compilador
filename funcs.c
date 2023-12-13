@@ -6,6 +6,8 @@
 #define tam 100
 #define bloom_size 100
 
+
+
 int check_whitespace(char c)
 {
   if (c == ' ' || c == '\n' || c == '\t' || c == '\0' || c == '\r' || c == '\v' || c == '\f' || c == '\b')
@@ -745,7 +747,169 @@ void Deallocate_Tabela(Lista *Tabela, int tamanho)
   int i;
   for (i = 0; i < tamanho; i++)
   {
-    free(Tabela[i].Primeiro);
+    while (Tabela[i].Primeiro != NULL)
+    {
+      Node *Aux = Tabela[i].Primeiro;
+      Tabela[i].Primeiro = Tabela[i].Primeiro->Prox;
+      free(Aux);
+    }    
   }
-  free(Tabela);
+}
+
+ASTNode* newASTNode(char* type) {
+    /*Creates a new AST node with the given type.*/
+    ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
+    node->type = type;
+    node->value = NULL;
+    node->line = yylineno;
+    node->children = NULL;
+    node->sibling = NULL;
+    return node;
+}
+
+ASTNode* newASTNodeValue(char* type, char* value) {
+    /*Creates a new AST node with the given type and value.*/
+    ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
+    node->type = type;
+    node->value = value;
+    node->line = yylineno;
+    node->children = NULL;
+    node->sibling = NULL;
+    return node;
+}
+
+ASTNode* addASTNode(ASTNode* node, ASTNode* child) {
+    /*Adds a child node to the given AST node.*/
+    if (node->children == NULL) {
+        node->children = child;
+    } else {
+        ASTNode* sibling = node->children;
+        while (sibling->sibling != NULL) {
+            sibling = sibling->sibling;
+        }
+        sibling->sibling = child;
+    }
+    return node;
+}
+
+SymbolTable* createSymbolTable() {
+    /*Creates an empty symbol table.*/
+    return NULL;
+}
+
+SymbolTable* addSymbol(SymbolTable* TabelaSimbolo, char* id, char* type) {
+    /*Adds a symbol to the symbol table.*/
+    SymbolTable* newSymbol = (SymbolTable*) malloc(sizeof(SymbolTable));
+    if (newSymbol == NULL) {
+        // handle error
+        printf("Failed to allocate memory for newSymbol\n");
+    }
+
+    if (id == NULL) {
+        // handle error
+        printf("id is NULL\n");
+    }
+    newSymbol->id = malloc(strlen(id) + 1);
+    if (newSymbol->id != NULL) {
+        strcpy(newSymbol->id, id);
+    }
+    newSymbol->type = malloc(strlen(type) + 1);
+    if (newSymbol->type != NULL) {
+        strcpy(newSymbol->type, type);
+    }
+    newSymbol->next = TabelaSimbolo;
+    return newSymbol;
+}
+
+void generateSymbolTable(ASTNode* node, SymbolTable** TabelaSimbolo) {
+    /*Generates the symbol table from the AST.*/
+    if (node == NULL) {
+        return;
+    }
+
+    if (strcmp(node->type, "var_declaracao") == 0) {
+        *TabelaSimbolo = addSymbol(*TabelaSimbolo, node->value, node->children->value);
+    }
+
+    ASTNode* child = node->children;
+    while (child != NULL) {
+        generateSymbolTable(child, TabelaSimbolo);
+        child = child->sibling;
+    }
+}
+
+void semanticAnalysis(ASTNode* node, SymbolTable** TabelaSimbolo) {
+    /*Performs semantic analysis on the AST.*/
+    if (node == NULL) {
+        return;
+    }
+
+    if (strcmp(node->type, "var_declaracao") == 0) {
+        if (node->children == NULL || node->children->value == NULL) {
+            printf("Error: Variable declaration without type on line %d\n", node->line);
+            return;
+        }
+
+        SymbolTable* symbol = *TabelaSimbolo;
+        while (symbol != NULL) {
+            if (strcmp(symbol->id, node->value) == 0) {
+                printf("Error: Duplicate declaration of variable %s on line %d\n", node->value, node->line);
+                return;
+            }
+            symbol = symbol->next;
+        }
+
+        *TabelaSimbolo = addSymbol(*TabelaSimbolo, node->value, node->children->value);
+    }
+
+    if (strcmp(node->type, "atribuicao") == 0) {
+        SymbolTable* symbol = *TabelaSimbolo;
+        while (symbol != NULL) {
+            if (strcmp(symbol->id, node->children->value) == 0) {
+                if (strcmp(symbol->type, node->children->sibling->type) != 0) {
+                    printf("Error: Type mismatch in assignment to variable %s on line %d\n", node->children->value, node->line);
+                    return;
+                }
+                break;
+            }
+            symbol = symbol->next;
+        }
+    }
+
+    if (strcmp(node->type, "if") == 0 || strcmp(node->type, "while") == 0) {
+        if (node->children == NULL || strcmp(node->children->type, "boolean") != 0) {
+            printf("Error: Non-boolean expression in flow control statement\n on line %d", node->line);
+            return;
+        }
+    }
+
+    ASTNode* child = node->children;
+    while (child != NULL) {
+        semanticAnalysis(child, TabelaSimbolo);
+        child = child->sibling;
+    }
+}
+
+void printAST(ASTNode* node, int depth) {
+    /**
+     * Prints the AST.
+     * @param node The current node in the AST.
+     * @param depth The depth of the current node.
+     */
+    for (int i = 0; i < depth; i++) {
+        printf("-");
+    }
+    if(node != NULL){
+        if (node->value != NULL) {
+            printf("%s: %s\n", node->type, node->value);
+        } else {
+            printf("%s\n", node->type);
+        }
+        if (node->children != NULL) {
+            printAST(node->children, depth + 1);
+        }
+        if (node->sibling != NULL) {
+            printAST(node->sibling, depth);
+        }
+    }
 }
