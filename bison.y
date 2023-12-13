@@ -200,7 +200,7 @@ void printAST(ASTNode* node, int depth) {
      * @param depth The depth of the current node.
      */
     for (int i = 0; i < depth; i++) {
-        printf("  ");
+        printf("-");
     }
     if(node != NULL){
         if (node->value != NULL) {
@@ -267,8 +267,8 @@ declaracao: var_declaracao { $$ = newASTNode("declaracao"); addASTNode($$, $1); 
           | fun_declaracao { $$ = newASTNode("declaracao"); addASTNode($$, $1); }
           ;
 
-var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, newASTNodeValue("ID", $2)); }
-              | tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, newASTNodeValue("ID", $2)); }
+var_declaracao: tipo_especificador ID PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
+              | tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA { $$ = newASTNode("var_declaracao"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
               ;
 
 tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int");}
@@ -276,7 +276,7 @@ tipo_especificador: INT { $$ = newASTNodeValue("tipo_especificador", "int");}
                   ;
 
 fun_declaracao: tipo_especificador ID ABRE_PARENTESE params FECHA_PARENTESE composto_decl
-    { $$ = newASTNode("fun_declaracao"); addASTNode($$, newASTNodeValue("ID", $2)); addASTNode($$, $4); addASTNode($$, $6);}
+    { $$ = newASTNode("fun_declaracao"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $2)); addASTNode($$, $4); addASTNode($$, $6);}
     ;
 
 params: param_lista
@@ -291,9 +291,9 @@ param_lista: param_lista VIRGULA param
     ;
 
 param: tipo_especificador ID
-    { $$ = newASTNode("param"); addASTNode($$, newASTNodeValue("ID", $2)); }
+    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
     | tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE
-    { $$ = newASTNode("param"); addASTNode($$, newASTNodeValue("ID", $2)); }
+    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", yytext)); }
     ;
 
 composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES
@@ -331,11 +331,11 @@ expressao_decl: expressao PONTO_VIRGULA
     ;
 
 selecao_decl: IF ABRE_PARENTESE expressao FECHA_PARENTESE statement selecao_decl_else
-    { $$ = newASTNode("selecao_decl"); addASTNode($$, $3); addASTNode($$, $5); addASTNode($$, $6); }
+    { $$ = newASTNode("If"); addASTNode($$, $3); addASTNode($$, $5); addASTNode($$, $6); }
     ;
 
 selecao_decl_else: ELSE statement
-    { $$ = newASTNode("selecao_decl_else"); addASTNode($$, $2); }
+    { $$ = newASTNode("Else"); addASTNode($$, $2); }
     | /* empty */
     { $$ = NULL; }
     ;
@@ -356,9 +356,9 @@ expressao: var ATRIBUICAO expressao
     ;
 
 var: ID
-    { $$ = newASTNodeValue("var", $1); }
+    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", yytext)); }
     | ID ABRE_COLCHETE expressao FECHA_COLCHETE
-    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", $1)); addASTNode($$, $3); }
+    { $$ = newASTNode("var"); addASTNode($$, newASTNodeValue("ID", yytext)); addASTNode($$, $3); }
     ;
 
 simples_expressao: soma_expressao relacional soma_expressao
@@ -381,16 +381,16 @@ relacional: MENOR_IGUAL
     ;
 
 soma_expressao: soma_expressao SOMA termo
-    { $$ = newASTNode("soma_expressao"); addASTNode($$, $1); addASTNode($$, $3); }
+    { $$ = newASTNode("Soma"); addASTNode($$, $1); addASTNode($$, $3); }
     | soma_expressao SUBTRACAO termo
-    { $$ = newASTNode("soma_expressao"); addASTNode($$, $1); addASTNode($$, $3); }
+    { $$ = newASTNode("Sub"); addASTNode($$, $1); addASTNode($$, $3); }
     | termo
     ;
 
 termo: termo MULTIPLICACAO fator
-    { $$ = newASTNode("termo"); addASTNode($$, $1); addASTNode($$, $3); }
+    { $$ = newASTNode("Mult"); addASTNode($$, $1); addASTNode($$, $3); }
     | termo DIVISAO fator
-    { $$ = newASTNode("termo"); addASTNode($$, $1); addASTNode($$, $3); }
+    { $$ = newASTNode("Div"); addASTNode($$, $1); addASTNode($$, $3); }
     | fator
     ;
 
@@ -403,7 +403,7 @@ fator: ABRE_PARENTESE expressao FECHA_PARENTESE
     ;
 
 ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE
-    { $$ = newASTNode("ativacao"); addASTNode($$, newASTNodeValue("ID", $1)); addASTNode($$, $3); }
+    { $$ = newASTNode("ativacao"); addASTNode($$, newASTNodeValue("ID", yytext)); addASTNode($$, $3); }
     ;
 
 args: arg_lista
@@ -494,11 +494,6 @@ int yylex(void) {
         yylineno = lex->line;
     }while(flag == 1 && tokentype == 285);
 
-    /* printf("\nFlag: %d\n", flag);
-    printf("Token: %s\n", lex->token);
-    printf("Token Type: %d\n", lex->token_type);
-    printf("Line: %d\n\n", lex->line); */
-
     if (flag == -1)
     {
         yyerror (YY_("lexical error"));
@@ -524,6 +519,6 @@ int yylex(void) {
 int main(void) {
     yyparse();
     printAST(root, 0);
-    semanticAnalysis(root, &TabelaSimbolos);    
+    //semanticAnalysis(root, &TabelaSimbolos);    
     return 0;
 }
