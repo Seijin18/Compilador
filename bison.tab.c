@@ -1440,13 +1440,13 @@ yyreduce:
 
   case 7: /* var_declaracao: tipo_especificador ID PONTO_VIRGULA  */
 #line 270 "bison.y"
-                                                    { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", yytext)); }
+                                                    { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), (yyvsp[-2].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-1].stringValue))); }
 #line 1445 "bison.tab.c"
     break;
 
   case 8: /* var_declaracao: tipo_especificador ID ABRE_COLCHETE NUMERO FECHA_COLCHETE PONTO_VIRGULA  */
 #line 271 "bison.y"
-                                                                                        { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), (yyvsp[-5].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", yytext)); }
+                                                                                        { (yyval.nodeValue) = newASTNode("var_declaracao"); addASTNode((yyval.nodeValue), (yyvsp[-5].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-4].stringValue))); }
 #line 1451 "bison.tab.c"
     break;
 
@@ -1488,13 +1488,13 @@ yyreduce:
 
   case 16: /* param: tipo_especificador ID  */
 #line 294 "bison.y"
-    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", yytext)); }
+    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[0].stringValue))); }
 #line 1493 "bison.tab.c"
     break;
 
   case 17: /* param: tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE  */
 #line 296 "bison.y"
-    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), (yyvsp[-3].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", yytext)); }
+    { (yyval.nodeValue) = newASTNode("param"); addASTNode((yyval.nodeValue), (yyvsp[-3].nodeValue)); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-2].stringValue))); }
 #line 1499 "bison.tab.c"
     break;
 
@@ -1614,13 +1614,13 @@ yyreduce:
 
   case 38: /* var: ID  */
 #line 359 "bison.y"
-    { (yyval.nodeValue) = newASTNode("var"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", yytext)); }
+    { (yyval.nodeValue) = newASTNode("var"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[0].stringValue))); }
 #line 1619 "bison.tab.c"
     break;
 
   case 39: /* var: ID ABRE_COLCHETE expressao FECHA_COLCHETE  */
 #line 361 "bison.y"
-    { (yyval.nodeValue) = newASTNode("var"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", yytext)); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+    { (yyval.nodeValue) = newASTNode("var"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-3].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
 #line 1625 "bison.tab.c"
     break;
 
@@ -1704,7 +1704,7 @@ yyreduce:
 
   case 58: /* ativacao: ID ABRE_PARENTESE args FECHA_PARENTESE  */
 #line 406 "bison.y"
-    { (yyval.nodeValue) = newASTNode("ativacao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", yytext)); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
+    { (yyval.nodeValue) = newASTNode("ativacao"); addASTNode((yyval.nodeValue), newASTNodeValue("ID", (yyvsp[-3].stringValue))); addASTNode((yyval.nodeValue), (yyvsp[-1].nodeValue)); }
 #line 1709 "bison.tab.c"
     break;
 

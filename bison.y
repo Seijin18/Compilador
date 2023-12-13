@@ -291,9 +291,9 @@ param_lista: param_lista VIRGULA param
     ;
 
 param: tipo_especificador ID
-    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $1)); }
+    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $2)); }
     | tipo_especificador ID ABRE_COLCHETE FECHA_COLCHETE
-    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $1)); }
+    { $$ = newASTNode("param"); addASTNode($$, $1); addASTNode($$, newASTNodeValue("ID", $2)); }
     ;
 
 composto_decl: ABRE_CHAVES local_declaracoes statement_lista FECHA_CHAVES
