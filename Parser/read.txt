@@ -1,0 +1,7 @@
+int god (int u, int v) {
+    if (u > v) {
+        return u;
+    } else{
+        return v;
+    }
+}

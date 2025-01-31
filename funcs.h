@@ -36,6 +36,7 @@ int get_next_lexema_tabela(Lexema *lex, Bloco *buffer, FILE *fp, int tabela[28][
 unsigned int hash(int lex_sum);
 int Get_Char_Value(char *c);
 int Get_Token_Type(char *c);
+
 Node* Cria_Node(int key, char *item);
 void Lista_Inicia(Lista *Lista);
 void Lista_Insere(Lista *Lista, int key, char *item);
@@ -44,9 +45,11 @@ int Pesquisa_Hash(int chave, Lista *Tabela, int tamanho);
 int Insere_Hash(int chave, char *item, Lista *tabela, int tamanho);
 void Tabela_Inicia(Lista *tabela, int tamanho);
 void Deallocate_Tabela(Lista *tabela, int tamanho);
+
 ASTNode* newASTNode(char* type);
 ASTNode* newASTNodeValue(char* type, char* value);
 ASTNode* addASTNode(ASTNode* node, ASTNode* child);
+
 SymbolTable* createSymbolTable();
 SymbolTable* addSymbol(SymbolTable* TabelaSimbolo, char* id, char* type);
 void generateSymbolTable(ASTNode* node, SymbolTable** TabelaSimbolo);
