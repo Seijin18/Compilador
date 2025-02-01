@@ -73,6 +73,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define MAX 100
 
@@ -93,7 +94,7 @@ int yyerror(char *s);
 int yylex(void);
 
 
-#line 97 "bison.tab.c"
+#line 98 "bison.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -181,7 +182,9 @@ enum yysymbol_kind_t
   YYSYMBOL_fator = 57,                     /* fator  */
   YYSYMBOL_ativacao = 58,                  /* ativacao  */
   YYSYMBOL_args = 59,                      /* args  */
-  YYSYMBOL_arg_lista = 60                  /* arg_lista  */
+  YYSYMBOL_arg_lista = 60,                 /* arg_lista  */
+  YYSYMBOL_id = 61,                        /* id  */
+  YYSYMBOL_num = 62                        /* num  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -509,16 +512,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  9
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   100
+#define YYLAST   103
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  31
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  30
+#define YYNNTS  32
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  63
+#define YYNRULES  65
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  103
+#define YYNSTATES  105
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   285
@@ -568,15 +571,15 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
-       0,    47,    47,    50,    51,    54,    55,    58,    59,    62,
-      63,    66,    69,    70,    73,    74,    77,    78,    81,    84,
-      85,    88,    89,    92,    93,    94,    95,    96,    99,   100,
-     103,   104,   107,   110,   111,   115,   116,   119,   120,   123,
-     124,   128,   129,   130,   131,   132,   133,   136,   137,   140,
-     141,   144,   145,   148,   149,   152,   153,   154,   155,   158,
-     159,   162,   165,   166
+       0,    51,    51,    57,    61,    64,    65,    68,    76,    87,
+      91,    97,   112,   113,   116,   120,   123,   131,   140,   150,
+     158,   161,   169,   172,   173,   174,   175,   176,   179,   180,
+     183,   188,   196,   203,   204,   211,   216,   221,   222,   229,
+     234,   240,   241,   242,   243,   244,   245,   248,   253,   258,
+     259,   262,   267,   272,   273,   276,   277,   278,   279,   282,
+     289,   297,   300,   308,   313,   321
 };
 #endif
 
@@ -601,7 +604,8 @@ static const char *const yytname[] =
   "local_declaracoes", "statement_lista", "statement", "expressao_decl",
   "selecao_decl", "iteracao_decl", "retorno_decl", "expressao", "var",
   "simples_expressao", "relacional", "soma_expressao", "aditivo", "termo",
-  "operador_multiplicativo", "fator", "ativacao", "args", "arg_lista", YY_NULLPTR
+  "operador_multiplicativo", "fator", "ativacao", "args", "arg_lista",
+  "id", "num", YY_NULLPTR
 };
 
 static const char *
@@ -611,7 +615,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-86)
+#define YYPACT_NINF (-52)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -625,17 +629,17 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      13,   -86,   -86,     1,    13,   -86,   -86,     9,   -86,   -86,
-     -86,   -16,   -86,    36,    47,    28,    52,    44,    53,   -86,
-      48,    54,    46,    13,    56,    57,   -86,   -86,   -86,   -86,
-     -86,    13,   -86,    73,     0,    19,   -86,    33,    58,    59,
-      11,   -86,    34,   -86,   -86,   -86,   -86,   -86,   -86,   -86,
-      63,    60,   -86,    50,    51,   -86,   -86,    23,    34,    34,
-      34,   -86,    64,    62,   -86,    34,   -86,   -86,   -86,   -86,
-     -86,   -86,   -86,   -86,    34,    34,   -86,   -86,    34,   -86,
-     -86,    65,    66,    61,    67,    68,   -86,   -86,   -86,   -86,
-      55,    51,   -86,   -86,    34,   -86,    27,    27,   -86,    85,
-     -86,    27,   -86
+      51,   -52,   -52,    15,    51,   -52,   -52,    19,   -52,   -52,
+     -52,   -52,   -16,   -52,    63,    27,    11,    19,    21,    54,
+     -52,   -52,    53,    28,    50,    51,    57,    55,   -52,   -52,
+     -52,   -52,   -52,    51,   -52,    19,     9,    -5,    59,    60,
+      31,   -52,    38,   -52,   -52,   -52,   -52,   -52,   -52,   -52,
+      64,    66,   -52,    52,    30,   -52,   -52,    48,   -52,    38,
+      38,   -52,    67,    56,   -52,    38,   -52,   -52,   -52,   -52,
+     -52,   -52,   -52,   -52,    38,    38,   -52,   -52,    38,    23,
+      38,    65,    68,   -52,   -52,   -52,   -52,    58,    30,   -52,
+     -52,   -52,    69,    62,    61,     0,     0,   -52,    38,   -52,
+      85,   -52,   -52,     0,   -52
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -644,32 +648,34 @@ static const yytype_int8 yypact[] =
 static const yytype_int8 yydefact[] =
 {
        0,     9,    10,     0,     2,     4,     5,     0,     6,     1,
-       3,     0,     7,     0,     0,    10,     0,     0,    12,    15,
-       0,    16,     0,     0,     0,     0,    20,    11,    14,     8,
-      17,    22,    19,     0,     0,     0,    58,    37,     0,     0,
+       3,    64,     0,     7,     0,     0,    10,     0,     0,    12,
+      15,    65,     0,    16,     0,     0,     0,     0,    20,    11,
+      14,     8,    17,    22,    19,     0,     0,     0,     0,     0,
        0,    29,     0,    18,    24,    21,    23,    25,    26,    27,
-       0,    56,    36,    40,    48,    52,    57,     0,     0,     0,
+       0,    56,    36,    40,    48,    52,    57,    37,    58,     0,
        0,    33,     0,     0,    28,     0,    45,    46,    43,    42,
-      44,    41,    49,    50,     0,     0,    53,    54,     0,    60,
-      63,     0,    61,     0,     0,     0,    34,    55,    35,    56,
-      39,    47,    51,    59,     0,    38,     0,     0,    62,    30,
-      32,     0,    31
+      44,    41,    49,    50,     0,     0,    53,    54,     0,     0,
+       0,     0,     0,    34,    55,    35,    56,    39,    47,    51,
+      60,    63,     0,    61,     0,     0,     0,    59,     0,    38,
+      30,    32,    62,     0,    31
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -86,   -86,   -86,    75,    69,    29,   -86,   -86,   -86,    71,
-      74,   -86,   -86,   -85,   -86,   -86,   -86,   -86,   -40,   -35,
-     -86,   -86,    21,   -86,    22,   -86,    20,   -86,   -86,   -86
+     -52,   -52,   -52,    88,    70,    18,   -52,   -52,   -52,    71,
+      73,   -52,   -52,   -51,   -52,   -52,   -52,   -52,   -40,   -18,
+     -52,   -52,    24,   -52,    20,   -52,    22,   -52,   -52,   -52,
+      -6,    84
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     3,     4,     5,     6,     7,     8,    17,    18,    19,
-      44,    31,    34,    45,    46,    47,    48,    49,    50,    51,
-      52,    74,    53,    75,    54,    78,    55,    56,    81,    82
+       0,     3,     4,     5,     6,     7,     8,    18,    19,    20,
+      44,    33,    36,    45,    46,    47,    48,    49,    50,    51,
+      52,    74,    53,    75,    54,    78,    55,    56,    92,    93,
+      57,    58
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -677,32 +683,32 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      62,     9,    63,    36,    37,    38,    12,    39,    13,    40,
-      14,    99,   100,    11,    36,    37,   102,    80,    83,    84,
-      85,     1,    41,     2,    42,    88,    36,    37,    26,    43,
-      36,    37,    38,    61,    39,    42,    40,    36,    37,    89,
-      89,    12,    16,    89,     1,    14,    15,    42,    79,    41,
-      20,    42,    16,   -13,    98,    26,    21,    57,    42,    58,
-      33,    66,    67,    68,    69,    70,    71,    72,    73,    22,
-      76,    77,    72,    73,    26,    24,    23,    35,    29,    10,
-      25,    65,    59,    60,    30,    64,    86,    87,    95,    94,
-      93,   101,    96,    97,    28,    90,    27,    91,    92,     0,
-      32
+      62,    12,    63,    21,    11,    38,    13,    39,    14,    40,
+      15,    23,    21,    11,    38,     9,    39,    13,    40,    81,
+      82,    15,    41,    11,    42,    85,    21,    11,    28,    37,
+      21,    41,    17,    42,    21,    11,   -13,    28,    43,    91,
+      94,    21,    11,    17,   100,   101,    24,    42,    90,    76,
+      77,    35,   104,    61,    27,    42,    86,    86,   102,     1,
+      86,     2,    42,    66,    67,    68,    69,    70,    71,    72,
+      73,     1,    79,    16,    80,    72,    73,    25,    28,    31,
+      26,    84,    32,    59,    60,    98,    64,    65,    99,    83,
+      95,   103,    10,    96,    97,    88,    30,    29,    87,    22,
+      89,     0,     0,    34
 };
 
 static const yytype_int8 yycheck[] =
 {
-      40,     0,    42,     3,     4,     5,    22,     7,    24,     9,
-      26,    96,    97,     4,     3,     4,   101,    57,    58,    59,
-      60,     8,    22,    10,    24,    65,     3,     4,    28,    29,
-       3,     4,     5,    22,     7,    24,     9,     3,     4,    74,
-      75,    22,    13,    78,     8,    26,    10,    24,    25,    22,
-       3,    24,    23,    25,    94,    28,     4,    24,    24,    26,
-      31,    11,    12,    13,    14,    15,    16,    17,    18,    25,
-      19,    20,    17,    18,    28,    27,    23,     4,    22,     4,
-      26,    21,    24,    24,    27,    22,    22,    25,    27,    23,
-      25,     6,    25,    25,    23,    74,    22,    75,    78,    -1,
-      31
+      40,     7,    42,     3,     4,     5,    22,     7,    24,     9,
+      26,    17,     3,     4,     5,     0,     7,    22,     9,    59,
+      60,    26,    22,     4,    24,    65,     3,     4,    28,    35,
+       3,    22,    14,    24,     3,     4,    25,    28,    29,    79,
+      80,     3,     4,    25,    95,    96,    25,    24,    25,    19,
+      20,    33,   103,    22,    26,    24,    74,    75,    98,     8,
+      78,    10,    24,    11,    12,    13,    14,    15,    16,    17,
+      18,     8,    24,    10,    26,    17,    18,    23,    28,    22,
+      27,    25,    27,    24,    24,    23,    22,    21,    27,    22,
+      25,     6,     4,    25,    25,    75,    25,    24,    74,    15,
+      78,    -1,    -1,    33
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -710,16 +716,16 @@ static const yytype_int8 yycheck[] =
 static const yytype_int8 yystos[] =
 {
        0,     8,    10,    32,    33,    34,    35,    36,    37,     0,
-      34,     4,    22,    24,    26,    10,    36,    38,    39,    40,
-       3,     4,    25,    23,    27,    26,    28,    41,    40,    22,
-      27,    42,    35,    36,    43,     4,     3,     4,     5,     7,
+      34,     4,    61,    22,    24,    26,    10,    36,    38,    39,
+      40,     3,    62,    61,    25,    23,    27,    26,    28,    41,
+      40,    22,    27,    42,    35,    36,    43,    61,     5,     7,
        9,    22,    24,    29,    41,    44,    45,    46,    47,    48,
-      49,    50,    51,    53,    55,    57,    58,    24,    26,    24,
+      49,    50,    51,    53,    55,    57,    58,    61,    62,    24,
       24,    22,    49,    49,    22,    21,    11,    12,    13,    14,
-      15,    16,    17,    18,    52,    54,    19,    20,    56,    25,
-      49,    59,    60,    49,    49,    49,    22,    25,    49,    50,
-      53,    55,    57,    25,    23,    27,    25,    25,    49,    44,
-      44,     6,    44
+      15,    16,    17,    18,    52,    54,    19,    20,    56,    24,
+      26,    49,    49,    22,    25,    49,    50,    53,    55,    57,
+      25,    49,    59,    60,    49,    25,    25,    25,    23,    27,
+      44,    44,    49,     6,    44
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
@@ -731,7 +737,7 @@ static const yytype_int8 yyr1[] =
       46,    46,    47,    48,    48,    49,    49,    50,    50,    51,
       51,    52,    52,    52,    52,    52,    52,    53,    53,    54,
       54,    55,    55,    56,    56,    57,    57,    57,    57,    58,
-      58,    59,    60,    60
+      58,    59,    60,    60,    61,    62
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -743,7 +749,7 @@ static const yytype_int8 yyr2[] =
        5,     7,     5,     2,     3,     3,     1,     1,     4,     3,
        1,     1,     1,     1,     1,     1,     1,     3,     1,     1,
        1,     3,     1,     1,     1,     3,     1,     1,     1,     4,
-       3,     1,     3,     1
+       3,     1,     3,     1,     1,     1
 };
 
 
@@ -1206,8 +1212,543 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
+  case 2: /* programa: declaracao_lista  */
+#line 51 "bison.y"
+                           { 
+            root = newAASNodeStmt(KProg);
+            addAASNode(root, (yyvsp[0].node));
+        }
+#line 1222 "bison.tab.c"
+    break;
 
-#line 1211 "bison.tab.c"
+  case 3: /* declaracao_lista: declaracao_lista declaracao  */
+#line 57 "bison.y"
+                                              {
+                    (yyval.node) = (yyvsp[-1].node);
+                    addAASNodeSibling((yyval.node), (yyvsp[0].node));
+                }
+#line 1231 "bison.tab.c"
+    break;
+
+  case 4: /* declaracao_lista: declaracao  */
+#line 61 "bison.y"
+                             { (yyval.node) = (yyvsp[0].node); }
+#line 1237 "bison.tab.c"
+    break;
+
+  case 5: /* declaracao: var_declaracao  */
+#line 64 "bison.y"
+                           { (yyval.node) = (yyvsp[0].node); }
+#line 1243 "bison.tab.c"
+    break;
+
+  case 6: /* declaracao: fun_declaracao  */
+#line 65 "bison.y"
+                           { (yyval.node) = (yyvsp[0].node); }
+#line 1249 "bison.tab.c"
+    break;
+
+  case 7: /* var_declaracao: tipo_especificador id PTV  */
+#line 68 "bison.y"
+                                          {
+                    (yyval.node) = (yyvsp[-2].node);
+                    addAASNode((yyval.node), newAASNodeStmt(KVar));
+                    (yyval.node)->children->line = (yyvsp[-1].node)->line;
+                    (yyval.node)->children->type = (yyvsp[-2].node)->type;
+                    copyString((yyval.node)->children->name, (yyvsp[-1].node)->name);
+                    copyString((yyval.node)->children->escopo, "global");
+                }
+#line 1262 "bison.tab.c"
+    break;
+
+  case 8: /* var_declaracao: tipo_especificador id ACOL num FCOL PTV  */
+#line 76 "bison.y"
+                                                          {
+                    (yyval.node) = (yyvsp[-5].node);
+                    addAASNode((yyval.node), newAASNodeStmt(KVet));
+                    (yyval.node)->children->line = (yyvsp[-4].node)->line;
+                    (yyval.node)->children->type = (yyvsp[-5].node)->type;
+                    copyString((yyval.node)->children->name, (yyvsp[-4].node)->name);
+                    copyString((yyval.node)->children->escopo, "global");
+                    addAASNode((yyval.node)->children, (yyvsp[-2].node));
+                }
+#line 1276 "bison.tab.c"
+    break;
+
+  case 9: /* tipo_especificador: INT  */
+#line 87 "bison.y"
+                        { 
+                        (yyval.node) = newAASNodeExp(KType); 
+                        (yyval.node)->type = KInt; 
+                        }
+#line 1285 "bison.tab.c"
+    break;
+
+  case 10: /* tipo_especificador: VOID  */
+#line 91 "bison.y"
+                           {
+                        (yyval.node) = newAASNodeExp(KType);
+                        (yyval.node)->type = KVoid;
+                    }
+#line 1294 "bison.tab.c"
+    break;
+
+  case 11: /* fun_declaracao: tipo_especificador id APAR params FPAR composto_decl  */
+#line 97 "bison.y"
+                                                                     {
+        (yyval.node) = (yyvsp[-5].node);
+        addAASNode((yyval.node), newAASNodeStmt(KFunc));
+        (yyval.node)->children->line = (yyvsp[-4].node)->line;
+        (yyval.node)->children->type = (yyvsp[-5].node)->type;
+        copyString((yyval.node)->children->name, (yyvsp[-4].node)->name);
+        copyString((yyval.node)->children->escopo, "global");
+        updateEscopo((yyvsp[-2].node), (yyval.node)->children->name);
+        updateEscopo((yyvsp[0].node), (yyval.node)->children->name);
+        addAASNode((yyval.node), (yyvsp[-2].node));
+        addAASNode((yyval.node), (yyvsp[0].node));
+        
+}
+#line 1312 "bison.tab.c"
+    break;
+
+  case 12: /* params: param_lista  */
+#line 112 "bison.y"
+                    { (yyval.node) = (yyvsp[0].node); }
+#line 1318 "bison.tab.c"
+    break;
+
+  case 13: /* params: VOID  */
+#line 113 "bison.y"
+           { (yyval.node) = NULL; }
+#line 1324 "bison.tab.c"
+    break;
+
+  case 14: /* param_lista: param_lista VIR param  */
+#line 116 "bison.y"
+                                   { 
+        (yyval.node) = (yyvsp[-2].node);
+        addAASNodeSibling((yyval.node), (yyvsp[0].node));
+    }
+#line 1333 "bison.tab.c"
+    break;
+
+  case 15: /* param_lista: param  */
+#line 120 "bison.y"
+            { (yyval.node) = (yyvsp[0].node); }
+#line 1339 "bison.tab.c"
+    break;
+
+  case 16: /* param: tipo_especificador id  */
+#line 123 "bison.y"
+                             {
+        (yyval.node) = (yyvsp[-1].node);
+        addAASNode((yyval.node), newAASNodeStmt(KVar));
+        (yyval.node)->children->line = (yyvsp[0].node)->line;
+        (yyval.node)->children->type = (yyvsp[-1].node)->type;
+        copyString((yyval.node)->children->name, (yyvsp[0].node)->name);
+
+    }
+#line 1352 "bison.tab.c"
+    break;
+
+  case 17: /* param: tipo_especificador id ACOL FCOL  */
+#line 131 "bison.y"
+                                      {
+        (yyval.node) = (yyvsp[-3].node);
+        addAASNode((yyval.node), newAASNodeStmt(KVet));
+        (yyval.node)->children->line = (yyvsp[-2].node)->line;
+        (yyval.node)->children->type = (yyvsp[-3].node)->type;
+        copyString((yyval.node)->children->name, (yyvsp[-2].node)->name);
+    }
+#line 1364 "bison.tab.c"
+    break;
+
+  case 18: /* composto_decl: ACHV local_declaracoes statement_lista FCHV  */
+#line 140 "bison.y"
+                                                           {
+        if ((yyvsp[-2].node) != NULL) {
+            (yyval.node) = (yyvsp[-2].node);
+            addAASNodeSibling((yyval.node), (yyvsp[-1].node));
+        } else {
+            (yyval.node) = (yyvsp[-1].node);
+        }
+    }
+#line 1377 "bison.tab.c"
+    break;
+
+  case 19: /* local_declaracoes: local_declaracoes var_declaracao  */
+#line 150 "bison.y"
+                                                    {
+        if ((yyvsp[-1].node) == NULL) {
+            (yyval.node) = (yyvsp[0].node);
+        } else {
+            (yyval.node) = (yyvsp[-1].node);
+            addAASNodeSibling((yyval.node), (yyvsp[0].node));
+        }
+    }
+#line 1390 "bison.tab.c"
+    break;
+
+  case 20: /* local_declaracoes: %empty  */
+#line 158 "bison.y"
+      { (yyval.node) = NULL; }
+#line 1396 "bison.tab.c"
+    break;
+
+  case 21: /* statement_lista: statement_lista statement  */
+#line 161 "bison.y"
+                                           {
+        if ((yyvsp[-1].node) == NULL) {
+            (yyval.node) = (yyvsp[0].node);
+        } else {
+            (yyval.node) = (yyvsp[-1].node);
+            addAASNodeSibling((yyval.node), (yyvsp[0].node));
+        }
+    }
+#line 1409 "bison.tab.c"
+    break;
+
+  case 22: /* statement_lista: %empty  */
+#line 169 "bison.y"
+      { (yyval.node) = NULL; }
+#line 1415 "bison.tab.c"
+    break;
+
+  case 23: /* statement: expressao_decl  */
+#line 172 "bison.y"
+                          { (yyval.node) = (yyvsp[0].node); }
+#line 1421 "bison.tab.c"
+    break;
+
+  case 24: /* statement: composto_decl  */
+#line 173 "bison.y"
+                    { (yyval.node) = (yyvsp[0].node); }
+#line 1427 "bison.tab.c"
+    break;
+
+  case 25: /* statement: selecao_decl  */
+#line 174 "bison.y"
+                   { (yyval.node) = (yyvsp[0].node); }
+#line 1433 "bison.tab.c"
+    break;
+
+  case 26: /* statement: iteracao_decl  */
+#line 175 "bison.y"
+                    { (yyval.node) = (yyvsp[0].node); }
+#line 1439 "bison.tab.c"
+    break;
+
+  case 27: /* statement: retorno_decl  */
+#line 176 "bison.y"
+                   { (yyval.node) = (yyvsp[0].node); }
+#line 1445 "bison.tab.c"
+    break;
+
+  case 28: /* expressao_decl: expressao PTV  */
+#line 179 "bison.y"
+                              { (yyval.node) = (yyvsp[-1].node); }
+#line 1451 "bison.tab.c"
+    break;
+
+  case 29: /* expressao_decl: PTV  */
+#line 180 "bison.y"
+          { (yyval.node) = NULL; }
+#line 1457 "bison.tab.c"
+    break;
+
+  case 30: /* selecao_decl: IF APAR expressao FPAR statement  */
+#line 183 "bison.y"
+                                               {
+        (yyval.node) = newAASNodeStmt(KIf);
+        addAASNode((yyval.node), (yyvsp[-2].node));
+        addAASNode((yyval.node), (yyvsp[0].node));
+    }
+#line 1467 "bison.tab.c"
+    break;
+
+  case 31: /* selecao_decl: IF APAR expressao FPAR statement ELSE statement  */
+#line 188 "bison.y"
+                                                      {
+        (yyval.node) = newAASNodeStmt(KIf);
+        addAASNode((yyval.node), (yyvsp[-4].node));
+        addAASNode((yyval.node), (yyvsp[-2].node));
+        addAASNode((yyval.node), (yyvsp[0].node));
+    }
+#line 1478 "bison.tab.c"
+    break;
+
+  case 32: /* iteracao_decl: WHILE APAR expressao FPAR statement  */
+#line 196 "bison.y"
+                                                  {
+        (yyval.node) = newAASNodeStmt(KWhile);
+        addAASNode((yyval.node), (yyvsp[-2].node));
+        addAASNode((yyval.node), (yyvsp[0].node));
+    }
+#line 1488 "bison.tab.c"
+    break;
+
+  case 33: /* retorno_decl: RETURN PTV  */
+#line 203 "bison.y"
+                         { (yyval.node) = newAASNodeStmt(KReturn); }
+#line 1494 "bison.tab.c"
+    break;
+
+  case 34: /* retorno_decl: RETURN expressao PTV  */
+#line 204 "bison.y"
+                           {
+        (yyval.node) = newAASNodeStmt(KReturn);
+        addAASNode((yyval.node), (yyvsp[-1].node));
+    }
+#line 1503 "bison.tab.c"
+    break;
+
+  case 35: /* expressao: var ATR expressao  */
+#line 211 "bison.y"
+                             {
+        (yyval.node) = newAASNodeStmt(KAssign);
+        addAASNode((yyval.node), (yyvsp[-2].node));
+        addAASNode((yyval.node), (yyvsp[0].node));
+    }
+#line 1513 "bison.tab.c"
+    break;
+
+  case 36: /* expressao: simples_expressao  */
+#line 216 "bison.y"
+                        {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 1521 "bison.tab.c"
+    break;
+
+  case 37: /* var: id  */
+#line 221 "bison.y"
+        { (yyval.node) = (yyvsp[0].node); }
+#line 1527 "bison.tab.c"
+    break;
+
+  case 38: /* var: id ACOL expressao FCOL  */
+#line 222 "bison.y"
+                             {
+        (yyval.node) = newAASNodeExp(KVetId);
+        addAASNode((yyval.node), (yyvsp[-3].node));
+        addAASNode((yyval.node), (yyvsp[-1].node));
+    }
+#line 1537 "bison.tab.c"
+    break;
+
+  case 39: /* simples_expressao: soma_expressao relacional soma_expressao  */
+#line 229 "bison.y"
+                                                            {
+    (yyval.node) = (yyvsp[-1].node);
+    addAASNode((yyval.node), (yyvsp[-2].node));
+    addAASNode((yyval.node), (yyvsp[0].node));
+}
+#line 1547 "bison.tab.c"
+    break;
+
+  case 40: /* simples_expressao: soma_expressao  */
+#line 234 "bison.y"
+                     {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 1555 "bison.tab.c"
+    break;
+
+  case 41: /* relacional: LE  */
+#line 240 "bison.y"
+               { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = LE; }
+#line 1561 "bison.tab.c"
+    break;
+
+  case 42: /* relacional: LT  */
+#line 241 "bison.y"
+         { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = LT; }
+#line 1567 "bison.tab.c"
+    break;
+
+  case 43: /* relacional: GT  */
+#line 242 "bison.y"
+         { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = GT; }
+#line 1573 "bison.tab.c"
+    break;
+
+  case 44: /* relacional: GE  */
+#line 243 "bison.y"
+         { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = GE; }
+#line 1579 "bison.tab.c"
+    break;
+
+  case 45: /* relacional: COMP  */
+#line 244 "bison.y"
+           { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = COMP; }
+#line 1585 "bison.tab.c"
+    break;
+
+  case 46: /* relacional: DIF  */
+#line 245 "bison.y"
+          { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = DIF; }
+#line 1591 "bison.tab.c"
+    break;
+
+  case 47: /* soma_expressao: soma_expressao aditivo termo  */
+#line 248 "bison.y"
+                                             {
+    (yyval.node) = (yyvsp[-1].node);
+    addAASNode((yyval.node), (yyvsp[-2].node));
+    addAASNode((yyval.node), (yyvsp[0].node));
+}
+#line 1601 "bison.tab.c"
+    break;
+
+  case 48: /* soma_expressao: termo  */
+#line 253 "bison.y"
+            {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 1609 "bison.tab.c"
+    break;
+
+  case 49: /* aditivo: SOMA  */
+#line 258 "bison.y"
+              { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = SOMA; }
+#line 1615 "bison.tab.c"
+    break;
+
+  case 50: /* aditivo: SUB  */
+#line 259 "bison.y"
+             { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = SUB; }
+#line 1621 "bison.tab.c"
+    break;
+
+  case 51: /* termo: termo operador_multiplicativo fator  */
+#line 262 "bison.y"
+                                           {
+    (yyval.node) = (yyvsp[-1].node);
+    addAASNode((yyval.node), (yyvsp[-2].node));
+    addAASNode((yyval.node), (yyvsp[0].node));
+}
+#line 1631 "bison.tab.c"
+    break;
+
+  case 52: /* termo: fator  */
+#line 267 "bison.y"
+            {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 1639 "bison.tab.c"
+    break;
+
+  case 53: /* operador_multiplicativo: MULT  */
+#line 272 "bison.y"
+                              { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = MULT; }
+#line 1645 "bison.tab.c"
+    break;
+
+  case 54: /* operador_multiplicativo: DIV  */
+#line 273 "bison.y"
+                             { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = DIV; }
+#line 1651 "bison.tab.c"
+    break;
+
+  case 55: /* fator: APAR expressao FPAR  */
+#line 276 "bison.y"
+                           { (yyval.node) = (yyvsp[-1].node); }
+#line 1657 "bison.tab.c"
+    break;
+
+  case 56: /* fator: var  */
+#line 277 "bison.y"
+          { (yyval.node) = (yyvsp[0].node); }
+#line 1663 "bison.tab.c"
+    break;
+
+  case 57: /* fator: ativacao  */
+#line 278 "bison.y"
+               { (yyval.node) = (yyvsp[0].node); }
+#line 1669 "bison.tab.c"
+    break;
+
+  case 58: /* fator: num  */
+#line 279 "bison.y"
+          { (yyval.node) = (yyvsp[0].node); }
+#line 1675 "bison.tab.c"
+    break;
+
+  case 59: /* ativacao: id APAR args FPAR  */
+#line 282 "bison.y"
+                            {
+        (yyval.node) = newAASNodeStmt(KCall);
+        (yyval.node)->token = lex->token;
+        (yyval.node)->line = lex->line;
+        copyString((yyval.node)->name, (yyvsp[-3].node)->name);
+        addAASNode((yyval.node), (yyvsp[-1].node));
+    }
+#line 1687 "bison.tab.c"
+    break;
+
+  case 60: /* ativacao: id APAR FPAR  */
+#line 289 "bison.y"
+                   {
+        (yyval.node) = newAASNodeStmt(KCall);
+        (yyval.node)->token = lex->token;
+        (yyval.node)->line = lex->line;
+        copyString((yyval.node)->name, (yyvsp[-2].node)->name);
+    }
+#line 1698 "bison.tab.c"
+    break;
+
+  case 61: /* args: arg_lista  */
+#line 297 "bison.y"
+                { (yyval.node) = (yyvsp[0].node); }
+#line 1704 "bison.tab.c"
+    break;
+
+  case 62: /* arg_lista: arg_lista VIR expressao  */
+#line 300 "bison.y"
+                                   {
+        if ((yyvsp[-2].node) == NULL) {
+            (yyval.node) = (yyvsp[0].node);
+        } else {
+            (yyval.node) = (yyvsp[-2].node);
+            addAASNodeSibling((yyval.node), (yyvsp[0].node));
+        }
+    }
+#line 1717 "bison.tab.c"
+    break;
+
+  case 63: /* arg_lista: expressao  */
+#line 308 "bison.y"
+                {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 1725 "bison.tab.c"
+    break;
+
+  case 64: /* id: ID  */
+#line 313 "bison.y"
+       {
+        (yyval.node) = newAASNodeExp(KId);
+        (yyval.node)->token = lex->token;
+        (yyval.node)->line = lex->line;
+        (yyval.node)->name = strdup(lex->lexema); 
+    }
+#line 1736 "bison.tab.c"
+    break;
+
+  case 65: /* num: NUM  */
+#line 321 "bison.y"
+         {
+        (yyval.node) = newAASNodeExp(KConst);
+        (yyval.node)->value = atoi(lex->lexema);
+        (yyval.node)->type = KInt;
+        (yyval.node)->line = lex->line;
+        (yyval.node)->token = lex->token;
+    }
+#line 1748 "bison.tab.c"
+    break;
+
+
+#line 1752 "bison.tab.c"
 
       default: break;
     }
@@ -1400,7 +1941,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 168 "bison.y"
+#line 329 "bison.y"
 
 int yyerror(char *s) {
     if (lex->token == ER) {
@@ -1426,11 +1967,28 @@ int yylex(void) {
     if (token == NUM) {
         yylval.intValue = atoi(lex->lexema);
     }
+    // printf("\nLexema: %s\nToken: %d\n", lex->lexema, lex->token);
     return token;
 }
 
 int main(int argc, char *argv[]) {
     int option = -1;
+    
+    /*
+    yydebug = 1;
+
+    FILE *debug_file = fopen("debug_log.txt", "w");
+    if (debug_file == NULL) {
+        perror("Failed to open debug log file");
+        return EXIT_FAILURE;
+    }
+
+    // Redirect stderr to the debug file
+    if (dup2(fileno(debug_file), fileno(stderr)) == -1) {
+        perror("Failed to redirect stderr");
+        fclose(debug_file);
+        return EXIT_FAILURE;
+    }*/
 
     if (argc < 2) {
         printf("Usage: %s <filename>\n", argv[0]);
@@ -1483,11 +2041,14 @@ int main(int argc, char *argv[]) {
         } while (token != EOF && token != ER);
     } else if (option == 1) {
         yyparse();
+        printAAS(root, 0);
     }
 
     fclose(fp);
     deallocate_buffer(buffer);
     deallocate_lex(lex);
+    deallocateAAS(root);
 
+    // fclose(debug_file);
     return 0;
 }

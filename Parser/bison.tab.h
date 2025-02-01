@@ -90,12 +90,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 27 "bison.y"
+#line 28 "bison.y"
 
     int intValue;
     char* stringValue;
+    AASNode* node;
 
-#line 99 "bison.tab.h"
+#line 100 "bison.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

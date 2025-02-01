@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define MAX 100
 
@@ -27,7 +28,10 @@ int yylex(void);
 %union {
     int intValue;
     char* stringValue;
+    AASNode* node;
 }
+
+// %debug
 
 %start programa
 %token NUM
@@ -37,134 +41,291 @@ int yylex(void);
 %token PTV VIR APAR FPAR ACOL 
 %token FCOL ACHV FCHV
 %token CMT
+%type <node> programa declaracao_lista declaracao var_declaracao tipo_especificador fun_declaracao params param_lista param composto_decl local_declaracoes statement_lista statement expressao_decl selecao_decl iteracao_decl retorno_decl expressao var simples_expressao relacional soma_expressao aditivo termo operador_multiplicativo fator ativacao args arg_lista id num
 
 %left SOMA SUB
 %left MULT DIV
 
 
-
 %%
-programa: declaracao_lista
+programa: declaracao_lista { 
+            root = newAASNodeStmt(KProg);
+            addAASNode(root, $1);
+        }
         ;
 
-declaracao_lista: declaracao_lista declaracao
-                | declaracao 
+declaracao_lista: declaracao_lista declaracao {
+                    $$ = $1;
+                    addAASNodeSibling($$, $2);
+                }
+                | declaracao { $$ = $1; }
                 ;
 
-declaracao: var_declaracao 
-          | fun_declaracao 
+declaracao: var_declaracao { $$ = $1; }
+          | fun_declaracao { $$ = $1; }
           ;
 
-var_declaracao: tipo_especificador ID PTV 
-                | tipo_especificador ID ACOL NUM FCOL PTV
-              ;
+var_declaracao: tipo_especificador id PTV {
+                    $$ = $1;
+                    addAASNode($$, newAASNodeStmt(KVar));
+                    $$->children->line = $2->line;
+                    $$->children->type = $1->type;
+                    copyString($$->children->name, $2->name);
+                    copyString($$->children->escopo, "global");
+                }
+                | tipo_especificador id ACOL num FCOL PTV {
+                    $$ = $1;
+                    addAASNode($$, newAASNodeStmt(KVet));
+                    $$->children->line = $2->line;
+                    $$->children->type = $1->type;
+                    copyString($$->children->name, $2->name);
+                    copyString($$->children->escopo, "global");
+                    addAASNode($$->children, $4);
+                }
+                ;
 
-tipo_especificador: INT
-                  | VOID
-                  ;
+tipo_especificador: INT { 
+                        $$ = newAASNodeExp(KType); 
+                        $$->type = KInt; 
+                        }
+                    | VOID {
+                        $$ = newAASNodeExp(KType);
+                        $$->type = KVoid;
+                    }
+                    ;
 
-fun_declaracao: tipo_especificador ID APAR params FPAR composto_decl
+fun_declaracao: tipo_especificador id APAR params FPAR composto_decl {
+        $$ = $1;
+        addAASNode($$, newAASNodeStmt(KFunc));
+        $$->children->line = $2->line;
+        $$->children->type = $1->type;
+        copyString($$->children->name, $2->name);
+        copyString($$->children->escopo, "global");
+        updateEscopo($4, $$->children->name);
+        updateEscopo($6, $$->children->name);
+        addAASNode($$, $4);
+        addAASNode($$, $6);
+        
+}
     ;
 
-params: param_lista
-    | VOID
+params: param_lista { $$ = $1; }
+    | VOID { $$ = NULL; }
     ;
 
-param_lista: param_lista VIR param
-    | param
+param_lista: param_lista VIR param { 
+        $$ = $1;
+        addAASNodeSibling($$, $3);
+    }
+    | param { $$ = $1; }
     ;
 
-param: tipo_especificador ID
-    | tipo_especificador ID ACOL FCOL
+param: tipo_especificador id {
+        $$ = $1;
+        addAASNode($$, newAASNodeStmt(KVar));
+        $$->children->line = $2->line;
+        $$->children->type = $1->type;
+        copyString($$->children->name, $2->name);
+
+    }
+    | tipo_especificador id ACOL FCOL {
+        $$ = $1;
+        addAASNode($$, newAASNodeStmt(KVet));
+        $$->children->line = $2->line;
+        $$->children->type = $1->type;
+        copyString($$->children->name, $2->name);
+    }
     ;
 
-composto_decl: ACHV local_declaracoes statement_lista FCHV
+composto_decl: ACHV local_declaracoes statement_lista FCHV {
+        if ($2 != NULL) {
+            $$ = $2;
+            addAASNodeSibling($$, $3);
+        } else {
+            $$ = $3;
+        }
+    }
     ;
 
-local_declaracoes: local_declaracoes var_declaracao
-    |
+local_declaracoes: local_declaracoes var_declaracao {
+        if ($1 == NULL) {
+            $$ = $2;
+        } else {
+            $$ = $1;
+            addAASNodeSibling($$, $2);
+        }
+    }
+    | { $$ = NULL; }
     ;
 
-statement_lista: statement_lista statement
-    |
+statement_lista: statement_lista statement {
+        if ($1 == NULL) {
+            $$ = $2;
+        } else {
+            $$ = $1;
+            addAASNodeSibling($$, $2);
+        }
+    }
+    | { $$ = NULL; }
     ;
 
-statement: expressao_decl
-    | composto_decl
-    | selecao_decl
-    | iteracao_decl
-    | retorno_decl
+statement: expressao_decl { $$ = $1; }
+    | composto_decl { $$ = $1; }
+    | selecao_decl { $$ = $1; }
+    | iteracao_decl { $$ = $1; }
+    | retorno_decl { $$ = $1; }
     ;
 
-expressao_decl: expressao PTV
-    | PTV
+expressao_decl: expressao PTV { $$ = $1; }
+    | PTV { $$ = NULL; }
     ;
 
-selecao_decl: IF APAR expressao FPAR statement
-    | IF APAR expressao FPAR statement ELSE statement
+selecao_decl: IF APAR expressao FPAR statement {
+        $$ = newAASNodeStmt(KIf);
+        addAASNode($$, $3);
+        addAASNode($$, $5);
+    }
+    | IF APAR expressao FPAR statement ELSE statement {
+        $$ = newAASNodeStmt(KIf);
+        addAASNode($$, $3);
+        addAASNode($$, $5);
+        addAASNode($$, $7);
+    }
     ;
 
-iteracao_decl: WHILE APAR expressao FPAR statement
+iteracao_decl: WHILE APAR expressao FPAR statement{
+        $$ = newAASNodeStmt(KWhile);
+        addAASNode($$, $3);
+        addAASNode($$, $5);
+    }
     ;
 
-retorno_decl: RETURN PTV
-    | RETURN expressao PTV
-    ;
-
-
-expressao: var ATR expressao
-    | simples_expressao
-    ;
-
-var: ID
-    | ID ACOL expressao FCOL
-    ;
-
-simples_expressao: soma_expressao relacional soma_expressao
-    | soma_expressao
+retorno_decl: RETURN PTV { $$ = newAASNodeStmt(KReturn); }
+    | RETURN expressao PTV {
+        $$ = newAASNodeStmt(KReturn);
+        addAASNode($$, $2);
+    }
     ;
 
 
-relacional: LE
-    | LT
-    | GT
-    | GE
-    | COMP
-    | DIF
+expressao: var ATR expressao {
+        $$ = newAASNodeStmt(KAssign);
+        addAASNode($$, $1);
+        addAASNode($$, $3);
+    }
+    | simples_expressao {
+        $$ = $1;
+    }
     ;
 
-soma_expressao: soma_expressao aditivo termo
-    | termo
+var: id { $$ = $1; }
+    | id ACOL expressao FCOL {
+        $$ = newAASNodeExp(KVetId);
+        addAASNode($$, $1);
+        addAASNode($$, $3);
+    }
     ;
 
-aditivo: SOMA
-       | SUB
+simples_expressao: soma_expressao relacional soma_expressao {
+    $$ = $2;
+    addAASNode($$, $1);
+    addAASNode($$, $3);
+}
+    | soma_expressao {
+        $$ = $1;
+    }
+    ;
+
+
+relacional: LE { $$ = newAASNodeExp(KOp); $$->token = LE; }
+    | LT { $$ = newAASNodeExp(KOp); $$->token = LT; }
+    | GT { $$ = newAASNodeExp(KOp); $$->token = GT; }
+    | GE { $$ = newAASNodeExp(KOp); $$->token = GE; }
+    | COMP { $$ = newAASNodeExp(KOp); $$->token = COMP; }
+    | DIF { $$ = newAASNodeExp(KOp); $$->token = DIF; }
+    ;
+
+soma_expressao: soma_expressao aditivo termo {
+    $$ = $2;
+    addAASNode($$, $1);
+    addAASNode($$, $3);
+}
+    | termo {
+        $$ = $1;
+    }
+    ;
+
+aditivo: SOMA { $$ = newAASNodeExp(KOp); $$->token = SOMA; }    
+       | SUB { $$ = newAASNodeExp(KOp); $$->token = SUB; }
        ;
 
-termo: termo operador_multiplicativo fator
-    | fator
+termo: termo operador_multiplicativo fator {
+    $$ = $2;
+    addAASNode($$, $1);
+    addAASNode($$, $3);
+}
+    | fator {
+        $$ = $1;
+    }
     ;
 
-operador_multiplicativo: MULT
-                       | DIV
+operador_multiplicativo: MULT { $$ = newAASNodeExp(KOp); $$->token = MULT; }
+                       | DIV { $$ = newAASNodeExp(KOp); $$->token = DIV; }
                        ;
 
-fator: APAR expressao FPAR
-    | var
-    | ativacao
-    | NUM
+fator: APAR expressao FPAR { $$ = $2; }
+    | var { $$ = $1; }
+    | ativacao { $$ = $1; }
+    | num { $$ = $1; }
     ;
 
-ativacao: ID APAR args FPAR
-    | ID APAR FPAR
+ativacao: id APAR args FPAR {
+        $$ = newAASNodeStmt(KCall);
+        $$->token = lex->token;
+        $$->line = lex->line;
+        copyString($$->name, $1->name);
+        addAASNode($$, $3);
+    }
+    | id APAR FPAR {
+        $$ = newAASNodeStmt(KCall);
+        $$->token = lex->token;
+        $$->line = lex->line;
+        copyString($$->name, $1->name);
+    }
     ;
 
-args: arg_lista
+args: arg_lista { $$ = $1; }
     ;
 
-arg_lista: arg_lista VIR expressao
-    | expressao
+arg_lista: arg_lista VIR expressao {
+        if ($1 == NULL) {
+            $$ = $3;
+        } else {
+            $$ = $1;
+            addAASNodeSibling($$, $3);
+        }
+    }
+    | expressao {
+        $$ = $1;
+    }
     ;
+
+id: ID {
+        $$ = newAASNodeExp(KId);
+        $$->token = lex->token;
+        $$->line = lex->line;
+        $$->name = strdup(lex->lexema); 
+    }
+    ;
+
+num: NUM {
+        $$ = newAASNodeExp(KConst);
+        $$->value = atoi(lex->lexema);
+        $$->type = KInt;
+        $$->line = lex->line;
+        $$->token = lex->token;
+    }
+
 %%
 int yyerror(char *s) {
     if (lex->token == ER) {
@@ -190,11 +351,28 @@ int yylex(void) {
     if (token == NUM) {
         yylval.intValue = atoi(lex->lexema);
     }
+    // printf("\nLexema: %s\nToken: %d\n", lex->lexema, lex->token);
     return token;
 }
 
 int main(int argc, char *argv[]) {
     int option = -1;
+    
+    /*
+    yydebug = 1;
+
+    FILE *debug_file = fopen("debug_log.txt", "w");
+    if (debug_file == NULL) {
+        perror("Failed to open debug log file");
+        return EXIT_FAILURE;
+    }
+
+    // Redirect stderr to the debug file
+    if (dup2(fileno(debug_file), fileno(stderr)) == -1) {
+        perror("Failed to redirect stderr");
+        fclose(debug_file);
+        return EXIT_FAILURE;
+    }*/
 
     if (argc < 2) {
         printf("Usage: %s <filename>\n", argv[0]);
@@ -247,11 +425,14 @@ int main(int argc, char *argv[]) {
         } while (token != EOF && token != ER);
     } else if (option == 1) {
         yyparse();
+        printAAS(root, 0);
     }
 
     fclose(fp);
     deallocate_buffer(buffer);
     deallocate_lex(lex);
+    deallocateAAS(root);
 
+    // fclose(debug_file);
     return 0;
 }

@@ -13,6 +13,8 @@ char simbolos[] = {'+', '-', '*', '/', '<', '>', '=', '!', ';', ',', '(', ')', '
 // Flag
 int read_next = 1;
 
+char c = '\0';
+
 char *get_token_name(int token)
 {
     switch (token)
@@ -146,32 +148,32 @@ void deallocate_buffer(Bloco *buffer) {
 }
 
 char get_next_char(Bloco *buffer, FILE *file) {
-    char c;
-    c = buffer->buffer[buffer->char_pos];
+    char ch;
+    ch = buffer->buffer[buffer->char_pos];
     buffer->column += 1;
-    if (c == '\0') {
+    if (ch == '\0') {
         load_buffer(buffer, file);
-        c = buffer->buffer[buffer->char_pos];
+        ch = buffer->buffer[buffer->char_pos];
     }
-    if(c == '\n') {
+    if(ch == '\n') {
         buffer->column = 0;
         buffer->line++;
     }
 
     buffer->char_pos++;
-    return c;
+    return ch;
 }
 
 void load_buffer(Bloco *buffer, FILE *file) {
-    char c;
+    char ch;
     buffer->char_pos = 0;
     do{
-        c = fgetc(file);
-        buffer->buffer[buffer->char_pos] = c;
+        ch = fgetc(file);
+        buffer->buffer[buffer->char_pos] = ch;
         buffer->char_pos++;
-    } while (c != EOF && c != '\n' && buffer->char_pos < buffer->size - 2);
+    } while (c != EOF && ch != '\n' && buffer->char_pos < buffer->size - 2);
 
-    if(c == EOF && buffer->char_pos < buffer->size - 2) {
+    if(ch == EOF && buffer->char_pos < buffer->size - 2) {
         buffer->buffer[buffer->char_pos] = EOF;
     }
     else{
@@ -193,31 +195,31 @@ void replace_print(Bloco *buffer, int size) {
     printf("%s\n", buffer->buffer);
 }
 
-int is_symbol(char c) {
+int is_symbol(char ch) {
     for (int i = 0; i < 16; i++) {
-        if (c == simbolos[i]) {
+        if (ch == simbolos[i]) {
             return i + 3;
         }
     }
     return 0;
 }
 
-int is_char(char c) {
-    if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')) {
+int is_char(char ch) {
+    if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z')) {
         return 1;
     }
     return 0;
 }
 
-int is_digit(char c) {
-    if ('0' <= c && c <= '9') {
+int is_digit(char ch) {
+    if ('0' <= ch && ch <= '9') {
         return 1;
     }
     return 0;
 }
 
-int is_space(char c) {
-    if (c == ' ' || c == '\n' || c == '\t' || c == '\0' || c == '\r' || c == '\v' || c == '\f' || c == '\b' || c == EOF)
+int is_space(char ch) {
+    if (ch == ' ' || ch == '\n' || ch == '\t' || ch == '\0' || ch == '\r' || ch == '\v' || ch == '\f' || ch == '\b' || ch == EOF)
     {
         return 1;
     }
@@ -331,18 +333,18 @@ int check_keyword(char *lexema) {
     return ID;
 }
 
-int get_terminal(char c) {
-    if (is_char(c)) {
+int get_terminal(char ch) {
+    if (is_char(ch)) {
         return 0;
     }
-    else if (is_digit(c)) {
+    else if (is_digit(ch)) {
         return 1;
     }
-    else if (is_space(c)) {
+    else if (is_space(ch)) {
         return 2;
     }
-    else if (is_symbol(c)) {
-        return is_symbol(c);
+    else if (is_symbol(ch)) {
+        return is_symbol(ch);
     }
     return ER;
 }
@@ -352,7 +354,6 @@ int get_token(Lex *lex, Bloco *buffer, FILE *file)
     int state = 0;
     int table_state = 0;
     int i = 0;
-    char c;
 
     while(state != ER) {
         if (c == EOF && !read_next) {
@@ -442,6 +443,48 @@ AASNode *newAASNode(StmtKind kstmt, ExpKind kexp) {
     return node;
 }
 
+AASNode *newAASNodeExp(ExpKind kexp) {
+    AASNode *node = malloc(sizeof(AASNode));
+    if (node == NULL) {
+        printf("Error allocating memory\n");
+        return NULL;
+    }
+
+    node->children = NULL;
+    node->sibling = NULL;
+    node->token = 0;
+    node->value = 0;
+    node->name = NULL;
+    node->line = 0;
+    node->node = KExp;
+    node->stmt = -1;
+    node->exp = kexp;
+    node->type = KInt;
+
+    return node;
+}
+
+AASNode *newAASNodeStmt(StmtKind kstmt) {
+    AASNode *node = malloc(sizeof(AASNode));
+    if (node == NULL) {
+        printf("Error allocating memory\n");
+        return NULL;
+    }
+
+    node->children = NULL;
+    node->sibling = NULL;
+    node->token = 0;
+    node->value = 0;
+    node->name = NULL;
+    node->line = 0;
+    node->node = KStmt;
+    node->stmt = kstmt;
+    node->exp = -1;
+    node->type = KInt;
+
+    return node;
+}
+
 AASNode *addAASNode(AASNode *node, AASNode *child) {
     if (node->children == NULL) {
         node->children = child;
@@ -456,13 +499,36 @@ AASNode *addAASNode(AASNode *node, AASNode *child) {
     return node;
 }
 
+AASNode *addAASNodeSibling(AASNode *node, AASNode *sibling) {
+    AASNode *temp = node;
+    while (temp->sibling != NULL) {
+        temp = temp->sibling;
+    }
+    temp->sibling = sibling;
+    return node;
+}
+
+void updateEscopo(AASNode *node, char *escopo) {
+    if (node == NULL) {
+        return;
+    }
+
+    node->escopo = escopo;
+
+    AASNode *child = node->children;
+    while (child != NULL) {
+        updateEscopo(child, escopo);
+        child = child->sibling;
+    }
+}
+
 void printAAS(AASNode *node, int depth) {
     if (node == NULL) {
         return;
     }
 
     for (int i = 0; i < depth; i++) {
-        printf("-");
+        printf("----");
     }
 
     switch (node->node){
@@ -487,11 +553,14 @@ void printAAS(AASNode *node, int depth) {
                 case KVar:
                     printf("Var\n");
                     break;
-                case Kvet:
+                case KVet:
                     printf("Vet\n");
                     break;
                 case KFunc:
                     printf("Func\n");
+                    break;
+                case KProg:
+                    printf("Prog\n");
                     break;
             }
             break;
@@ -513,14 +582,15 @@ void printAAS(AASNode *node, int depth) {
                 case KVarId:
                     printf("VarId\n");
                     break;
-                case KVetID:
+                case KVetId:
                     printf("VetId\n");
                     break;
             }
             break;
     }
 
-    AASNode *child = node->children;
+    AASNode *child;
+    child = node->children;
     while (child != NULL) {
         printAAS(child, depth + 1);
         child = child->sibling;
@@ -540,4 +610,19 @@ void deallocateAAS(AASNode *node) {
     }
 
     free(node);
+}
+
+void copyString(char *dest, char *src) {
+    int n;
+    if(src == NULL) {
+        dest = NULL;
+        return;
+    }
+    n = strlen(src);
+    dest = malloc(sizeof(char) * (n + 1));
+    if (dest == NULL) {
+        printf("Error allocating memory to the destination string\n");
+        return;
+    }
+    strcpy(dest, src);
 }

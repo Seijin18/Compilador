@@ -1,0 +1,148 @@
+Stmt: Prog
+----Exp: Type
+--------Stmt: Vet
+------------Exp: Const
+----Exp: Type
+--------Stmt: Func
+--------Exp: Type
+------------Stmt: Vet
+--------Exp: Type
+------------Stmt: Var
+--------Exp: Type
+------------Stmt: Var
+--------Exp: Type
+------------Stmt: Var
+--------Exp: Type
+------------Stmt: Var
+--------Exp: Type
+------------Stmt: Var
+--------Stmt: Assign
+------------Exp: Id: k
+------------Exp: Id: low
+--------Stmt: Assign
+------------Exp: Id: x
+------------Exp: VetId
+----------------Exp: Id: a
+----------------Exp: Id: low
+--------Stmt: Assign
+------------Exp: Id: i
+------------Exp: Op
+----------------Exp: Id: low
+----------------Exp: Const
+--------Stmt: While
+------------Exp: Op
+----------------Exp: Id: i
+----------------Exp: Id: high
+------------Stmt: If
+----------------Exp: Op
+--------------------Exp: VetId
+------------------------Exp: Id: a
+------------------------Exp: Id: i
+--------------------Exp: Id: x
+----------------Stmt: Assign
+--------------------Exp: Id: x
+--------------------Exp: VetId
+------------------------Exp: Id: a
+------------------------Exp: Id: i
+----------------Stmt: Assign
+--------------------Exp: Id: k
+--------------------Exp: Id: i
+------------Stmt: Assign
+----------------Exp: Id: i
+----------------Exp: Op
+--------------------Exp: Id: i
+--------------------Exp: Const
+--------Stmt: Return
+------------Exp: Id: k
+----Exp: Type
+--------Stmt: Func
+--------Exp: Type
+------------Stmt: Vet
+--------Exp: Type
+------------Stmt: Var
+--------Exp: Type
+------------Stmt: Var
+--------Exp: Type
+------------Stmt: Var
+--------Exp: Type
+------------Stmt: Var
+--------Stmt: Assign
+------------Exp: Id: i
+------------Exp: Id: low
+--------Stmt: While
+------------Exp: Op
+----------------Exp: Id: i
+----------------Exp: Op
+--------------------Exp: Id: high
+--------------------Exp: Const
+------------Exp: Type
+----------------Stmt: Var
+------------Stmt: Assign
+----------------Exp: Id: k
+----------------Stmt: Call
+--------------------Exp: Id: a
+--------------------Exp: Id: i
+--------------------Exp: Id: high
+------------Stmt: Assign
+----------------Exp: Id: t
+----------------Exp: VetId
+--------------------Exp: Id: a
+--------------------Exp: Id: k
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: a
+--------------------Exp: Id: k
+----------------Exp: VetId
+--------------------Exp: Id: a
+--------------------Exp: Id: i
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: a
+--------------------Exp: Id: i
+----------------Exp: Id: t
+------------Stmt: Assign
+----------------Exp: Id: i
+----------------Exp: Op
+--------------------Exp: Id: i
+--------------------Exp: Const
+----Exp: Type
+--------Stmt: Func
+--------Exp: Type
+------------Stmt: Var
+--------Stmt: Assign
+------------Exp: Id: i
+------------Exp: Const
+--------Stmt: While
+------------Exp: Op
+----------------Exp: Id: i
+----------------Exp: Const
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: x
+--------------------Exp: Id: i
+----------------Stmt: Call
+------------Stmt: Assign
+----------------Exp: Id: i
+----------------Exp: Op
+--------------------Exp: Id: i
+--------------------Exp: Const
+--------Stmt: Call
+------------Exp: Id: x
+------------Exp: Const
+------------Exp: Const
+--------Stmt: Assign
+------------Exp: Id: i
+------------Exp: Const
+--------Stmt: While
+------------Exp: Op
+----------------Exp: Id: i
+----------------Exp: Const
+------------Stmt: Call
+----------------Exp: VetId
+--------------------Exp: Id: x
+--------------------Exp: Id: i
+------------Stmt: Assign
+----------------Exp: Id: i
+----------------Exp: Op
+--------------------Exp: Id: i
+--------------------Exp: Const
