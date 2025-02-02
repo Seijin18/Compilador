@@ -5,8 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX 100
-
 FILE *fp;
 Bloco *buffer = NULL;
 Lex *lex;
@@ -16,8 +14,9 @@ int yylineno;
 int valyy;
 char yytext[64];
 
-// SymbolTable* TabelaSimbolos;
+
 AASNode *root;
+SimbCell simbTable[MAX];
 
 int yyerror(char *s);
 
@@ -38,7 +37,7 @@ int yylex(void);
 %token ID
 %token IF ELSE WHILE INT RETURN VOID COMP DIF GT LT GE
 %token LE SOMA SUB MULT DIV ATR
-%token PTV VIR APAR FPAR ACOL 
+%token PTV VIR APAR FPAR ACOL   
 %token FCOL ACHV FCHV
 %token CMT
 %type <node> programa declaracao_lista declaracao var_declaracao tipo_especificador fun_declaracao params param_lista param composto_decl local_declaracoes statement_lista statement expressao_decl selecao_decl iteracao_decl retorno_decl expressao var simples_expressao relacional soma_expressao aditivo termo operador_multiplicativo fator ativacao args arg_lista id num
@@ -67,19 +66,23 @@ declaracao: var_declaracao { $$ = $1; }
 
 var_declaracao: tipo_especificador id PTV {
                     $$ = $1;
+                    $2->type = $1->type;
                     addAASNode($$, newAASNodeStmt(KVar));
                     $$->children->line = $2->line;
                     $$->children->type = $1->type;
-                    copyString($$->children->name, $2->name);
-                    copyString($$->children->escopo, "global");
+                    $$->children->name = copyString($2->name);
+                    $$->children->escopo = copyString("global");
+
                 }
                 | tipo_especificador id ACOL num FCOL PTV {
                     $$ = $1;
+                    $2->type = $1->type;
                     addAASNode($$, newAASNodeStmt(KVet));
                     $$->children->line = $2->line;
                     $$->children->type = $1->type;
-                    copyString($$->children->name, $2->name);
-                    copyString($$->children->escopo, "global");
+                    $$->children->name = copyString($2->name);
+                    $$->children->escopo = copyString("global");
+                    addAASNode($$->children, $2); 
                     addAASNode($$->children, $4);
                 }
                 ;
@@ -96,16 +99,17 @@ tipo_especificador: INT {
 
 fun_declaracao: tipo_especificador id APAR params FPAR composto_decl {
         $$ = $1;
+        $2->type = $1->type;
         addAASNode($$, newAASNodeStmt(KFunc));
         $$->children->line = $2->line;
         $$->children->type = $1->type;
-        copyString($$->children->name, $2->name);
-        copyString($$->children->escopo, "global");
+        $$->children->name = copyString($2->name);
+        printf("Funcao: %s\n", $$->children->name);
+        $$->children->escopo = copyString("global");
         updateEscopo($4, $$->children->name);
         updateEscopo($6, $$->children->name);
-        addAASNode($$, $4);
-        addAASNode($$, $6);
-        
+        addAASNode($$->children, $4);
+        addAASNode($$->children, $6);
 }
     ;
 
@@ -122,18 +126,20 @@ param_lista: param_lista VIR param {
 
 param: tipo_especificador id {
         $$ = $1;
+        $2->type = $1->type;
         addAASNode($$, newAASNodeStmt(KVar));
         $$->children->line = $2->line;
         $$->children->type = $1->type;
-        copyString($$->children->name, $2->name);
+        $$->children->name = copyString($2->name);
 
     }
     | tipo_especificador id ACOL FCOL {
         $$ = $1;
+        $2->type = $1->type;
         addAASNode($$, newAASNodeStmt(KVet));
         $$->children->line = $2->line;
         $$->children->type = $1->type;
-        copyString($$->children->name, $2->name);
+        $$->children->name = copyString($2->name);
     }
     ;
 
@@ -200,7 +206,10 @@ iteracao_decl: WHILE APAR expressao FPAR statement{
     }
     ;
 
-retorno_decl: RETURN PTV { $$ = newAASNodeStmt(KReturn); }
+retorno_decl: RETURN PTV { 
+        $$ = newAASNodeStmt(KReturn);
+        $$->type = KVoid;
+    }   
     | RETURN expressao PTV {
         $$ = newAASNodeStmt(KReturn);
         addAASNode($$, $2);
@@ -210,6 +219,7 @@ retorno_decl: RETURN PTV { $$ = newAASNodeStmt(KReturn); }
 
 expressao: var ATR expressao {
         $$ = newAASNodeStmt(KAssign);
+        $$->type = $1->type;
         addAASNode($$, $1);
         addAASNode($$, $3);
     }
@@ -221,6 +231,7 @@ expressao: var ATR expressao {
 var: id { $$ = $1; }
     | id ACOL expressao FCOL {
         $$ = newAASNodeExp(KVetId);
+        $$->type = $1->type;
         addAASNode($$, $1);
         addAASNode($$, $3);
     }
@@ -228,6 +239,7 @@ var: id { $$ = $1; }
 
 simples_expressao: soma_expressao relacional soma_expressao {
     $$ = $2;
+    $$->type = KInt;
     addAASNode($$, $1);
     addAASNode($$, $3);
 }
@@ -255,8 +267,8 @@ soma_expressao: soma_expressao aditivo termo {
     }
     ;
 
-aditivo: SOMA { $$ = newAASNodeExp(KOp); $$->token = SOMA; }    
-       | SUB { $$ = newAASNodeExp(KOp); $$->token = SUB; }
+aditivo: SOMA { $$ = newAASNodeExp(KOp); $$->token = SOMA; $$->type = KInt; }    
+       | SUB { $$ = newAASNodeExp(KOp); $$->token = SUB; $$->type = KInt; }
        ;
 
 termo: termo operador_multiplicativo fator {
@@ -269,8 +281,8 @@ termo: termo operador_multiplicativo fator {
     }
     ;
 
-operador_multiplicativo: MULT { $$ = newAASNodeExp(KOp); $$->token = MULT; }
-                       | DIV { $$ = newAASNodeExp(KOp); $$->token = DIV; }
+operador_multiplicativo: MULT { $$ = newAASNodeExp(KOp); $$->token = MULT; $$->type = KInt; }
+                       | DIV { $$ = newAASNodeExp(KOp); $$->token = DIV; $$->type = KInt; }
                        ;
 
 fator: APAR expressao FPAR { $$ = $2; }
@@ -281,16 +293,18 @@ fator: APAR expressao FPAR { $$ = $2; }
 
 ativacao: id APAR args FPAR {
         $$ = newAASNodeStmt(KCall);
+        $$->type = $1->type;
         $$->token = lex->token;
         $$->line = lex->line;
-        copyString($$->name, $1->name);
+        $$->name = copyString($1->name);
         addAASNode($$, $3);
     }
     | id APAR FPAR {
         $$ = newAASNodeStmt(KCall);
+        $$->type = $1->type;
         $$->token = lex->token;
         $$->line = lex->line;
-        copyString($$->name, $1->name);
+        $$->name = copyString($1->name);
     }
     ;
 
@@ -314,7 +328,7 @@ id: ID {
         $$ = newAASNodeExp(KId);
         $$->token = lex->token;
         $$->line = lex->line;
-        $$->name = strdup(lex->lexema); 
+        $$->name = copyString(lex->lexema);
     }
     ;
 
@@ -379,7 +393,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    for(int i = 0; i < argc; i++) {
+    for(int i = 0; i < argc; i++) { // Seleciona opção entre -l, -p e -s
         if(argv[i][0] == '-') {
             if (argv[i][1] == 'l' || argv[i][1] == 'L') {
                 option = 0;
@@ -401,17 +415,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int buffer_size = 20;
+    /*Inicialização do buffer*/
+    int buffer_size = 20; 
     buffer = allocate_buffer(buffer_size);
     if (buffer == NULL) {
         return 1;
     }
 
+    /*Inicialização do lex*/
     lex = allocate_lex();
     int token;
     char *token_name;
     
-    if (option == 0) {
+    if (option == 0) { // Análise léxica
         do{
             token = yylex();
             token_name = get_token_name(token);
@@ -423,9 +439,18 @@ int main(int argc, char *argv[]) {
             }
             
         } while (token != EOF && token != ER);
-    } else if (option == 1) {
+    } else if (option == 1) { // Análise sintática
         yyparse();
         printAAS(root, 0);
+    } else if (option == 2) { // Análise semântica
+        yyparse();
+        if (root == NULL) {
+            printf("Erro na análise sintática\n");
+            return 1;
+        }
+        else {
+            buildTabSimb(simbTable, root);
+        }
     }
 
     fclose(fp);

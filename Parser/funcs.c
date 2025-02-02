@@ -13,7 +13,11 @@ char simbolos[] = {'+', '-', '*', '/', '<', '>', '=', '!', ';', ',', '(', ')', '
 // Flag
 int read_next = 1;
 
+// Char buffer
 char c = '\0';
+
+// Semantic Error
+char *semantic_error = NULL;
 
 char *get_token_name(int token)
 {
@@ -557,7 +561,7 @@ void printAAS(AASNode *node, int depth) {
                     printf("Vet\n");
                     break;
                 case KFunc:
-                    printf("Func\n");
+                    printf("Func: %s\n", node->name);
                     break;
                 case KProg:
                     printf("Prog\n");
@@ -568,19 +572,19 @@ void printAAS(AASNode *node, int depth) {
             printf("Exp: ");
             switch (node->exp) {
                 case KOp:
-                    printf("Op\n");
+                    printf("Op: %s\n", get_token_name(node->token));
                     break;
                 case KConst:
-                    printf("Const\n");
+                    printf("Const: %d\n", node->value);
                     break;
                 case KId:
                     printf("Id: %s\n", node->name);
                     break;
                 case KType:
-                    printf("Type\n");
+                    printf("Type: %s\n", getTypeName(node->type));
                     break;
                 case KVarId:
-                    printf("VarId\n");
+                    printf("VarId: %s\n", node->name);
                     break;
                 case KVetId:
                     printf("VetId\n");
@@ -612,17 +616,213 @@ void deallocateAAS(AASNode *node) {
     free(node);
 }
 
-void copyString(char *dest, char *src) {
+char *copyString(char *src) {
     int n;
+    char *dest;
     if(src == NULL) {
         dest = NULL;
-        return;
+        return dest;
     }
     n = strlen(src);
     dest = malloc(sizeof(char) * (n + 1));
     if (dest == NULL) {
         printf("Error allocating memory to the destination string\n");
-        return;
+        return dest;
     }
     strcpy(dest, src);
+    return dest;
+}
+
+char *getTypeName(TypeKind type) {
+    switch (type) {
+        case KInt:
+            return "int";
+        case KVoid:
+            return "void";
+        default:
+            return "ERRO";
+    }
+}
+
+static int hash(char *name) {
+    if (name == NULL) {
+        return -1;
+    }
+
+    int temp = 0;
+    int i = 0;
+    while (name[i] != '\0') {
+        temp = ((temp << 4) + name[i]) % MAX;
+        ++i;
+    }
+    return temp;
+}
+
+SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo) {
+    int h = hash(name);
+    SimbCell *cell, *sibling;
+    cell = &tab[h];
+    while (cell != NULL) {
+        if (strcmp(cell->name, name) == 0) {
+            if ((strcmp(cell->escopo, escopo) == 0) || (strcmp(cell->escopo, "global") == 0)) {
+                return cell;
+            }
+            else {
+                sibling = cell->sibling;
+                while (sibling != NULL) {
+                    if (strcmp(sibling->name, name) == 0) {
+                        if ((strcmp(sibling->escopo, escopo) == 0 || strcmp(sibling->escopo, "global") == 0)) {
+                            return sibling;
+                        }
+                    }
+                    sibling = sibling->sibling;
+                }
+            }
+        }
+        cell = cell->next;
+    }
+    return NULL;
+}
+
+void insertHash(SimbCell *tab, char *name, char *escopo, TypeKind type, IdKind kind, int line, int hash) {
+    SimbCell *newCell = malloc(sizeof(SimbCell));
+    if (newCell == NULL) {
+        printf("Error allocating memory\n");
+        return;
+    }
+
+    newCell->name = copyString(name);
+    newCell->escopo = copyString(escopo);
+    newCell->type = type;
+    newCell->IdKind = kind;
+    newCell->line = line;
+    newCell->next = NULL;
+    newCell->sibling = NULL;
+
+    SimbCell *cell = &tab[hash];
+    while (cell->next != NULL && strcmp(cell->name, name) != 0) {
+        cell = cell->next;
+    }
+    if (cell->next == NULL) {
+        cell->next = newCell;
+    }
+    else {
+        SimbCell *sibling = cell->sibling;
+        while (sibling->sibling != NULL) {
+            sibling = sibling->sibling;
+        }
+        sibling->sibling = newCell;
+    }
+}
+
+int insertTabSimb(SimbCell *tab, AASNode *node) {
+    int h = hash(node->name);
+    if (h == -1) {
+        return -1;
+    }
+
+    switch (node->node) {
+        case KStmt:
+            if (node->stmt == KVar || node->stmt == KVet) {
+                if (node->type == KVoid) {
+                    semantic_error = "Declaracao de tipo void para a variavel";
+                    return -1;
+                }
+                if (searchTabSimb(tab, node->name, node->escopo) != NULL) {
+                    semantic_error = "Redeclaração da variável";
+                    return -1;
+                }
+                else {
+                    insertHash(tab, node->name, node->escopo, node->type, Var, node->line, h);
+                    return 1;
+                }
+            }
+            else if (node->stmt == KFunc) {
+                if (searchTabSimb(tab, node->name, "global") != NULL) {
+                    semantic_error = "Redeclaração da função";
+                    return -1;
+                }
+                else {
+                    insertHash(tab, node->name, "global", node->type, Func, node->line, h);
+                    return 1;
+                }
+            }
+            else if (node->stmt == KCall) {
+                SimbCell *aux = searchTabSimb(tab, node->name, "global");
+                if (aux == NULL) { // Verificar se a função foi declarada
+                    semantic_error = "Função não declarada";
+                    return -1;
+                }
+                else {
+                    insertHash(tab, node->name, node->escopo, node->type, Func, node->line, h);
+                    return 1;
+                }
+            }
+            else if (node->stmt == KAssign) {
+                if (node->type == KVoid) {
+                    semantic_error = "Atribuição de tipo void para a variável";
+                    return -1;
+                }
+                else if (node->type != node->children->type != node->children->sibling->type) {
+                    semantic_error = "Tipos incompatíveis";
+                    return -1;
+                }
+                else {
+                    return 1;
+                }
+            }
+            break;
+
+        case KExp:
+            if (node->exp == KVarId || node->exp == KVetId || node->exp == KId) {
+                SimbCell *aux = searchTabSimb(tab, node->name, node->escopo);
+                if (aux == NULL) {
+                    aux = searchTabSimb(tab, node->name, "global");
+                    if (aux == NULL) {
+                        semantic_error = "Variável não declarada";
+                        return -1;
+                    }
+                    else {
+                        insertHash(tab, node->name, "global", node->type, Var, node->line, h);
+                        return 1;
+                    }
+                }
+                else {
+                    insertHash(tab, node->name, node->escopo, node->type, Var, node->line, h);
+                    return 1;
+                }
+            }
+            break;
+    }
+}
+
+void buildTabSimb(SimbCell *tabSimb, AASNode *node){
+    if (node == NULL) {
+        return;
+    }
+
+    char kind[9];
+
+    printf("Formato da Tabela de Simbolos:\n");
+    printf("Nome;\tEscopo;\tTipo;\tTipo de Identificador;\tLinha\n");
+
+    AASNode *child = node->children;
+    int k = 0;
+    while (child != NULL) {
+        k = insertTabSimb(tabSimb, child);
+        if (k == -1) {
+            printf("%s: %s [linha: %d]\n", semantic_error, child->name, child->line);
+            return;
+        } else if (k == 1) {
+            if(child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId) {
+                strcmp(kind, "Variable");
+            }
+            else {
+                strcmp(kind, "Function");
+            }
+
+            printf("%s;\t%s;\t%s;\t%s;\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line);
+        }
+        child = child->sibling;
+    }
 }

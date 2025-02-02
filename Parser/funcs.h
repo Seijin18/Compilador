@@ -2,15 +2,20 @@
 #define FUNCS_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define AC -9
 #define ER -10
+
+#define MAX 255
 
 
 typedef enum {KStmt, KExp} NodeKind;
 typedef enum {KIf, KWhile, KAssign, KReturn, KCall, KVar, KVet, KFunc, KProg} StmtKind;
 typedef enum {KOp, KConst, KId, KType, KVarId, KVetId} ExpKind;
 typedef enum {KInt, KVoid} TypeKind;
+typedef enum {Var, Func} IdKind;
 
 extern char simbolos[];
 
@@ -47,6 +52,17 @@ struct AASNode {
     TypeKind type;
 };
 
+typedef struct SimbCell SimbCell;
+struct SimbCell {
+    char *name;
+    char *escopo;
+    TypeKind type;
+    IdKind IdKind;
+    int line;
+    struct SimbCell *next;
+    struct SimbCell *sibling;
+};
+
 char *get_token_name(int token);
 Bloco *allocate_buffer(int size);
 void deallocate_buffer(Bloco *buffer);
@@ -72,6 +88,12 @@ void updateEscopo(AASNode *node, char *escopo);
 void printAAS(AASNode *node, int depth);
 void deallocateAAS(AASNode *node);
 
-void copyString(char *dest, char *src);
+char *copyString(char *src);
+char *getTypeName(TypeKind type);
+
+static int hash(char *name);
+SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo);
+int insertTabSimb(SimbCell *tab, AASNode *node);
+void buildTabSimb(SimbCell *tab, AASNode *node);
 
 #endif

@@ -90,7 +90,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 28 "bison.y"
+#line 27 "bison.y"
 
     int intValue;
     char* stringValue;

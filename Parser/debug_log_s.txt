@@ -1,0 +1,9 @@
+Funcao: minloc
+Funcao: sort
+Funcao: main
+Formato da Tabela de Simbolos:
+Nome;	Escopo;	Tipo;	Tipo de Identificador;	Linha
+(null);	(null);	int;	;	0
+(null);	(null);	int;	;	0
+(null);	(null);	void;	;	0
+(null);	(null);	void;	;	0
