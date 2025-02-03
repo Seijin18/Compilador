@@ -1989,7 +1989,6 @@ int yyerror(char *s) {
 
 int yylex(void) {
     int token;
-
     do {
         token = get_lexema(buffer, lex, fp);
         if (token == ER) {
@@ -2002,41 +2001,23 @@ int yylex(void) {
     if (token == NUM) {
         yylval.intValue = atoi(lex->lexema);
     }
-    // printf("\nLexema: %s\nToken: %d\n", lex->lexema, lex->token);
     return token;
 }
 
 int main(int argc, char *argv[]) {
     int option = -1;
-    
-    /*
-    yydebug = 1;
-
-    FILE *debug_file = fopen("debug_log.txt", "w");
-    if (debug_file == NULL) {
-        perror("Failed to open debug log file");
-        return EXIT_FAILURE;
-    }
-
-    // Redirect stderr to the debug file
-    if (dup2(fileno(debug_file), fileno(stderr)) == -1) {
-        perror("Failed to redirect stderr");
-        fclose(debug_file);
-        return EXIT_FAILURE;
-    }*/
-
-    if (argc < 2) {
+    if (argc < 2) { // Verifica se o arquivo foi passado como argumento
         printf("Usage: %s <filename>\n", argv[0]);
         return 1;
     }
 
     for(int i = 0; i < argc; i++) { // Seleciona opção entre -l, -p e -s
         if(argv[i][0] == '-') {
-            if (argv[i][1] == 'l' || argv[i][1] == 'L') {
+            if (argv[i][1] == 'l' || argv[i][1] == 'L') { // Análise léxica
                 option = 0;
-            } else if (argv[i][1] == 'p' || argv[i][1] == 'P') {
+            } else if (argv[i][1] == 'p' || argv[i][1] == 'P') { // Análise sintática
                 option = 1;
-            } else if (argv[i][1] == 's' || argv[i][1] == 'S') {
+            } else if (argv[i][1] == 's' || argv[i][1] == 'S') { // Análise semântica
                 option = 2;
             }
             else {
@@ -2046,7 +2027,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    fp = fopen(argv[1], "r");
+    fp = fopen(argv[1], "r"); // Abre o arquivo
     if (fp == NULL) {
         printf("Error opening file %s\n", argv[1]);
         return 1;
@@ -2091,6 +2072,8 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(fp);
+
+    /*Desalocação de memória*/
     deallocate_buffer(buffer);
     deallocate_lex(lex);
     if (root != NULL) {
@@ -2098,6 +2081,5 @@ int main(int argc, char *argv[]) {
     }
     deallocateTabSimb(simbTable);
 
-    // fclose(debug_file);
     return 0;
 }

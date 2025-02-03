@@ -7,7 +7,7 @@
 #define AC -9
 #define ER -10
 
-char simbolos[] = {'+', '-', '*', '/', '<', '>', '=', '!', ';', ',', '(', ')', '[', ']', '{', '}'}; // Define the variable
+char simbolos[] = {'+', '-', '*', '/', '<', '>', '=', '!', ';', ',', '(', ')', '[', ']', '{', '}'}; // Simbolos
 
 // Flag
 int read_next = 1;
@@ -15,10 +15,10 @@ int read_next = 1;
 // Char buffer
 char c = '\0';
 
-// Semantic Error
+// Texto de erro semântico
 char *semantic_error = NULL;
 
-char *get_token_name(int token)
+char *get_token_name(int token) // Retorna o nome do token
 {
     switch (token)
     {
@@ -88,7 +88,7 @@ char *get_token_name(int token)
 // Letra: 0
 // Digito: 1
 // White space: 2
-// Simbolo: 3 - 18
+// Simbolos: 3 - 18
 
 // DFA
 int dfa[27][19] = {
@@ -121,7 +121,7 @@ int dfa[27][19] = {
     {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}  // 26
 };
 
-Bloco *allocate_buffer(int size)
+Bloco *allocate_buffer(int size) // Aloca o buffer
 {
     Bloco *buffer = malloc(sizeof(Bloco));
     if (buffer == NULL)
@@ -138,6 +138,7 @@ Bloco *allocate_buffer(int size)
         return NULL;
     }
 
+    // Inicializa o buffer
     buffer->buffer[0] = '\0';
     buffer->char_pos = 0;
     buffer->line = 0;
@@ -146,23 +147,23 @@ Bloco *allocate_buffer(int size)
     return buffer;
 }
 
-void deallocate_buffer(Bloco *buffer)
+void deallocate_buffer(Bloco *buffer) // Desaloca o buffer
 {
     free(buffer->buffer);
     free(buffer);
 }
 
-char get_next_char(Bloco *buffer, FILE *file)
+char get_next_char(Bloco *buffer, FILE *file) // Pega o próximo caractere
 {
     char ch;
     ch = buffer->buffer[buffer->char_pos];
     buffer->column += 1;
-    if (ch == '\0')
+    if (ch == '\0') // Se chegou no final do buffer
     {
         load_buffer(buffer, file);
         ch = buffer->buffer[buffer->char_pos];
     }
-    if (ch == '\n')
+    if (ch == '\n') // Se chegou no final da linha
     {
         buffer->column = 0;
         buffer->line++;
@@ -172,13 +173,13 @@ char get_next_char(Bloco *buffer, FILE *file)
     return ch;
 }
 
-void load_buffer(Bloco *buffer, FILE *file)
+void load_buffer(Bloco *buffer, FILE *file) // Carrega o buffer
 {
     char ch;
     buffer->char_pos = 0;
-    do
+    do // Pega o próximo caractere do arquivo até o final da linha ou do arquivo ou do buffer
     {
-        ch = fgetc(file);
+        ch = fgetc(file); 
         buffer->buffer[buffer->char_pos] = ch;
         buffer->char_pos++;
     } while (c != EOF && ch != '\n' && buffer->char_pos < buffer->size - 2);
@@ -195,7 +196,7 @@ void load_buffer(Bloco *buffer, FILE *file)
     buffer->char_pos = 0;
 }
 
-void replace_print(Bloco *buffer, int size)
+void replace_print(Bloco *buffer, int size) // Troca as letras maiúsculas pelas minúsculas e vice-versa
 {
     for (int i = 0; i < size; i++)
     {
@@ -212,7 +213,7 @@ void replace_print(Bloco *buffer, int size)
     printf("%s\n", buffer->buffer);
 }
 
-int is_symbol(char ch)
+int is_symbol(char ch) // Verifica se é um símbolo
 {
     for (int i = 0; i < 16; i++)
     {
@@ -224,7 +225,7 @@ int is_symbol(char ch)
     return 0;
 }
 
-int is_char(char ch)
+int is_char(char ch) // Verifica se é uma letra
 {
     if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z'))
     {
@@ -233,7 +234,7 @@ int is_char(char ch)
     return 0;
 }
 
-int is_digit(char ch)
+int is_digit(char ch) // Verifica se é um dígito
 {
     if ('0' <= ch && ch <= '9')
     {
@@ -242,7 +243,7 @@ int is_digit(char ch)
     return 0;
 }
 
-int is_space(char ch)
+int is_space(char ch) // Verifica se é um espaço
 {
     if (ch == ' ' || ch == '\n' || ch == '\t' || ch == '\0' || ch == '\r' || ch == '\v' || ch == '\f' || ch == '\b' || ch == EOF)
     {
@@ -251,7 +252,7 @@ int is_space(char ch)
     return 0;
 }
 
-Lex *allocate_lex()
+Lex *allocate_lex() // Aloca o lexema
 {
     Lex *lex = malloc(sizeof(Lex));
     if (lex == NULL)
@@ -268,6 +269,7 @@ Lex *allocate_lex()
         return NULL;
     }
 
+    // Inicializa o lexema
     lex->token = 0;
     lex->line = 0;
     lex->column = 0;
@@ -275,13 +277,13 @@ Lex *allocate_lex()
     return lex;
 }
 
-void deallocate_lex(Lex *lex)
+void deallocate_lex(Lex *lex) // Desaloca o lexema
 {
     free(lex->lexema);
     free(lex);
 }
 
-void clear_lex(Lex *lex)
+void clear_lex(Lex *lex) // Limpa o lexema
 {
     for (int i = 0; i < 64; i++)
     {
@@ -291,7 +293,7 @@ void clear_lex(Lex *lex)
     lex->line = 0;
 }
 
-int check_token(int table_state)
+int check_token(int table_state) // Verifica o token do estado da tabela
 {
     switch (table_state)
     {
@@ -344,7 +346,7 @@ int check_token(int table_state)
     }
 }
 
-int check_keyword(char *lexema)
+int check_keyword(char *lexema) // Verifica se é uma palavra reservada
 {
     if (strcmp(lexema, "else") == 0)
     {
@@ -373,7 +375,7 @@ int check_keyword(char *lexema)
     return ID;
 }
 
-int get_terminal(char ch)
+int get_terminal(char ch) // Verifica o terminal do autômato
 {
     if (is_char(ch))
     {
@@ -394,19 +396,19 @@ int get_terminal(char ch)
     return ER;
 }
 
-int get_token(Lex *lex, Bloco *buffer, FILE *file)
+int get_token(Lex *lex, Bloco *buffer, FILE *file) // Pega o token
 {
     int state = 0;
     int table_state = 0;
     int i = 0;
 
-    while (state != ER)
+    while (state != ER) // Itera até encontrar um estado de erro ou aceitação
     {
         if (c == EOF && !read_next)
         {
             return EOF;
         }
-        if (read_next)
+        if (read_next) // Pega o próximo caractere somente após a primeira iteração ou caso a ultima leitura tenha sido um espaço
         {
             c = get_next_char(buffer, file);
             if (c == EOF)
@@ -446,15 +448,16 @@ int get_token(Lex *lex, Bloco *buffer, FILE *file)
     return ER;
 }
 
-int get_lexema(Bloco *buffer, Lex *lex, FILE *file)
+int get_lexema(Bloco *buffer, Lex *lex, FILE *file) // Pega o lexema
 {
     int i = 0;
     clear_lex(lex);
-    if (buffer->buffer[buffer->char_pos] == '\0')
+    if (buffer->buffer[buffer->char_pos] == '\0') // Carrega o buffer se estiver no finaç
     {
         load_buffer(buffer, file);
     }
 
+    // Pega o próximo token
     lex->token = get_token(lex, buffer, file);
     lex->line = buffer->line;
     lex->column = buffer->column - 1;
@@ -480,7 +483,7 @@ int get_lexema(Bloco *buffer, Lex *lex, FILE *file)
     return lex->token;
 }
 
-AASNode *newAASNode(StmtKind kstmt, ExpKind kexp)
+AASNode *newAASNode(StmtKind kstmt, ExpKind kexp) // Aloca um novo nó
 {
     AASNode *node = calloc(1, sizeof(AASNode));
     if (node == NULL)
@@ -489,6 +492,7 @@ AASNode *newAASNode(StmtKind kstmt, ExpKind kexp)
         return NULL;
     }
 
+    // Inicializa o nó
     node->children = NULL;
     node->sibling = NULL;
     node->token = 0;
@@ -503,7 +507,7 @@ AASNode *newAASNode(StmtKind kstmt, ExpKind kexp)
     return node;
 }
 
-AASNode *newAASNodeExp(ExpKind kexp)
+AASNode *newAASNodeExp(ExpKind kexp) // Aloca um novo nó de expressão
 {
     AASNode *node = calloc(1, sizeof(AASNode));
     if (node == NULL)
@@ -526,7 +530,7 @@ AASNode *newAASNodeExp(ExpKind kexp)
     return node;
 }
 
-AASNode *newAASNodeStmt(StmtKind kstmt)
+AASNode *newAASNodeStmt(StmtKind kstmt) // Aloca um novo nó de declaração
 {
     AASNode *node = calloc(1, sizeof(AASNode));
     if (node == NULL)
@@ -549,7 +553,7 @@ AASNode *newAASNodeStmt(StmtKind kstmt)
     return node;
 }
 
-AASNode *addAASNode(AASNode *node, AASNode *child)
+AASNode *addAASNode(AASNode *node, AASNode *child) // Adiciona um nó filho
 {
     if (node->children == NULL)
     {
@@ -558,8 +562,8 @@ AASNode *addAASNode(AASNode *node, AASNode *child)
     else
     {
         AASNode *temp = node->children;
-        while (temp->sibling != NULL)
-        {
+        while (temp->sibling != NULL) // Vai até o último filho
+        { 
             temp = temp->sibling;
         }
         temp->sibling = child;
@@ -567,10 +571,10 @@ AASNode *addAASNode(AASNode *node, AASNode *child)
     return node;
 }
 
-AASNode *addAASNodeSibling(AASNode *node, AASNode *sibling)
+AASNode *addAASNodeSibling(AASNode *node, AASNode *sibling) // Adiciona um nó irmão
 {
     AASNode *temp = node;
-    while (temp->sibling != NULL)
+    while (temp->sibling != NULL) // Vai até o último irmão
     {
         temp = temp->sibling;
     }
@@ -578,34 +582,25 @@ AASNode *addAASNodeSibling(AASNode *node, AASNode *sibling)
     return node;
 }
 
-void updateEscopo(AASNode *node, char *escopo)
+void updateEscopo(AASNode *node, char *escopo) // Atualiza o escopo
 {
     if (node == NULL)
     {
         return;
     }
 
-    while (node != NULL)
+    while (node != NULL) // Atualiza o escopo de todos os nós descendentes
     {
         node->escopo = copyString(escopo);
-        // printf("Name: %s, Escopo: %s\n", node->name, node->escopo);
         if (node->children != NULL)
         {
             updateEscopo(node->children, escopo);
         }
         node = node->sibling;
     }
-
-    // AASNode *child = node->children;
-    // while (child != NULL) {
-    //     node->escopo = escopo;
-    //     printf("Name: %s, Escopo: %s\n", node->name, node->escopo);
-    //     updateEscopo(child, escopo);
-    //     child = child->sibling;
-    // }
 }
 
-void printAAS(AASNode *node, int depth)
+void printAAS(AASNode *node, int depth) // Imprime a árvore abstrata de sintaxe
 {
     if (node == NULL)
     {
@@ -687,7 +682,7 @@ void printAAS(AASNode *node, int depth)
     }
 }
 
-void deallocateAAS(AASNode *node)
+void deallocateAAS(AASNode *node) // Desaloca a árvore abstrata de sintaxe
 {
     if (node == NULL)
     {
@@ -695,16 +690,13 @@ void deallocateAAS(AASNode *node)
     }
 
     AASNode *child = node->children;
-    while (child != NULL)
+    while (child != NULL) // Desaloca todos os filhos e irmãos
     {
         AASNode *temp = child;
         child = child->sibling;
         deallocateAAS(temp);
     }
 
-    // printf("Deallocating node: %s\n", node->name ? node->name : "(null)");
-    // printf("Name address: %p\n", node->name);
-    // printf("Escopo address: %p\n", node->escopo);
     if (node->name != NULL)
     {
         free(node->name);
@@ -718,7 +710,7 @@ void deallocateAAS(AASNode *node)
     free(node);
 }
 
-char *copyString(char *src)
+char *copyString(char *src) // Copia uma string
 {
     int n;
     char *dest;
@@ -728,7 +720,7 @@ char *copyString(char *src)
         return dest;
     }
     n = strlen(src);
-    dest = calloc(n + 1, sizeof(char));
+    dest = calloc(n + 1, sizeof(char)); // Aloca memória para a string
     if (dest == NULL)
     {
         printf("Error allocating memory to the destination string\n");
@@ -738,7 +730,7 @@ char *copyString(char *src)
     return dest;
 }
 
-char *getTypeName(TypeKind type)
+char *getTypeName(TypeKind type) // Retorna o nome do tipo
 {
     switch (type)
     {
@@ -751,7 +743,7 @@ char *getTypeName(TypeKind type)
     }
 }
 
-static int hash(char *name)
+static int hash(char *name) // Função de hash
 {
     if (name == NULL)
     {
@@ -760,7 +752,7 @@ static int hash(char *name)
 
     int temp = 0;
     int i = 0;
-    while (name[i] != '\0')
+    while (name[i] != '\0') // Calcula o hash
     {
         temp = ((temp << 4) + name[i]) % MAX;
         ++i;
@@ -768,12 +760,12 @@ static int hash(char *name)
     return temp;
 }
 
-SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo)
+SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo) // Procura na tabela de símbolos
 {
-    int h = hash(name);
+    int h = hash(name); // Calcula o hash
     SimbCell *cell, *sibling;
-    cell = &tab[h];
-    while (cell != NULL)
+    cell = &tab[h]; // Pega a célula na posição do hash
+    while (cell != NULL) // Percorre na tabela de símbolos até encontrar o nome e escopo
     {
         if (cell->name == NULL)
         {
@@ -781,14 +773,14 @@ SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo)
         }
         if (strcmp(cell->name, name) == 0)
         {
-            if ((strcmp(cell->escopo, escopo) == 0) || (strcmp(cell->escopo, "global") == 0))
+            if ((strcmp(cell->escopo, escopo) == 0) || (strcmp(cell->escopo, "global") == 0)) // Verifica se o escopo é o mesmo ou se é global
             {
                 return cell;
             }
             else
             {
                 sibling = cell->sibling;
-                while (sibling != NULL)
+                while (sibling != NULL) // Verifica se o irmão tem o mesmo nome e escopo
                 {
                     if (strcmp(sibling->name, name) == 0)
                     {
@@ -806,7 +798,7 @@ SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo)
     return NULL;
 }
 
-void insertHash(SimbCell *tab, char *name, char *escopo, TypeKind type, IdKind kind, int line, int hash)
+void insertHash(SimbCell *tab, char *name, char *escopo, TypeKind type, IdKind kind, int line, int hash) // Insere na tabela de símbolos
 {
     if (name == NULL)
     {
@@ -840,15 +832,15 @@ void insertHash(SimbCell *tab, char *name, char *escopo, TypeKind type, IdKind k
     newCell->next = NULL;
     newCell->sibling = NULL;
 
-    while (cell->next != NULL && strcmp(cell->name, name) != 0)
-    { // Verificar se a célula já existe
+    while (cell->next != NULL && strcmp(cell->name, name) != 0) // Verificar se a célula já existe
+    {
         cell = cell->next;
     }
     if (cell->next == NULL)
     {
         cell->next = newCell;
     }
-    else
+    else // Se a célula já existe, insere o novo nó como irmão
     {
         SimbCell *sibling = cell->sibling;
         if (sibling == NULL)
@@ -866,25 +858,25 @@ void insertHash(SimbCell *tab, char *name, char *escopo, TypeKind type, IdKind k
     }
 }
 
-int insertTabSimb(SimbCell *tab, AASNode *node)
+int insertTabSimb(SimbCell *tab, AASNode *node) // Insere na tabela de símbolos
 {
     int h = hash(node->name);
-    if (h == -1)
+    if (h == -1) // Hash inválido
     {
         return 0; // Pular a inserção
     }
 
-    switch (node->node)
+    switch (node->node) // Verifica o tipo do nó
     {
-    case KStmt:
-        if (node->stmt == KVar || node->stmt == KVet)
+    case KStmt: // Verifica o tipo de declaração
+        if (node->stmt == KVar || node->stmt == KVet) // Verifica se é uma variável ou vetor
         {
-            if (node->type == KVoid)
+            if (node->type == KVoid) // Declaração de tipo void
             {
                 semantic_error = "Declaracao de tipo void para a variavel";
                 return -1;
             }
-            if (searchTabSimb(tab, node->name, node->escopo) != NULL)
+            if (searchTabSimb(tab, node->name, node->escopo) != NULL) // Verifica se a variável já foi declarada
             {
                 semantic_error = "Redeclaração da variável";
                 return -1;
@@ -895,9 +887,9 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
                 return 1;
             }
         }
-        else if (node->stmt == KFunc)
+        else if (node->stmt == KFunc) // Verifica se é uma função
         {
-            if (searchTabSimb(tab, node->name, "global") != NULL)
+            if (searchTabSimb(tab, node->name, "global") != NULL) // Verifica se a função já foi declarada
             {
                 semantic_error = "Redeclaração da função";
                 return -1;
@@ -908,23 +900,23 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
                 return 1;
             }
         }
-        else if (node->stmt == KCall)
+        else if (node->stmt == KCall) // Verifica se é uma chamada de função
         {
             SimbCell *aux = searchTabSimb(tab, node->name, "global");
-            if (aux == NULL)
-            { // Verificar se a função foi declarada
+            if (aux == NULL) // Verificar se a função foi declarada
+            {
                 semantic_error = "Função não declarada";
                 return -1;
             }
-            else if (node->children != NULL)
+            else if (node->children != NULL) // Verificar se os argumentos são válidos
             {
                 AASNode *child = node->children;
                 while (child != NULL)
                 {
-                    if (child->stmt == KCall)
+                    if (child->stmt == KCall) // Funcao como argumento
                     {
                         SimbCell *aux = searchTabSimb(tab, child->name, "global");
-                        if (aux == NULL)
+                        if (aux == NULL) 
                         {
                             semantic_error = "Função não declarada";
                             free(node->name);
@@ -945,14 +937,14 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
                 return 1;
             }
         }
-        else if (node->stmt == KAssign)
+        else if (node->stmt == KAssign) // Verifica se é uma atribuição
         {
-            if (node->type == KVoid)
+            if (node->type == KVoid) // Verifica se é uma atribuição de tipo void
             {
                 semantic_error = "Atribuição de tipo void para a variável";
                 return -1;
             }
-            else if (node->children->sibling->stmt == KCall)
+            else if (node->children->sibling->stmt == KCall) // Verifica se tem uma chamada de função
             {
                 SimbCell *aux = searchTabSimb(tab, node->children->sibling->name, "global");
                 if (aux == NULL)
@@ -972,7 +964,7 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
                     return 1;
                 }
             }
-            else if (node->type != node->children->type != node->children->sibling->type)
+            else if (node->type != node->children->type != node->children->sibling->type) // Verifica se os tipos são compatíveis
             {
                 semantic_error = "Tipos incompatíveis";
                 return -1;
@@ -982,10 +974,10 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
                 return 1;
             }
         }
-        else if (node->stmt == KReturn)
+        else if (node->stmt == KReturn) // Verifica se é um retorno
         {
             SimbCell *aux = searchTabSimb(tab, node->escopo, "global");
-            if (aux->type != node->type)
+            if (aux->type != node->type) // Verifica se os tipos da função e do retorno são compatíveis
             {
                 semantic_error = "Retorno com tipos incompatíveis";
                 return -1;
@@ -997,13 +989,13 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
         }
         break;
 
-    case KExp:
-        if (node->exp == KVarId || node->exp == KVetId)
+    case KExp: // Verifica o tipo de expressão
+        if (node->exp == KVarId || node->exp == KVetId) // Verifica se é uma variável ou vetor
         {
-            SimbCell *aux = searchTabSimb(tab, node->name, node->escopo);
+            SimbCell *aux = searchTabSimb(tab, node->name, node->escopo); // Verifica se a variável foi declarada no escopo
             if (aux == NULL)
             {
-                aux = searchTabSimb(tab, node->name, "global");
+                aux = searchTabSimb(tab, node->name, "global"); // Verifica se a variável foi declarada globalmente
                 if (aux == NULL)
                 {
                     semantic_error = "Variável não declarada";
@@ -1025,7 +1017,7 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
     }
 }
 
-int buildTabSimb(SimbCell *tabSimb, AASNode *node)
+int buildTabSimb(SimbCell *tabSimb, AASNode *node) // Constroi a tabela de símbolos
 {
     if (node == NULL)
     {
@@ -1036,17 +1028,17 @@ int buildTabSimb(SimbCell *tabSimb, AASNode *node)
 
     AASNode *child = node->children;
     int k = 0;
-    while (child != NULL)
-    { // alterar a lógica de inserção para buildar a tabela de símbolos (problema possivelmente na recursao)
+    while (child != NULL) // Percorre todos os nós da árvore
+    {
         k = insertTabSimb(tabSimb, child);
-        if (k == -1)
+        if (k == -1) // Verifica se houve erro semântico
         {
             printf("%s: %s [linha: %d]\n", semantic_error, child->name, child->line + 1);
             return -1;
         }
-        else if (k == 1)
+        else if (k == 1) // Insere na tabela de símbolos
         {
-            if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId)
+            if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId) // Verifica o tipo de identificador
             {
                 strcpy(kind, "Variable");
             }
@@ -1055,7 +1047,7 @@ int buildTabSimb(SimbCell *tabSimb, AASNode *node)
                 strcpy(kind, "Function");
             }
 
-            printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);
+            printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1); // Imprime a tabela de símbolos
         }
         if (buildTabSimb(tabSimb, child) == -1)
         {
@@ -1065,19 +1057,19 @@ int buildTabSimb(SimbCell *tabSimb, AASNode *node)
     }
 }
 
-void printTabSimb(SimbCell *tabSimb, AASNode *node)
+void printTabSimb(SimbCell *tabSimb, AASNode *node) // Imprime o cabeçalho da tabela de símbolos e chama a função de construção
 {
     printf("Formato da Tabela de Simbolos:\n");
     printf("Nome;\tEscopo;\tTipo;\tTipo de Identificador;\tLinha\n");
     buildTabSimb(tabSimb, node);
 }
 
-void deallocateTabSimb(SimbCell *tabSimb)
+void deallocateTabSimb(SimbCell *tabSimb) // Desaloca a tabela de símbolos
 {
     for (int i = 0; i < MAX; i++)
     {
         SimbCell *cell = &tabSimb[i];
-        while (cell != NULL)
+        while (cell != NULL) // Desaloca todos os nós da tabela de símbolos
         {
             SimbCell *temp = cell;
             cell = cell->next;
