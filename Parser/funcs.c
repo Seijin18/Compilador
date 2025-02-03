@@ -633,7 +633,7 @@ void printAAS(AASNode *node, int depth)
             printf("Assign\n");
             break;
         case KReturn:
-            printf("Return\n");
+            printf("Return: %s\n", getTypeName(node->type));
             break;
         case KCall:
             printf("Call\n");
@@ -916,7 +916,30 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
                 semantic_error = "Função não declarada";
                 return -1;
             }
-            else
+            else if (node->children != NULL)
+            {
+                AASNode *child = node->children;
+                while (child != NULL)
+                {
+                    if (child->stmt == KCall)
+                    {
+                        SimbCell *aux = searchTabSimb(tab, child->name, "global");
+                        if (aux == NULL)
+                        {
+                            semantic_error = "Função não declarada";
+                            free(node->name);
+                            node->name = copyString(child->name);
+                            return -1;
+                        }
+                        else if (aux->type == KVoid)
+                        {
+                            semantic_error = "Tipos incompatíveis";
+                            return -1;
+                        }
+                    }
+                    child = child->sibling;
+                }
+            }               
             {
                 insertHash(tab, node->name, node->escopo, node->type, Func, node->line, h);
                 return 1;
@@ -929,9 +952,42 @@ int insertTabSimb(SimbCell *tab, AASNode *node)
                 semantic_error = "Atribuição de tipo void para a variável";
                 return -1;
             }
+            else if (node->children->sibling->stmt == KCall)
+            {
+                SimbCell *aux = searchTabSimb(tab, node->children->sibling->name, "global");
+                if (aux == NULL)
+                {
+                    semantic_error = "Função não declarada";
+                    free(node->name);
+                    node->name = copyString(node->children->sibling->name);
+                    return -1;
+                }
+                else if (aux->type != node->type)
+                {
+                    semantic_error = "Atribuição com tipos incompatíveis";
+                    return -1;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
             else if (node->type != node->children->type != node->children->sibling->type)
             {
                 semantic_error = "Tipos incompatíveis";
+                return -1;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+        else if (node->stmt == KReturn)
+        {
+            SimbCell *aux = searchTabSimb(tab, node->escopo, "global");
+            if (aux->type != node->type)
+            {
+                semantic_error = "Retorno com tipos incompatíveis";
                 return -1;
             }
             else
@@ -992,11 +1048,11 @@ int buildTabSimb(SimbCell *tabSimb, AASNode *node)
         {
             if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId)
             {
-                strncpy(kind, "Variable", 8);
+                strcpy(kind, "Variable");
             }
             else
             {
-                strncpy(kind, "Function", 8);
+                strcpy(kind, "Function");
             }
 
             printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);

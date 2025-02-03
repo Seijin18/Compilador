@@ -209,10 +209,15 @@ iteracao_decl: WHILE APAR expressao FPAR statement{
 
 retorno_decl: RETURN PTV { 
         $$ = newAASNodeStmt(KReturn);
+        $$->name = copyString("void");
         $$->type = KVoid;
+        $$->line = lex->line;
     }   
     | RETURN expressao PTV {
         $$ = newAASNodeStmt(KReturn);
+        $$->name = copyString("int");
+        $$->type = $2->type;
+        $$->line = $2->line;
         addAASNode($$, $2);
     }
     ;
@@ -220,7 +225,9 @@ retorno_decl: RETURN PTV {
 
 expressao: var ATR expressao {
         $$ = newAASNodeStmt(KAssign);
+        $$->name = copyString($1->name);
         $$->type = $1->type;
+        $$->line = $1->line;
         addAASNode($$, $1);
         addAASNode($$, $3);
     }
@@ -339,6 +346,7 @@ id: ID {
         $$ = newAASNodeExp(KId);
         $$->token = lex->token;
         $$->line = lex->line;
+        $$->type = KInt;
         $$->name = copyString(lex->lexema);
         $$->escopo = copyString("global");
     }
@@ -471,8 +479,6 @@ int main(int argc, char *argv[]) {
     deallocate_lex(lex);
     if (root != NULL) {
         deallocateAAS(root);
-    } else {
-        printf("Root is NULL\n");
     }
     deallocateTabSimb(simbTable);
 
