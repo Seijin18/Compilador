@@ -104,7 +104,7 @@ fun_declaracao: tipo_especificador id APAR params FPAR composto_decl {
         $$->children->line = $2->line;
         $$->children->type = $1->type;
         $$->children->name = copyString($2->name);
-        printf("Funcao: %s\n", $$->children->name);
+        // printf("Funcao: %s\n", $$->children->name);
         $$->children->escopo = copyString("global");
         updateEscopo($4, $$->children->name);
         updateEscopo($6, $$->children->name);
@@ -127,15 +127,16 @@ param_lista: param_lista VIR param {
 param: tipo_especificador id {
         $$ = $1;
         $2->type = $1->type;
+        $2->escopo = copyString($$->escopo);
         addAASNode($$, newAASNodeStmt(KVar));
         $$->children->line = $2->line;
         $$->children->type = $1->type;
         $$->children->name = copyString($2->name);
-
     }
     | tipo_especificador id ACOL FCOL {
         $$ = $1;
         $2->type = $1->type;
+        $2->escopo = copyString($$->escopo);
         addAASNode($$, newAASNodeStmt(KVet));
         $$->children->line = $2->line;
         $$->children->type = $1->type;
@@ -228,10 +229,20 @@ expressao: var ATR expressao {
     }
     ;
 
-var: id { $$ = $1; }
+var: id { 
+        $$ = newAASNodeExp(KVarId);
+        $$->type = $1->type;
+        $$->line = $1->line;
+        $$->name = copyString($1->name);
+        $$->escopo = copyString($1->escopo);
+        addAASNode($$, $1); 
+    }
     | id ACOL expressao FCOL {
         $$ = newAASNodeExp(KVetId);
         $$->type = $1->type;
+        $$->line = $1->line;
+        $$->name = copyString($1->name);
+        $$->escopo = copyString($1->escopo);
         addAASNode($$, $1);
         addAASNode($$, $3);
     }
@@ -329,6 +340,7 @@ id: ID {
         $$->token = lex->token;
         $$->line = lex->line;
         $$->name = copyString(lex->lexema);
+        $$->escopo = copyString("global");
     }
     ;
 
@@ -338,6 +350,7 @@ num: NUM {
         $$->type = KInt;
         $$->line = lex->line;
         $$->token = lex->token;
+        $$->escopo = copyString("global");
     }
 
 %%
@@ -449,14 +462,19 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         else {
-            buildTabSimb(simbTable, root);
+            printTabSimb(simbTable, root);
         }
     }
 
     fclose(fp);
     deallocate_buffer(buffer);
     deallocate_lex(lex);
-    deallocateAAS(root);
+    if (root != NULL) {
+        deallocateAAS(root);
+    } else {
+        printf("Root is NULL\n");
+    }
+    deallocateTabSimb(simbTable);
 
     // fclose(debug_file);
     return 0;

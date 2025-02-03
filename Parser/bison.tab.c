@@ -573,12 +573,12 @@ static const yytype_int8 yytranslate[] =
 static const yytype_int16 yyrline[] =
 {
        0,    50,    50,    56,    60,    63,    64,    67,    77,    90,
-      94,   100,   116,   117,   120,   124,   127,   136,   146,   156,
-     164,   167,   175,   178,   179,   180,   181,   182,   185,   186,
-     189,   194,   202,   209,   213,   220,   226,   231,   232,   240,
-     246,   252,   253,   254,   255,   256,   257,   260,   265,   270,
-     271,   274,   279,   284,   285,   288,   289,   290,   291,   294,
-     302,   311,   314,   322,   327,   335
+      94,   100,   116,   117,   120,   124,   127,   136,   147,   157,
+     165,   168,   176,   179,   180,   181,   182,   183,   186,   187,
+     190,   195,   203,   210,   214,   221,   227,   232,   240,   251,
+     257,   263,   264,   265,   266,   267,   268,   271,   276,   281,
+     282,   285,   290,   295,   296,   299,   300,   301,   302,   305,
+     313,   322,   325,   333,   338,   347
 };
 #endif
 
@@ -1305,7 +1305,7 @@ yyreduce:
         (yyval.node)->children->line = (yyvsp[-4].node)->line;
         (yyval.node)->children->type = (yyvsp[-5].node)->type;
         (yyval.node)->children->name = copyString((yyvsp[-4].node)->name);
-        printf("Funcao: %s\n", (yyval.node)->children->name);
+        // printf("Funcao: %s\n", $$->children->name);
         (yyval.node)->children->escopo = copyString("global");
         updateEscopo((yyvsp[-2].node), (yyval.node)->children->name);
         updateEscopo((yyvsp[0].node), (yyval.node)->children->name);
@@ -1347,11 +1347,11 @@ yyreduce:
                              {
         (yyval.node) = (yyvsp[-1].node);
         (yyvsp[0].node)->type = (yyvsp[-1].node)->type;
+        (yyvsp[0].node)->escopo = copyString((yyval.node)->escopo);
         addAASNode((yyval.node), newAASNodeStmt(KVar));
         (yyval.node)->children->line = (yyvsp[0].node)->line;
         (yyval.node)->children->type = (yyvsp[-1].node)->type;
         (yyval.node)->children->name = copyString((yyvsp[0].node)->name);
-
     }
 #line 1357 "bison.tab.c"
     break;
@@ -1361,16 +1361,17 @@ yyreduce:
                                       {
         (yyval.node) = (yyvsp[-3].node);
         (yyvsp[-2].node)->type = (yyvsp[-3].node)->type;
+        (yyvsp[-2].node)->escopo = copyString((yyval.node)->escopo);
         addAASNode((yyval.node), newAASNodeStmt(KVet));
         (yyval.node)->children->line = (yyvsp[-2].node)->line;
         (yyval.node)->children->type = (yyvsp[-3].node)->type;
         (yyval.node)->children->name = copyString((yyvsp[-2].node)->name);
     }
-#line 1370 "bison.tab.c"
+#line 1371 "bison.tab.c"
     break;
 
   case 18: /* composto_decl: ACHV local_declaracoes statement_lista FCHV  */
-#line 146 "bison.y"
+#line 147 "bison.y"
                                                            {
         if ((yyvsp[-2].node) != NULL) {
             (yyval.node) = (yyvsp[-2].node);
@@ -1379,11 +1380,11 @@ yyreduce:
             (yyval.node) = (yyvsp[-1].node);
         }
     }
-#line 1383 "bison.tab.c"
+#line 1384 "bison.tab.c"
     break;
 
   case 19: /* local_declaracoes: local_declaracoes var_declaracao  */
-#line 156 "bison.y"
+#line 157 "bison.y"
                                                     {
         if ((yyvsp[-1].node) == NULL) {
             (yyval.node) = (yyvsp[0].node);
@@ -1392,17 +1393,17 @@ yyreduce:
             addAASNodeSibling((yyval.node), (yyvsp[0].node));
         }
     }
-#line 1396 "bison.tab.c"
+#line 1397 "bison.tab.c"
     break;
 
   case 20: /* local_declaracoes: %empty  */
-#line 164 "bison.y"
+#line 165 "bison.y"
       { (yyval.node) = NULL; }
-#line 1402 "bison.tab.c"
+#line 1403 "bison.tab.c"
     break;
 
   case 21: /* statement_lista: statement_lista statement  */
-#line 167 "bison.y"
+#line 168 "bison.y"
                                            {
         if ((yyvsp[-1].node) == NULL) {
             (yyval.node) = (yyvsp[0].node);
@@ -1411,283 +1412,293 @@ yyreduce:
             addAASNodeSibling((yyval.node), (yyvsp[0].node));
         }
     }
-#line 1415 "bison.tab.c"
+#line 1416 "bison.tab.c"
     break;
 
   case 22: /* statement_lista: %empty  */
-#line 175 "bison.y"
+#line 176 "bison.y"
       { (yyval.node) = NULL; }
-#line 1421 "bison.tab.c"
+#line 1422 "bison.tab.c"
     break;
 
   case 23: /* statement: expressao_decl  */
-#line 178 "bison.y"
+#line 179 "bison.y"
                           { (yyval.node) = (yyvsp[0].node); }
-#line 1427 "bison.tab.c"
+#line 1428 "bison.tab.c"
     break;
 
   case 24: /* statement: composto_decl  */
-#line 179 "bison.y"
+#line 180 "bison.y"
                     { (yyval.node) = (yyvsp[0].node); }
-#line 1433 "bison.tab.c"
+#line 1434 "bison.tab.c"
     break;
 
   case 25: /* statement: selecao_decl  */
-#line 180 "bison.y"
+#line 181 "bison.y"
                    { (yyval.node) = (yyvsp[0].node); }
-#line 1439 "bison.tab.c"
+#line 1440 "bison.tab.c"
     break;
 
   case 26: /* statement: iteracao_decl  */
-#line 181 "bison.y"
+#line 182 "bison.y"
                     { (yyval.node) = (yyvsp[0].node); }
-#line 1445 "bison.tab.c"
+#line 1446 "bison.tab.c"
     break;
 
   case 27: /* statement: retorno_decl  */
-#line 182 "bison.y"
+#line 183 "bison.y"
                    { (yyval.node) = (yyvsp[0].node); }
-#line 1451 "bison.tab.c"
+#line 1452 "bison.tab.c"
     break;
 
   case 28: /* expressao_decl: expressao PTV  */
-#line 185 "bison.y"
+#line 186 "bison.y"
                               { (yyval.node) = (yyvsp[-1].node); }
-#line 1457 "bison.tab.c"
+#line 1458 "bison.tab.c"
     break;
 
   case 29: /* expressao_decl: PTV  */
-#line 186 "bison.y"
+#line 187 "bison.y"
           { (yyval.node) = NULL; }
-#line 1463 "bison.tab.c"
+#line 1464 "bison.tab.c"
     break;
 
   case 30: /* selecao_decl: IF APAR expressao FPAR statement  */
-#line 189 "bison.y"
+#line 190 "bison.y"
                                                {
         (yyval.node) = newAASNodeStmt(KIf);
         addAASNode((yyval.node), (yyvsp[-2].node));
         addAASNode((yyval.node), (yyvsp[0].node));
     }
-#line 1473 "bison.tab.c"
+#line 1474 "bison.tab.c"
     break;
 
   case 31: /* selecao_decl: IF APAR expressao FPAR statement ELSE statement  */
-#line 194 "bison.y"
+#line 195 "bison.y"
                                                       {
         (yyval.node) = newAASNodeStmt(KIf);
         addAASNode((yyval.node), (yyvsp[-4].node));
         addAASNode((yyval.node), (yyvsp[-2].node));
         addAASNode((yyval.node), (yyvsp[0].node));
     }
-#line 1484 "bison.tab.c"
+#line 1485 "bison.tab.c"
     break;
 
   case 32: /* iteracao_decl: WHILE APAR expressao FPAR statement  */
-#line 202 "bison.y"
+#line 203 "bison.y"
                                                   {
         (yyval.node) = newAASNodeStmt(KWhile);
         addAASNode((yyval.node), (yyvsp[-2].node));
         addAASNode((yyval.node), (yyvsp[0].node));
     }
-#line 1494 "bison.tab.c"
+#line 1495 "bison.tab.c"
     break;
 
   case 33: /* retorno_decl: RETURN PTV  */
-#line 209 "bison.y"
+#line 210 "bison.y"
                          { 
         (yyval.node) = newAASNodeStmt(KReturn);
         (yyval.node)->type = KVoid;
     }
-#line 1503 "bison.tab.c"
+#line 1504 "bison.tab.c"
     break;
 
   case 34: /* retorno_decl: RETURN expressao PTV  */
-#line 213 "bison.y"
+#line 214 "bison.y"
                            {
         (yyval.node) = newAASNodeStmt(KReturn);
         addAASNode((yyval.node), (yyvsp[-1].node));
     }
-#line 1512 "bison.tab.c"
+#line 1513 "bison.tab.c"
     break;
 
   case 35: /* expressao: var ATR expressao  */
-#line 220 "bison.y"
+#line 221 "bison.y"
                              {
         (yyval.node) = newAASNodeStmt(KAssign);
         (yyval.node)->type = (yyvsp[-2].node)->type;
         addAASNode((yyval.node), (yyvsp[-2].node));
         addAASNode((yyval.node), (yyvsp[0].node));
     }
-#line 1523 "bison.tab.c"
+#line 1524 "bison.tab.c"
     break;
 
   case 36: /* expressao: simples_expressao  */
-#line 226 "bison.y"
+#line 227 "bison.y"
                         {
         (yyval.node) = (yyvsp[0].node);
     }
-#line 1531 "bison.tab.c"
+#line 1532 "bison.tab.c"
     break;
 
   case 37: /* var: id  */
-#line 231 "bison.y"
-        { (yyval.node) = (yyvsp[0].node); }
-#line 1537 "bison.tab.c"
+#line 232 "bison.y"
+        { 
+        (yyval.node) = newAASNodeExp(KVarId);
+        (yyval.node)->type = (yyvsp[0].node)->type;
+        (yyval.node)->line = (yyvsp[0].node)->line;
+        (yyval.node)->name = copyString((yyvsp[0].node)->name);
+        (yyval.node)->escopo = copyString((yyvsp[0].node)->escopo);
+        addAASNode((yyval.node), (yyvsp[0].node)); 
+    }
+#line 1545 "bison.tab.c"
     break;
 
   case 38: /* var: id ACOL expressao FCOL  */
-#line 232 "bison.y"
+#line 240 "bison.y"
                              {
         (yyval.node) = newAASNodeExp(KVetId);
         (yyval.node)->type = (yyvsp[-3].node)->type;
+        (yyval.node)->line = (yyvsp[-3].node)->line;
+        (yyval.node)->name = copyString((yyvsp[-3].node)->name);
+        (yyval.node)->escopo = copyString((yyvsp[-3].node)->escopo);
         addAASNode((yyval.node), (yyvsp[-3].node));
         addAASNode((yyval.node), (yyvsp[-1].node));
     }
-#line 1548 "bison.tab.c"
+#line 1559 "bison.tab.c"
     break;
 
   case 39: /* simples_expressao: soma_expressao relacional soma_expressao  */
-#line 240 "bison.y"
+#line 251 "bison.y"
                                                             {
     (yyval.node) = (yyvsp[-1].node);
     (yyval.node)->type = KInt;
     addAASNode((yyval.node), (yyvsp[-2].node));
     addAASNode((yyval.node), (yyvsp[0].node));
 }
-#line 1559 "bison.tab.c"
+#line 1570 "bison.tab.c"
     break;
 
   case 40: /* simples_expressao: soma_expressao  */
-#line 246 "bison.y"
+#line 257 "bison.y"
                      {
         (yyval.node) = (yyvsp[0].node);
     }
-#line 1567 "bison.tab.c"
+#line 1578 "bison.tab.c"
     break;
 
   case 41: /* relacional: LE  */
-#line 252 "bison.y"
+#line 263 "bison.y"
                { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = LE; }
-#line 1573 "bison.tab.c"
+#line 1584 "bison.tab.c"
     break;
 
   case 42: /* relacional: LT  */
-#line 253 "bison.y"
+#line 264 "bison.y"
          { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = LT; }
-#line 1579 "bison.tab.c"
+#line 1590 "bison.tab.c"
     break;
 
   case 43: /* relacional: GT  */
-#line 254 "bison.y"
+#line 265 "bison.y"
          { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = GT; }
-#line 1585 "bison.tab.c"
+#line 1596 "bison.tab.c"
     break;
 
   case 44: /* relacional: GE  */
-#line 255 "bison.y"
+#line 266 "bison.y"
          { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = GE; }
-#line 1591 "bison.tab.c"
+#line 1602 "bison.tab.c"
     break;
 
   case 45: /* relacional: COMP  */
-#line 256 "bison.y"
+#line 267 "bison.y"
            { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = COMP; }
-#line 1597 "bison.tab.c"
+#line 1608 "bison.tab.c"
     break;
 
   case 46: /* relacional: DIF  */
-#line 257 "bison.y"
+#line 268 "bison.y"
           { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = DIF; }
-#line 1603 "bison.tab.c"
+#line 1614 "bison.tab.c"
     break;
 
   case 47: /* soma_expressao: soma_expressao aditivo termo  */
-#line 260 "bison.y"
+#line 271 "bison.y"
                                              {
     (yyval.node) = (yyvsp[-1].node);
     addAASNode((yyval.node), (yyvsp[-2].node));
     addAASNode((yyval.node), (yyvsp[0].node));
 }
-#line 1613 "bison.tab.c"
+#line 1624 "bison.tab.c"
     break;
 
   case 48: /* soma_expressao: termo  */
-#line 265 "bison.y"
+#line 276 "bison.y"
             {
         (yyval.node) = (yyvsp[0].node);
     }
-#line 1621 "bison.tab.c"
+#line 1632 "bison.tab.c"
     break;
 
   case 49: /* aditivo: SOMA  */
-#line 270 "bison.y"
+#line 281 "bison.y"
               { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = SOMA; (yyval.node)->type = KInt; }
-#line 1627 "bison.tab.c"
+#line 1638 "bison.tab.c"
     break;
 
   case 50: /* aditivo: SUB  */
-#line 271 "bison.y"
+#line 282 "bison.y"
              { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = SUB; (yyval.node)->type = KInt; }
-#line 1633 "bison.tab.c"
+#line 1644 "bison.tab.c"
     break;
 
   case 51: /* termo: termo operador_multiplicativo fator  */
-#line 274 "bison.y"
+#line 285 "bison.y"
                                            {
     (yyval.node) = (yyvsp[-1].node);
     addAASNode((yyval.node), (yyvsp[-2].node));
     addAASNode((yyval.node), (yyvsp[0].node));
 }
-#line 1643 "bison.tab.c"
+#line 1654 "bison.tab.c"
     break;
 
   case 52: /* termo: fator  */
-#line 279 "bison.y"
+#line 290 "bison.y"
             {
         (yyval.node) = (yyvsp[0].node);
     }
-#line 1651 "bison.tab.c"
+#line 1662 "bison.tab.c"
     break;
 
   case 53: /* operador_multiplicativo: MULT  */
-#line 284 "bison.y"
+#line 295 "bison.y"
                               { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = MULT; (yyval.node)->type = KInt; }
-#line 1657 "bison.tab.c"
+#line 1668 "bison.tab.c"
     break;
 
   case 54: /* operador_multiplicativo: DIV  */
-#line 285 "bison.y"
+#line 296 "bison.y"
                              { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = DIV; (yyval.node)->type = KInt; }
-#line 1663 "bison.tab.c"
+#line 1674 "bison.tab.c"
     break;
 
   case 55: /* fator: APAR expressao FPAR  */
-#line 288 "bison.y"
+#line 299 "bison.y"
                            { (yyval.node) = (yyvsp[-1].node); }
-#line 1669 "bison.tab.c"
+#line 1680 "bison.tab.c"
     break;
 
   case 56: /* fator: var  */
-#line 289 "bison.y"
+#line 300 "bison.y"
           { (yyval.node) = (yyvsp[0].node); }
-#line 1675 "bison.tab.c"
+#line 1686 "bison.tab.c"
     break;
 
   case 57: /* fator: ativacao  */
-#line 290 "bison.y"
+#line 301 "bison.y"
                { (yyval.node) = (yyvsp[0].node); }
-#line 1681 "bison.tab.c"
+#line 1692 "bison.tab.c"
     break;
 
   case 58: /* fator: num  */
-#line 291 "bison.y"
+#line 302 "bison.y"
           { (yyval.node) = (yyvsp[0].node); }
-#line 1687 "bison.tab.c"
+#line 1698 "bison.tab.c"
     break;
 
   case 59: /* ativacao: id APAR args FPAR  */
-#line 294 "bison.y"
+#line 305 "bison.y"
                             {
         (yyval.node) = newAASNodeStmt(KCall);
         (yyval.node)->type = (yyvsp[-3].node)->type;
@@ -1696,11 +1707,11 @@ yyreduce:
         (yyval.node)->name = copyString((yyvsp[-3].node)->name);
         addAASNode((yyval.node), (yyvsp[-1].node));
     }
-#line 1700 "bison.tab.c"
+#line 1711 "bison.tab.c"
     break;
 
   case 60: /* ativacao: id APAR FPAR  */
-#line 302 "bison.y"
+#line 313 "bison.y"
                    {
         (yyval.node) = newAASNodeStmt(KCall);
         (yyval.node)->type = (yyvsp[-2].node)->type;
@@ -1708,17 +1719,17 @@ yyreduce:
         (yyval.node)->line = lex->line;
         (yyval.node)->name = copyString((yyvsp[-2].node)->name);
     }
-#line 1712 "bison.tab.c"
+#line 1723 "bison.tab.c"
     break;
 
   case 61: /* args: arg_lista  */
-#line 311 "bison.y"
+#line 322 "bison.y"
                 { (yyval.node) = (yyvsp[0].node); }
-#line 1718 "bison.tab.c"
+#line 1729 "bison.tab.c"
     break;
 
   case 62: /* arg_lista: arg_lista VIR expressao  */
-#line 314 "bison.y"
+#line 325 "bison.y"
                                    {
         if ((yyvsp[-2].node) == NULL) {
             (yyval.node) = (yyvsp[0].node);
@@ -1727,42 +1738,44 @@ yyreduce:
             addAASNodeSibling((yyval.node), (yyvsp[0].node));
         }
     }
-#line 1731 "bison.tab.c"
+#line 1742 "bison.tab.c"
     break;
 
   case 63: /* arg_lista: expressao  */
-#line 322 "bison.y"
+#line 333 "bison.y"
                 {
         (yyval.node) = (yyvsp[0].node);
     }
-#line 1739 "bison.tab.c"
+#line 1750 "bison.tab.c"
     break;
 
   case 64: /* id: ID  */
-#line 327 "bison.y"
+#line 338 "bison.y"
        {
         (yyval.node) = newAASNodeExp(KId);
         (yyval.node)->token = lex->token;
         (yyval.node)->line = lex->line;
         (yyval.node)->name = copyString(lex->lexema);
+        (yyval.node)->escopo = copyString("global");
     }
-#line 1750 "bison.tab.c"
+#line 1762 "bison.tab.c"
     break;
 
   case 65: /* num: NUM  */
-#line 335 "bison.y"
+#line 347 "bison.y"
          {
         (yyval.node) = newAASNodeExp(KConst);
         (yyval.node)->value = atoi(lex->lexema);
         (yyval.node)->type = KInt;
         (yyval.node)->line = lex->line;
         (yyval.node)->token = lex->token;
+        (yyval.node)->escopo = copyString("global");
     }
-#line 1762 "bison.tab.c"
+#line 1775 "bison.tab.c"
     break;
 
 
-#line 1766 "bison.tab.c"
+#line 1779 "bison.tab.c"
 
       default: break;
     }
@@ -1955,7 +1968,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 343 "bison.y"
+#line 356 "bison.y"
 
 int yyerror(char *s) {
     if (lex->token == ER) {
@@ -2065,14 +2078,19 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         else {
-            buildTabSimb(simbTable, root);
+            printTabSimb(simbTable, root);
         }
     }
 
     fclose(fp);
     deallocate_buffer(buffer);
     deallocate_lex(lex);
-    deallocateAAS(root);
+    if (root != NULL) {
+        deallocateAAS(root);
+    } else {
+        printf("Root is NULL\n");
+    }
+    deallocateTabSimb(simbTable);
 
     // fclose(debug_file);
     return 0;

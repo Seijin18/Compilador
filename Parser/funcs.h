@@ -94,6 +94,8 @@ char *getTypeName(TypeKind type);
 static int hash(char *name);
 SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo);
 int insertTabSimb(SimbCell *tab, AASNode *node);
-void buildTabSimb(SimbCell *tab, AASNode *node);
+int buildTabSimb(SimbCell *tab, AASNode *node);
+void printTabSimb(SimbCell *tabSimb, AASNode *node);
+void deallocateTabSimb(SimbCell *tabSimb);
 
 #endif
