@@ -7,7 +7,7 @@
 #define AC -9
 #define ER -10
 
-char simbolos[] = {'+', '-', '*', '/', '<', '>', '=', '!', ';', ',', '(', ')', '[', ']', '{', '}'}; // Simbolos
+char simbolos[] = {'+', '-', '*', '/', '<', '>', '=', '!', ';', ',', '(', ')', '[', ']', '{', '}', '.'}; // Simbolos
 
 // Flag
 int read_next = 1;
@@ -91,34 +91,34 @@ char *get_token_name(int token) // Retorna o nome do token
 // Simbolos: 3 - 18
 
 // DFA
-int dfa[27][19] = {
-    {2, 1, 0, 3, 4, 5, 6, 12, 11, 7, 9, 15, 16, 17, 18, 19, 20, 21, 22},          // 0
-    {ER, 1, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC},  // 1
-    {2, ER, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC},  // 2
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 3
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 4
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 5
-    {AC, AC, AC, AC, AC, 23, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 6
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, 8, AC, AC, AC, AC, AC, AC, AC, AC, AC},  // 7
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 8
-    {ER, ER, ER, ER, ER, ER, ER, ER, ER, 10, ER, ER, ER, ER, ER, ER, ER, ER, ER}, // 9
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 10
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, 13, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 11
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, 14, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 12
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 13
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 14
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 15
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 16
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 17
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 18
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 19
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 20
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 21
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, // 22
-    {23, 23, 23, 23, 23, 25, 24, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 23
-    {23, 23, 23, 23, 23, ER, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 24
-    {23, 23, 23, 23, 23, 23, 26, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 25
-    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}  // 26
+int dfa[27][20] = {
+    { 2,  1,  0,  3,  4,  5,  6, 12, 11,  7,  9, 15, 16, 17, 18, 19, 20, 21, 22, ER},          // 0
+    {ER,  1, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER},  // 1
+    { 2, ER, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER},  // 2
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 3
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 4
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 5
+    {AC, AC, AC, AC, AC, 23, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 6
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC,  8, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER},  // 7
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 8
+    {ER, ER, ER, ER, ER, ER, ER, ER, ER, 10, ER, ER, ER, ER, ER, ER, ER, ER, ER, ER}, // 9
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 10
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, 13, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 11
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, 14, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 12
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 13
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 14
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 15
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 16
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 17
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 18
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 19
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 20
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 21
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}, // 22
+    {23, 23, 23, 23, 23, 25, 24, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 23
+    {23, 23, 23, 23, 23, ER, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 24
+    {23, 23, 23, 23, 23, 23, 26, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 25
+    {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}  // 26
 };
 
 Bloco *allocate_buffer(int size) // Aloca o buffer
@@ -215,7 +215,7 @@ void replace_print(Bloco *buffer, int size) // Troca as letras maiúsculas pelas
 
 int is_symbol(char ch) // Verifica se é um símbolo
 {
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < 17; i++)
     {
         if (ch == simbolos[i])
         {
@@ -452,7 +452,7 @@ int get_lexema(Bloco *buffer, Lex *lex, FILE *file) // Pega o lexema
 {
     int i = 0;
     clear_lex(lex);
-    if (buffer->buffer[buffer->char_pos] == '\0') // Carrega o buffer se estiver no finaç
+    if (buffer->buffer[buffer->char_pos] == '\0') // Carrega o buffer se estiver no final
     {
         load_buffer(buffer, file);
     }

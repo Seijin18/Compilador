@@ -390,12 +390,14 @@ int yylex(void) {
 
 int main(int argc, char *argv[]) {
     int option = -1;
+    int run_all = 0;
     if (argc < 2) { // Verifica se o arquivo foi passado como argumento
-        printf("Usage: %s <filename>\n", argv[0]);
+        printf("Usage: %s <filename> [-l|-p|-s]\n", argv[0]);
         return 1;
     }
 
-    for(int i = 0; i < argc; i++) { // Seleciona opção entre -l, -p e -s
+    // Verifica se alguma flag foi passada
+    for(int i = 0; i < argc; i++) {
         if(argv[i][0] == '-') {
             if (argv[i][1] == 'l' || argv[i][1] == 'L') { // Análise léxica
                 option = 0;
@@ -403,12 +405,16 @@ int main(int argc, char *argv[]) {
                 option = 1;
             } else if (argv[i][1] == 's' || argv[i][1] == 'S') { // Análise semântica
                 option = 2;
-            }
-            else {
+            } else {
                 printf("Invalid option\n");
                 return 1;
             }
         }
+    }
+
+    // Se nenhuma flag foi passada, executa todos os analisadores
+    if (option == -1) {
+        run_all = 1;
     }
 
     fp = fopen(argv[1], "r"); // Abre o arquivo
@@ -428,8 +434,14 @@ int main(int argc, char *argv[]) {
     lex = allocate_lex();
     int token;
     char *token_name;
-    
-    if (option == 0) { // Análise léxica
+
+    if (run_all) {
+        yyparse();
+        printAAS(root, 0);
+
+        printTabSimb(simbTable, root);
+        
+    } else if (option == 0) { // Análise léxica
         do{
             token = yylex();
             token_name = get_token_name(token);
@@ -439,7 +451,6 @@ int main(int argc, char *argv[]) {
             else {
                 printf("%s\t'%s' \t[linha: %d]\n", token_name, lex->lexema, lex->line + 1);
             }
-            
         } while (token != EOF && token != ER);
     } else if (option == 1) { // Análise sintática
         yyparse();
