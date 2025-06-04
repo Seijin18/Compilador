@@ -12,7 +12,7 @@
 
 
 typedef enum {KStmt, KExp} NodeKind;
-typedef enum {KIf, KWhile, KAssign, KReturn, KCall, KVar, KVet, KFunc, KProg} StmtKind;
+typedef enum {KIf, KWhile, KAssign, KReturn, KCall, KVar, KVet, KFunc, KProg, KInput, KOutput} StmtKind;
 typedef enum {KOp, KConst, KId, KType, KVarId, KVetId} ExpKind;
 typedef enum {KInt, KVoid} TypeKind;
 typedef enum {Var, Func} IdKind;

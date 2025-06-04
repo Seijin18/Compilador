@@ -1,5 +1,6 @@
 %{
 #include "funcs.h"
+#include "intermediate.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +41,8 @@ int yylex(void);
 %token PTV VIR APAR FPAR ACOL   
 %token FCOL ACHV FCHV
 %token CMT
-%type <node> programa declaracao_lista declaracao var_declaracao tipo_especificador fun_declaracao params param_lista param composto_decl local_declaracoes statement_lista statement expressao_decl selecao_decl iteracao_decl retorno_decl expressao var simples_expressao relacional soma_expressao aditivo termo operador_multiplicativo fator ativacao args arg_lista id num
+%token INPUT OUTPUT
+%type <node> programa declaracao_lista declaracao var_declaracao tipo_especificador fun_declaracao params param_lista param composto_decl local_declaracoes statement_lista statement expressao_decl selecao_decl iteracao_decl retorno_decl expressao var simples_expressao relacional soma_expressao aditivo termo operador_multiplicativo fator ativacao args arg_lista id num input_stmt output_stmt
 
 %left SOMA SUB
 %left MULT DIV
@@ -181,6 +183,22 @@ statement: expressao_decl { $$ = $1; }
     | selecao_decl { $$ = $1; }
     | iteracao_decl { $$ = $1; }
     | retorno_decl { $$ = $1; }
+    | input_stmt { $$ = $1; }
+    | output_stmt { $$ = $1; }
+    ;
+
+input_stmt: INPUT APAR var FPAR PTV {
+        $$ = newAASNodeStmt(KInput);
+        addAASNode($$, $3);
+        $$->line = $3->line;
+    }
+    ;
+
+output_stmt: OUTPUT APAR expressao FPAR PTV {
+        $$ = newAASNodeStmt(KOutput);
+        addAASNode($$, $3);
+        $$->line = $3->line;
+    }
     ;
 
 expressao_decl: expressao PTV { $$ = $1; }
@@ -237,12 +255,7 @@ expressao: var ATR expressao {
     ;
 
 var: id { 
-        $$ = newAASNodeExp(KVarId);
-        $$->type = $1->type;
-        $$->line = $1->line;
-        $$->name = copyString($1->name);
-        $$->escopo = copyString($1->escopo);
-        addAASNode($$, $1); 
+        $$ = $1;
     }
     | id ACOL expressao FCOL {
         $$ = newAASNodeExp(KVetId);
@@ -310,6 +323,20 @@ fator: APAR expressao FPAR { $$ = $2; }
     ;
 
 ativacao: id APAR args FPAR {
+    if (strcmp($1->name, "input") == 0) {
+        $$ = newAASNodeStmt(KInput);
+        $$->type = KInt;
+        $$->token = lex->token;
+        $$->line = lex->line;
+        $$->name = copyString("input");
+    } else if (strcmp($1->name, "output") == 0) {
+        $$ = newAASNodeStmt(KOutput);
+        $$->type = KVoid;
+        $$->token = lex->token;
+        $$->line = lex->line;
+        $$->name = copyString("output");
+        addAASNode($$, $3);
+    } else {
         $$ = newAASNodeStmt(KCall);
         $$->type = $1->type;
         $$->token = lex->token;
@@ -317,13 +344,28 @@ ativacao: id APAR args FPAR {
         $$->name = copyString($1->name);
         addAASNode($$, $3);
     }
-    | id APAR FPAR {
+}
+| id APAR FPAR {
+    if (strcmp($1->name, "input") == 0) {
+        $$ = newAASNodeStmt(KInput);
+        $$->type = KInt;
+        $$->token = lex->token;
+        $$->line = lex->line;
+        $$->name = copyString("input");
+    } else if (strcmp($1->name, "output") == 0) {
+        $$ = newAASNodeStmt(KOutput);
+        $$->type = KVoid;
+        $$->token = lex->token;
+        $$->line = lex->line;
+        $$->name = copyString("output");
+    } else {
         $$ = newAASNodeStmt(KCall);
         $$->type = $1->type;
         $$->token = lex->token;
         $$->line = lex->line;
         $$->name = copyString($1->name);
     }
+}
     ;
 
 args: arg_lista { $$ = $1; }
@@ -435,12 +477,30 @@ int main(int argc, char *argv[]) {
     int token;
     char *token_name;
 
+    // Adiciona funções built-in input e output na tabela de símbolos
+    AASNode *inputFunc = newAASNodeStmt(KFunc);
+    inputFunc->name = copyString("input");
+    inputFunc->type = KInt; // ou KVoid, dependendo do seu design
+    inputFunc->escopo = copyString("global");
+    insertTabSimb(simbTable, inputFunc);
+    AASNode *outputFunc = newAASNodeStmt(KFunc);
+    outputFunc->name = copyString("output");
+    outputFunc->type = KVoid;
+    outputFunc->escopo = copyString("global");
+    insertTabSimb(simbTable, outputFunc);
+
     if (run_all) {
         yyparse();
         printAAS(root, 0);
-
         printTabSimb(simbTable, root);
-        
+        FILE *finter = fopen("intermediate.txt", "w");
+        if (finter && root) {
+            generateIntermediateCode(root, finter);
+            fclose(finter);
+            printf("Intermediate code written to intermediate.txt\n");
+        } else {
+            printf("Could not write intermediate code.\n");
+        }
     } else if (option == 0) { // Análise léxica
         do{
             token = yylex();

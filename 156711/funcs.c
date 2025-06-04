@@ -645,6 +645,12 @@ void printAAS(AASNode *node, int depth) // Imprime a árvore abstrata de sintaxe
         case KProg:
             printf("Prog\n");
             break;
+        case KInput:
+            printf("Input\n");
+            break;
+        case KOutput:
+            printf("Output\n");
+            break;
         }
         break;
     case KExp:
@@ -889,6 +895,10 @@ int insertTabSimb(SimbCell *tab, AASNode *node) // Insere na tabela de símbolos
         }
         else if (node->stmt == KFunc) // Verifica se é uma função
         {
+            // Não insere nem imprime input/output como funções do usuário
+            if ((strcmp(node->name, "input") == 0 || strcmp(node->name, "output") == 0)) {
+                return 0;
+            }
             if (searchTabSimb(tab, node->name, "global") != NULL) // Verifica se a função já foi declarada
             {
                 semantic_error = "Redeclaração da função";
@@ -1038,16 +1048,19 @@ int buildTabSimb(SimbCell *tabSimb, AASNode *node) // Constroi a tabela de símb
         }
         else if (k == 1) // Insere na tabela de símbolos
         {
-            if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId) // Verifica o tipo de identificador
+            // Não imprime input/output como funções do usuário
+            if (child->stmt == KFunc && (strcmp(child->name, "input") == 0 || strcmp(child->name, "output") == 0)) {
+                // skip
+            } else if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId) // Verifica o tipo de identificador
             {
                 strcpy(kind, "Variable");
+                printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);
             }
             else
             {
                 strcpy(kind, "Function");
+                printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);
             }
-
-            printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1); // Imprime a tabela de símbolos
         }
         if (buildTabSimb(tabSimb, child) == -1)
         {

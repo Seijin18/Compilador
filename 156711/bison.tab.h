@@ -66,7 +66,9 @@
      FCOL = 282,
      ACHV = 283,
      FCHV = 284,
-     CMT = 285
+     CMT = 285,
+     INPUT = 286,
+     OUTPUT = 287
    };
 #endif
 
@@ -77,7 +79,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 27 "bison.y"
+#line 28 "bison.y"
 
     int intValue;
     char* stringValue;
@@ -86,7 +88,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 90 "bison.tab.h"
+#line 92 "bison.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
