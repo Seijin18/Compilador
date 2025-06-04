@@ -85,7 +85,7 @@ AASNode *newAASNodeStmt(StmtKind kstmt);
 AASNode *addAASNode(AASNode *node, AASNode *child);
 AASNode *addAASNodeSibling(AASNode *node, AASNode *sibling);
 void updateEscopo(AASNode *node, char *escopo);
-void printAAS(AASNode *node, int depth);
+void printAAS(AASNode *node, int depth, FILE *out);
 void deallocateAAS(AASNode *node);
 
 char *copyString(char *src);
@@ -94,8 +94,8 @@ char *getTypeName(TypeKind type);
 static int hash(char *name);
 SimbCell *searchTabSimb(SimbCell *tab, char *name, char *escopo);
 int insertTabSimb(SimbCell *tab, AASNode *node);
-int buildTabSimb(SimbCell *tab, AASNode *node);
-void printTabSimb(SimbCell *tabSimb, AASNode *node);
+int buildTabSimb(SimbCell *tabSimb, AASNode *node, FILE *out);
+void printTabSimb(SimbCell *tabSimb, AASNode *node, FILE *out);
 void deallocateTabSimb(SimbCell *tabSimb);
 
 #endif

@@ -23,15 +23,26 @@ static char* newLabel() {
 // Forward declaration
 static char* genNode(AASNode* node, FILE* out);
 
+static FILE* quadOut = NULL;
+
+static void emitQuad(const char* op, const char* arg1, const char* arg2, const char* result) {
+    if (!quadOut) return;
+    fprintf(quadOut, "(%s,%s,%s,%s)\n", op, arg1 ? arg1 : " ", arg2 ? arg2 : " ", result ? result : " ");
+}
+
 void generateIntermediateCode(AASNode* root, FILE* out) {
     tempCount = 0;
     labelCount = 0;
+    quadOut = out;
     if (!root) return;
+    // Emit initial goto main
+    emitQuad("goto", "main", " ", " ");
     AASNode* node = root->children;
     while (node) {
         genNode(node, out);
         node = node->sibling;
     }
+    quadOut = NULL;
 }
 
 static char* genNode(AASNode* node, FILE* out) {
@@ -39,34 +50,67 @@ static char* genNode(AASNode* node, FILE* out) {
     switch (node->node) {
         case KStmt:
             switch (node->stmt) {
+                case KFunc: {
+                    // Function declaration: (fun, name, , )
+                    emitQuad("fun", node->name, " ", " ");
+                    // Emit all parameter (arg,...) quads before allocs/body
+                    AASNode* child = node->children;
+                    AASNode* bodyStart = NULL;
+                    while (child) {
+                        if (child->node == KStmt && (child->stmt == KVar || child->stmt == KVet)) {
+                            emitQuad("arg", child->name, " ", " ");
+                        } else {
+                            // First non-param child is the start of the body
+                            if (!bodyStart) bodyStart = child;
+                        }
+                        child = child->sibling;
+                    }
+                    // Now process the function body (all non-param children)
+                    child = bodyStart;
+                    while (child) {
+                        genNode(child, out);
+                        child = child->sibling;
+                    }
+                    emitQuad("endfun", " ", " ", " ");
+                    return NULL;
+                }
+                case KProg: {
+                    // Traverse children (functions, globals)
+                    AASNode* child = node->children;
+                    while (child) {
+                        genNode(child, out);
+                        child = child->sibling;
+                    }
+                    return NULL;
+                }
                 case KAssign: {
                     char* rhs = genNode(node->children->sibling, out);
                     char* lhs = node->children->name;
-                    fprintf(out, "%s = %s\n", lhs, rhs);
+                    emitQuad("asn", rhs, " ", lhs);
                     return lhs;
                 }
                 case KIf: {
                     char* cond = genNode(node->children, out);
                     char* labelElse = newLabel();
                     char* labelEnd = newLabel();
-                    fprintf(out, "ifFalse %s goto %s\n", cond, labelElse);
+                    emitQuad("if_f", cond, labelElse, " ");
                     genNode(node->children->sibling, out); // then
-                    fprintf(out, "goto %s\n", labelEnd);
-                    fprintf(out, "%s:\n", labelElse);
+                    emitQuad("goto", labelEnd, " ", " ");
+                    emitQuad("label", labelElse, " ", " ");
                     if (node->children->sibling->sibling)
                         genNode(node->children->sibling->sibling, out); // else
-                    fprintf(out, "%s:\n", labelEnd);
+                    emitQuad("label", labelEnd, " ", " ");
                     return NULL;
                 }
                 case KWhile: {
                     char* labelStart = newLabel();
                     char* labelEnd = newLabel();
-                    fprintf(out, "%s:\n", labelStart);
+                    emitQuad("label", labelStart, " ", " ");
                     char* cond = genNode(node->children, out);
-                    fprintf(out, "ifFalse %s goto %s\n", cond, labelEnd);
+                    emitQuad("if_f", cond, labelEnd, " ");
                     genNode(node->children->sibling, out);
-                    fprintf(out, "goto %s\n", labelStart);
-                    fprintf(out, "%s:\n", labelEnd);
+                    emitQuad("goto", labelStart, " ", " ");
+                    emitQuad("label", labelEnd, " ", " ");
                     return NULL;
                 }
                 case KCall: {
@@ -79,38 +123,32 @@ static char* genNode(AASNode* node, FILE* out) {
                         arg = arg->sibling;
                     }
                     for (int i = 0; i < argCount; i++)
-                        fprintf(out, "param %s\n", args[i]);
+                        emitQuad("param", args[i], " ", " ");
                     char* temp = newTemp();
-                    fprintf(out, "%s = call %s, %d\n", temp, node->name, argCount);
+                    emitQuad("call", node->name, argCount == 0 ? "0" : args[0], temp); // argCount in arg2 if needed
                     return temp;
                 }
                 case KInput: {
                     char* temp = newTemp();
-                    fprintf(out, "%s = input\n", temp);
+                    emitQuad("input", " ", " ", temp);
                     return temp;
                 }
                 case KOutput: {
                     char* val = genNode(node->children, out);
-                    fprintf(out, "output %s\n", val);
+                    emitQuad("output", val, "0", " ");
                     return NULL;
                 }
                 case KReturn: {
                     if (node->children)
-                        fprintf(out, "return %s\n", genNode(node->children, out));
+                        emitQuad("ret", genNode(node->children, out), " ", " ");
                     else
-                        fprintf(out, "return\n");
+                        emitQuad("ret", " ", " ", " ");
                     return NULL;
                 }
                 case KVar:
-                case KVet:
-                case KFunc:
-                case KProg: {
-                    // Declarations, skip or traverse children
-                    AASNode* child = node->children;
-                    while (child) {
-                        genNode(child, out);
-                        child = child->sibling;
-                    }
+                case KVet: {
+                    // Variable/array declaration: (alloc, name, size, )
+                    emitQuad("alloc", node->name, "1", " ");
                     return NULL;
                 }
                 default: {
@@ -130,7 +168,7 @@ static char* genNode(AASNode* node, FILE* out) {
                     char* left = genNode(node->children, out);
                     char* right = genNode(node->children->sibling, out);
                     char* temp = newTemp();
-                    char op[4];
+                    char op[8];
                     switch (node->token) {
                         case SOMA: strcpy(op, "+"); break;
                         case SUB: strcpy(op, "-"); break;
@@ -144,30 +182,30 @@ static char* genNode(AASNode* node, FILE* out) {
                         case DIF: strcpy(op, "!="); break;
                         default: strcpy(op, "?"); break;
                     }
-                    fprintf(out, "%s = %s %s %s\n", temp, left, op, right);
+                    emitQuad(op, left, right, temp);
                     return temp;
                 }
                 case KConst: {
                     char* temp = newTemp();
-                    fprintf(out, "%s = %d\n", temp, node->value);
+                    char val[16];
+                    sprintf(val, "%d", node->value);
+                    emitQuad("immed", val, " ", temp);
                     return temp;
                 }
                 case KId: {
                     return node->name;
                 }
                 case KVarId: {
-                    // Variable access
                     return node->name;
                 }
                 case KVetId: {
-                    // Array access: a[i]
                     char* idx = genNode(node->children->sibling, out);
                     char* temp = newTemp();
-                    fprintf(out, "%s = %s[%s]\n", temp, node->children->name, idx);
+                    emitQuad("load", node->children->name, " ", temp);
+                    // For array access, you may want to use idx in the quad
                     return temp;
                 }
                 default: {
-                    // For any other node, traverse children
                     AASNode* child = node->children;
                     while (child) {
                         genNode(child, out);
@@ -178,7 +216,6 @@ static char* genNode(AASNode* node, FILE* out) {
             }
             break;
         default:
-            // For any other node, traverse children
             {
                 AASNode* child = node->children;
                 while (child) {

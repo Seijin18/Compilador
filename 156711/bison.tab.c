@@ -2478,8 +2478,24 @@ int main(int argc, char *argv[]) {
 
     if (run_all) {
         yyparse();
-        printAAS(root, 0);
-        printTabSimb(simbTable, root);
+        // Print tree to file
+        FILE *ftree = fopen("tree.txt", "w");
+        if (ftree && root) {
+            printAAS(root, 0, ftree);
+            fclose(ftree);
+            printf("Tree written to tree.txt\n");
+        } else {
+            printf("Could not write tree.\n");
+        }
+        // Print symbol table to file
+        FILE *fsymb = fopen("symbol_table.txt", "w");
+        if (fsymb && root) {
+            printTabSimb(simbTable, root, fsymb);
+            fclose(fsymb);
+            printf("Symbol table written to symbol_table.txt\n");
+        } else {
+            printf("Could not write symbol table.\n");
+        }
         FILE *finter = fopen("intermediate.txt", "w");
         if (finter && root) {
             generateIntermediateCode(root, finter);
@@ -2501,7 +2517,14 @@ int main(int argc, char *argv[]) {
         } while (token != EOF && token != ER);
     } else if (option == 1) { // Análise sintática
         yyparse();
-        printAAS(root, 0);
+        FILE *ftree = fopen("tree.txt", "w");
+        if (ftree && root) {
+            printAAS(root, 0, ftree);
+            fclose(ftree);
+            printf("Tree written to tree.txt\n");
+        } else {
+            printf("Could not write tree.\n");
+        }
     } else if (option == 2) { // Análise semântica
         yyparse();
         if (root == NULL) {
@@ -2509,7 +2532,14 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         else {
-            printTabSimb(simbTable, root);
+            FILE *fsymb = fopen("symbol_table.txt", "w");
+            if (fsymb && root) {
+                printTabSimb(simbTable, root, fsymb);
+                fclose(fsymb);
+                printf("Symbol table written to symbol_table.txt\n");
+            } else {
+                printf("Could not write symbol table.\n");
+            }
         }
     }
 

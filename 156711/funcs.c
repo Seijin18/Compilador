@@ -479,7 +479,7 @@ int get_lexema(Bloco *buffer, Lex *lex, FILE *file) // Pega o lexema
     // printf("Lex: %s\n", lex->lexema);
     // printf("Token: %d\n", lex->token);
     // printf("Line: %d\n", lex->line + 1);
-    // printf("Column: %d\n\n", lex->column);
+    // printf("Column: %d\n", lex->column);
     return lex->token;
 }
 
@@ -600,92 +600,137 @@ void updateEscopo(AASNode *node, char *escopo) // Atualiza o escopo
     }
 }
 
-void printAAS(AASNode *node, int depth) // Imprime a árvore abstrata de sintaxe
+void printAAS(AASNode *node, int depth, FILE *out) // Imprime a árvore abstrata de sintaxe em arquivo
 {
     if (node == NULL)
     {
         return;
     }
-
     for (int i = 0; i < depth; i++)
     {
-        printf("----");
+        fprintf(out, "----");
     }
-
     switch (node->node)
     {
     case KStmt:
-        printf("Stmt: ");
+        fprintf(out, "Stmt: ");
         switch (node->stmt)
         {
         case KIf:
-            printf("If\n");
+            fprintf(out, "If\n");
             break;
         case KWhile:
-            printf("While\n");
+            fprintf(out, "While\n");
             break;
         case KAssign:
-            printf("Assign\n");
+            fprintf(out, "Assign\n");
             break;
         case KReturn:
-            printf("Return: %s\n", getTypeName(node->type));
+            fprintf(out, "Return: %s\n", getTypeName(node->type));
             break;
         case KCall:
-            printf("Call\n");
+            fprintf(out, "Call\n");
             break;
         case KVar:
-            printf("Var\n");
+            fprintf(out, "Var\n");
             break;
         case KVet:
-            printf("Vet\n");
+            fprintf(out, "Vet\n");
             break;
         case KFunc:
-            printf("Func: %s\n", node->name);
+            fprintf(out, "Func: %s\n", node->name);
             break;
         case KProg:
-            printf("Prog\n");
+            fprintf(out, "Prog\n");
             break;
         case KInput:
-            printf("Input\n");
+            fprintf(out, "Input\n");
             break;
         case KOutput:
-            printf("Output\n");
+            fprintf(out, "Output\n");
             break;
         }
         break;
     case KExp:
-        printf("Exp: ");
+        fprintf(out, "Exp: ");
         switch (node->exp)
         {
         case KOp:
-            printf("Op: %s\n", get_token_name(node->token));
+            fprintf(out, "Op: %s\n", get_token_name(node->token));
             break;
         case KConst:
-            printf("Const: %d\n", node->value);
+            fprintf(out, "Const: %d\n", node->value);
             break;
         case KId:
-            printf("Id: %s\n", node->name);
+            fprintf(out, "Id: %s\n", node->name);
             break;
         case KType:
-            printf("Type: %s\n", getTypeName(node->type));
+            fprintf(out, "Type: %s\n", getTypeName(node->type));
             break;
         case KVarId:
-            printf("VarId: %s\n", node->name);
+            fprintf(out, "VarId: %s\n", node->name);
             break;
         case KVetId:
-            printf("VetId\n");
+            fprintf(out, "VetId\n");
             break;
         }
         break;
     }
-
     AASNode *child;
     child = node->children;
     while (child != NULL)
     {
-        printAAS(child, depth + 1);
+        printAAS(child, depth + 1, out);
         child = child->sibling;
     }
+}
+
+void printTabSimb(SimbCell *tabSimb, AASNode *node, FILE *out) // Imprime o cabeçalho da tabela de símbolos e chama a função de construção
+{
+    fprintf(out, "Formato da Tabela de Simbolos:\n");
+    fprintf(out, "Nome;\tEscopo;\tTipo;\tTipo de Identificador;\tLinha\n");
+    buildTabSimb(tabSimb, node, out);
+}
+
+int buildTabSimb(SimbCell *tabSimb, AASNode *node, FILE *out) // Constroi a tabela de símbolos
+{
+    if (node == NULL)
+    {
+        return 0;
+    }
+    char kind[9];
+    AASNode *child = node->children;
+    int k = 0;
+    while (child != NULL) // Percorre todos os nós da árvore
+    {
+        k = insertTabSimb(tabSimb, child);
+        if (k == -1) // Verifica se houve erro semântico
+        {
+            fprintf(out, "%s: %s [linha: %d]\n", semantic_error, child->name, child->line + 1);
+            return -1;
+        }
+        else if (k == 1) // Insere na tabela de símbolos
+        {
+            if (child->stmt == KFunc && (strcmp(child->name, "input") == 0 || strcmp(child->name, "output") == 0)) {
+                // skip
+            } else if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId) // Verifica o tipo de identificador
+            {
+                strcpy(kind, "Variable");
+                fprintf(out, "%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);
+            }
+            else
+            {
+                strcpy(kind, "Function");
+                fprintf(out, "%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);
+            }
+        }
+        if (buildTabSimb(tabSimb, child, out) == -1)
+        {
+            return -1;
+        }
+        child = child->sibling;
+    }
+    return 0;
 }
 
 void deallocateAAS(AASNode *node) // Desaloca a árvore abstrata de sintaxe
@@ -1027,96 +1072,48 @@ int insertTabSimb(SimbCell *tab, AASNode *node) // Insere na tabela de símbolos
     }
 }
 
-int buildTabSimb(SimbCell *tabSimb, AASNode *node) // Constroi a tabela de símbolos
-{
-    if (node == NULL)
-    {
-        return 0;
-    }
-
-    char kind[9];
-
-    AASNode *child = node->children;
-    int k = 0;
-    while (child != NULL) // Percorre todos os nós da árvore
-    {
-        k = insertTabSimb(tabSimb, child);
-        if (k == -1) // Verifica se houve erro semântico
-        {
-            printf("%s: %s [linha: %d]\n", semantic_error, child->name, child->line + 1);
-            return -1;
-        }
-        else if (k == 1) // Insere na tabela de símbolos
-        {
-            // Não imprime input/output como funções do usuário
-            if (child->stmt == KFunc && (strcmp(child->name, "input") == 0 || strcmp(child->name, "output") == 0)) {
-                // skip
-            } else if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId) // Verifica o tipo de identificador
-            {
-                strcpy(kind, "Variable");
-                printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);
-            }
-            else
-            {
-                strcpy(kind, "Function");
-                printf("%s;\t%s;\t%s;\t%s;\t\t%d\n", child->name, child->escopo, getTypeName(child->type), kind, child->line + 1);
-            }
-        }
-        if (buildTabSimb(tabSimb, child) == -1)
-        {
-            return -1;
-        }
-        child = child->sibling;
-    }
-}
-
-void printTabSimb(SimbCell *tabSimb, AASNode *node) // Imprime o cabeçalho da tabela de símbolos e chama a função de construção
-{
-    printf("Formato da Tabela de Simbolos:\n");
-    printf("Nome;\tEscopo;\tTipo;\tTipo de Identificador;\tLinha\n");
-    buildTabSimb(tabSimb, node);
-}
-
 void deallocateTabSimb(SimbCell *tabSimb) // Desaloca a tabela de símbolos
 {
-    for (int i = 0; i < MAX; i++)
-    {
+    if (tabSimb == NULL) return;
+    for (int i = 0; i < MAX; i++) {
         SimbCell *cell = &tabSimb[i];
-        while (cell != NULL) // Desaloca todos os nós da tabela de símbolos
-        {
-            SimbCell *temp = cell;
-            cell = cell->next;
-            SimbCell *sibling = temp->sibling;
-            while (sibling != NULL)
-            {
-                SimbCell *siblingTemp = sibling;
-                sibling = sibling->sibling;
-                if (siblingTemp->name != NULL)
-                {
-                    free(siblingTemp->name);
-                    temp->name = NULL;
-                }
-                if (siblingTemp->escopo != NULL)
-                {
-                    free(siblingTemp->escopo);
-                    temp->escopo = NULL;
-                }
-                free(siblingTemp);
-            }
-            if (temp->name != NULL)
-            {
-                free(temp->name);
-                temp->name = NULL;
-            }
-            if (temp->escopo != NULL)
-            {
-                free(temp->escopo);
-                temp->escopo = NULL;
-            }
-            if (temp != &tabSimb[i])
-            {
-                free(temp);
-            }
+        // Free the main cell if it was allocated (skip if name is NULL)
+        if (cell->name != NULL) {
+            free(cell->name);
+            cell->name = NULL;
         }
+        if (cell->escopo != NULL) {
+            free(cell->escopo);
+            cell->escopo = NULL;
+        }
+        // Free siblings
+        SimbCell *sibling = cell->sibling;
+        while (sibling != NULL) {
+            SimbCell *nextSibling = sibling->sibling;
+            if (sibling->name) free(sibling->name);
+            if (sibling->escopo) free(sibling->escopo);
+            free(sibling);
+            sibling = nextSibling;
+        }
+        cell->sibling = NULL;
+        // Free the linked list (next)
+        SimbCell *next = cell->next;
+        while (next != NULL) {
+            SimbCell *tmp = next->next;
+            if (next->name) free(next->name);
+            if (next->escopo) free(next->escopo);
+            // Also free any siblings of this next cell
+            SimbCell *sib = next->sibling;
+            while (sib != NULL) {
+                SimbCell *sibNext = sib->sibling;
+                if (sib->name) free(sib->name);
+                if (sib->escopo) free(sib->escopo);
+                free(sib);
+                sib = sibNext;
+            }
+            free(next);
+            next = tmp;
+        }
+        cell->next = NULL;
     }
 }
