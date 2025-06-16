@@ -511,7 +511,8 @@ int main(int argc, char *argv[]) {
         }
         FILE *finter = fopen("intermediate.txt", "w");
         if (finter && root) {
-            generateIntermediateCode(root, finter);
+            QuadNode* quadList = generateIntermediateCodeWithList(root, finter);
+            printQuadList(quadList, stdout); // Print all quads to stdout
             fclose(finter);
             printf("Intermediate code written to intermediate.txt\n");
         } else {

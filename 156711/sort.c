@@ -31,18 +31,6 @@ void sort( int a[], int low, int high)
 	}
 }
 
-void output(int x)
-{
-	x = 0;
-}
-
-int input(void)
-{
-	int x;
-	
-	return x;
-}
-
 void main(void)
 {
 	int i;

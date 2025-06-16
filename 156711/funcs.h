@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct QuadNode;
+typedef struct QuadNode QuadNode;
+
 #define AC -9
 #define ER -10
 
@@ -97,5 +100,6 @@ int insertTabSimb(SimbCell *tab, AASNode *node);
 int buildTabSimb(SimbCell *tabSimb, AASNode *node, FILE *out);
 void printTabSimb(SimbCell *tabSimb, AASNode *node, FILE *out);
 void deallocateTabSimb(SimbCell *tabSimb);
+void printQuadList(QuadNode* head, FILE* out);
 
 #endif

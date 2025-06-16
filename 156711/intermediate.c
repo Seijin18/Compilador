@@ -5,6 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct QuadNode {
+    char op[16];
+    char arg1[32];
+    char arg2[32];
+    char result[32];
+    struct QuadNode* next;
+} QuadNode;
+
 static int tempCount = 0;
 static int labelCount = 0;
 
@@ -25,9 +33,51 @@ static char* genNode(AASNode* node, FILE* out);
 
 static FILE* quadOut = NULL;
 
+static QuadNode* quadListHead = NULL;
+static QuadNode* quadListTail = NULL;
+
 static void emitQuad(const char* op, const char* arg1, const char* arg2, const char* result) {
-    if (!quadOut) return;
-    fprintf(quadOut, "(%s,%s,%s,%s)\n", op, arg1 ? arg1 : " ", arg2 ? arg2 : " ", result ? result : " ");
+    // Store in dynamic linked list
+    QuadNode* node = (QuadNode*)malloc(sizeof(QuadNode));
+    strncpy(node->op, op ? op : " ", 15);
+    node->op[15] = '\0';
+    strncpy(node->arg1, arg1 ? arg1 : " ", 31);
+    node->arg1[31] = '\0';
+    strncpy(node->arg2, arg2 ? arg2 : " ", 31);
+    node->arg2[31] = '\0';
+    strncpy(node->result, result ? result : " ", 31);
+    node->result[31] = '\0';
+    node->next = NULL;
+    if (!quadListHead) {
+        quadListHead = node;
+        quadListTail = node;
+    } else {
+        quadListTail->next = node;
+        quadListTail = node;
+    }
+    // Print as before
+    if (quadOut) {
+        fprintf(quadOut, "(%s,%s,%s,%s)\n", op, arg1 ? arg1 : " ", arg2 ? arg2 : " ", result ? result : " ");
+    }
+}
+
+// Function to reset and return the head of the quad list
+QuadNode* generateIntermediateCodeWithList(AASNode* root, FILE* out) {
+    tempCount = 0;
+    labelCount = 0;
+    quadListHead = NULL;
+    quadListTail = NULL;
+    quadOut = out;
+    if (!root) return NULL;
+    // Emit initial goto main
+    emitQuad("goto", "main", " ", " ");
+    AASNode* node = root->children;
+    while (node) {
+        genNode(node, out);
+        node = node->sibling;
+    }
+    quadOut = NULL;
+    return quadListHead;
 }
 
 void generateIntermediateCode(AASNode* root, FILE* out) {
@@ -226,4 +276,12 @@ static char* genNode(AASNode* node, FILE* out) {
             }
     }
     return NULL;
+}
+
+void printQuadList(QuadNode* head, FILE* out) {
+    QuadNode* curr = head;
+    while (curr) {
+        fprintf(out, "(%s,%s,%s,%s)\n", curr->op, curr->arg1, curr->arg2, curr->result);
+        curr = curr->next;
+    }
 }
