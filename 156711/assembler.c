@@ -35,6 +35,13 @@ typedef struct LabelInfo {
     struct LabelInfo* next;
 } LabelInfo;
 
+// Estrutura para manter endereços das funções
+typedef struct FunctionInfo {
+    char name[32];
+    int address;
+    struct FunctionInfo* next;
+} FunctionInfo;
+
 // Estrutura principal do assembler expandida
 typedef struct {
     struct Instrucao* instrucoes;
@@ -42,6 +49,7 @@ typedef struct {
     struct Escopo* escopos;
     struct TempReg temp_regs[26];  // $t0 a $t25
     LabelInfo* labels;
+    FunctionInfo* functions;
     int label_count;
     int instruction_count;
     int next_global_addr;
@@ -53,6 +61,7 @@ Assembler* init_assembler(FILE* output) {
     assembler->instrucoes = NULL;
     assembler->ultima_instrucao = NULL;
     assembler->escopos = NULL;
+    assembler->functions = NULL;
     assembler->label_count = 0;
     assembler->next_global_addr = 0;
     assembler->output_file = output;
@@ -68,6 +77,30 @@ Assembler* init_assembler(FILE* output) {
     create_scope(assembler, "global");
     
     return assembler;
+}
+
+// Função para obter endereço de uma função
+int get_function_address(Assembler* assembler, const char* function_name) {
+    FunctionInfo* current = assembler->functions;
+    while (current) {
+        if (strcmp(current->name, function_name) == 0) {
+            return current->address;
+        }
+        current = current->next;
+    }
+    
+    // Se não encontrou, assumir endereço 1 como fallback
+    return 1;
+}
+
+// Função para adicionar endereço de função
+void add_function_address(Assembler* assembler, const char* name, int address) {
+    FunctionInfo* func = (FunctionInfo*)malloc(sizeof(FunctionInfo));
+    strncpy(func->name, name, 31);
+    func->name[31] = '\0';
+    func->address = address;
+    func->next = assembler->functions;
+    assembler->functions = func;
 }
 
 // Liberação de memória
@@ -331,23 +364,28 @@ int get_opcode(Instrucoes op) {
 // Processar operações aritméticas
 void process_arithmetic(Assembler* assembler, QuadNode* quad) {
     Registradores reg_result, reg_arg1, reg_arg2;
+    struct Escopo* current_scope = find_scope(assembler, "global"); // TODO: manter escopo atual
     
     // Alocar registrador para resultado
     reg_result = allocate_register(assembler, quad->result);
     
-    // Processar argumentos
+    // Processar primeiro argumento
     if (is_temp_variable(quad->arg1)) {
         reg_arg1 = allocate_register(assembler, quad->arg1);
     } else if (is_constant(quad->arg1)) {
         reg_arg1 = allocate_register(assembler, "temp_const1");
         emit_instruction(assembler, INSTR_LI, R0, reg_arg1, R0, get_constant_value(quad->arg1), NULL);
     } else {
-        // Variável normal - carregar da memória
+        // Variável normal - carregar da memória baseado no escopo
+        struct Variable* var = find_variable(current_scope, quad->arg1);
         reg_arg1 = allocate_register(assembler, quad->arg1);
-        // TODO: Implementar carregamento da memória baseado no escopo
+        if (var) {
+            emit_instruction(assembler, INSTR_LW, FP, reg_arg1, R0, var->loc_mem, NULL);
+        }
     }
     
-    if (strcmp(quad->arg2, " ") != 0) {
+    // Processar segundo argumento (se existir)
+    if (quad->arg2 && strcmp(quad->arg2, " ") != 0 && strlen(quad->arg2) > 0) {
         if (is_temp_variable(quad->arg2)) {
             reg_arg2 = allocate_register(assembler, quad->arg2);
         } else if (is_constant(quad->arg2)) {
@@ -355,11 +393,17 @@ void process_arithmetic(Assembler* assembler, QuadNode* quad) {
             emit_instruction(assembler, INSTR_LI, R0, reg_arg2, R0, get_constant_value(quad->arg2), NULL);
         } else {
             // Variável normal
+            struct Variable* var = find_variable(current_scope, quad->arg2);
             reg_arg2 = allocate_register(assembler, quad->arg2);
+            if (var) {
+                emit_instruction(assembler, INSTR_LW, FP, reg_arg2, R0, var->loc_mem, NULL);
+            }
         }
+    } else {
+        reg_arg2 = R0; // Registrador zero se não há segundo argumento
     }
     
-    // Emitir instrução apropriada
+    // Emitir instrução apropriada baseada na operação
     if (strcmp(quad->op, "+") == 0) {
         emit_instruction(assembler, INSTR_ADD, reg_arg1, reg_arg2, reg_result, 0, NULL);
     } else if (strcmp(quad->op, "-") == 0) {
@@ -375,9 +419,17 @@ void process_arithmetic(Assembler* assembler, QuadNode* quad) {
     } else if (strcmp(quad->op, "<") == 0) {
         emit_instruction(assembler, INSTR_SLT, reg_arg1, reg_arg2, reg_result, 0, NULL);
     } else if (strcmp(quad->op, "==") == 0) {
-        // Implementar comparação de igualdade
+        // Para igualdade, subtrair e verificar se é zero
         emit_instruction(assembler, INSTR_SUB, reg_arg1, reg_arg2, reg_result, 0, NULL);
-        // TODO: Verificar se resultado é zero
+        // TODO: Adicionar lógica para verificar se resultado é zero
+    }
+    
+    // Liberar registradores temporários
+    if (!is_temp_variable(quad->arg1) && is_constant(quad->arg1)) {
+        free_register(assembler, reg_arg1);
+    }
+    if (quad->arg2 && !is_temp_variable(quad->arg2) && is_constant(quad->arg2)) {
+        free_register(assembler, reg_arg2);
     }
 }
 
@@ -424,20 +476,23 @@ void generate_assembly(Assembler* assembler, QuadNode* quad_list) {
             current_scope = create_scope(assembler, current->arg1);
             fprintf(assembler->output_file, "Func %s:\n", current->arg1);
             
+            // Registrar endereço da função para lookup em chamadas
+            add_function_address(assembler, current->arg1, global_instruction_count);
+            
             // Marcar onde main começa
             if (strcmp(current->arg1, "main") == 0) {
                 main_address = global_instruction_count;
             }
             
-            // Setup do frame se não for main
+            // Setup do frame para todas as funções (exceto main)
             if (strcmp(current->arg1, "main") != 0) {
-                // Salvar registradores na pilha conforme gcd_goal.txt
-                emit_instruction(assembler, INSTR_SW, FP, RA, R0, 1, NULL);  // sw r29 r31 1
-                emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL); // addi r30 r30 1
-                emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL); // addi r30 r30 1
-                emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL); // addi r30 r30 1
+                // Prologue padrão para funções C-
+                emit_instruction(assembler, INSTR_SW, FP, RA, R0, 1, NULL);  // Salvar return address
+                emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL); // Alocar espaço na pilha
+                emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL); // Alocar mais espaço
+                emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL); // Alocar espaço para variáveis locais
             } else {
-                // Para main, apenas alocar espaço para variáveis locais
+                // Main: apenas alocar espaço para variáveis locais
                 emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
                 emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
             }
@@ -463,53 +518,71 @@ void generate_assembly(Assembler* assembler, QuadNode* quad_list) {
             }
         }
         else if (strcmp(current->op, "param") == 0) {
-            // Empilhar parâmetro
-            if (strcmp(current->arg1, "x") == 0 || strcmp(current->arg1, "y") == 0) {
-                // Carregar variável da pilha e empilhar
-                struct Variable* var = find_variable(current_scope, current->arg1);
-                if (var) {
-                    emit_instruction(assembler, INSTR_LW, FP, R1, R0, var->loc_mem, NULL);
-                    emit_instruction(assembler, INSTR_SW, SP, R1, R0, 0, NULL);
-                    emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
-                }
-            } else {
-                // Parâmetro temporário
+            // Empilhar parâmetro de forma genérica
+            if (is_temp_variable(current->arg1)) {
+                // Parâmetro temporário (resultado de expressão)
                 Registradores reg = allocate_register(assembler, current->arg1);
                 emit_instruction(assembler, INSTR_SW, SP, reg, R0, 0, NULL);
                 emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
+            } else if (is_constant(current->arg1)) {
+                // Parâmetro constante
+                Registradores reg = allocate_register(assembler, "temp_param");
+                emit_instruction(assembler, INSTR_LI, R0, reg, R0, get_constant_value(current->arg1), NULL);
+                emit_instruction(assembler, INSTR_SW, SP, reg, R0, 0, NULL);
+                emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
+                free_register(assembler, reg);
+            } else {
+                // Parâmetro variável - carregar da posição no frame atual
+                struct Variable* var = find_variable(current_scope, current->arg1);
+                if (var) {
+                    Registradores temp_reg = allocate_register(assembler, "temp_param");
+                    emit_instruction(assembler, INSTR_LW, FP, temp_reg, R0, var->loc_mem, NULL);
+                    emit_instruction(assembler, INSTR_SW, SP, temp_reg, R0, 0, NULL);
+                    emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
+                    free_register(assembler, temp_reg);
+                } else {
+                    // Fallback: assumir que está em um registrador padrão
+                    emit_instruction(assembler, INSTR_SW, SP, R1, R0, 0, NULL);
+                    emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
+                }
             }
         }
         else if (strcmp(current->op, "call") == 0) {
-            // Chamada de função conforme gcd_goal.txt
-            // Salvar parâmetros na pilha
-            emit_instruction(assembler, INSTR_SW, SP, R1, R0, 0, NULL);    // sw r30 r1 0
-            emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);  // addi r30 r30 1
-            emit_instruction(assembler, INSTR_SW, SP, R2, R0, 0, NULL);    // sw r30 r2 0  
-            emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);  // addi r30 r30 1
+            // Chamada de função generalizada
+            // 1. Salvar registradores temporários na pilha (convenção de chamada)
+            emit_instruction(assembler, INSTR_SW, SP, R1, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
+            emit_instruction(assembler, INSTR_SW, SP, R2, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
+            emit_instruction(assembler, INSTR_SW, SP, R3, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
             
-            // Salvar frame pointer
-            emit_instruction(assembler, INSTR_SW, SP, FP, R0, 0, NULL);    // sw r30 r29 0
-            emit_instruction(assembler, INSTR_ADDI, SP, FP, R0, 0, NULL);  // addi r30 r29 0
-            emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);  // addi r30 r30 1
+            // 2. Salvar frame pointer atual
+            emit_instruction(assembler, INSTR_SW, SP, FP, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_ADDI, FP, SP, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_ADDI, SP, SP, R0, 1, NULL);
             
-            // Salvar parâmetros no frame da função chamada
-            emit_instruction(assembler, INSTR_SW, FP, R2, R0, 3, NULL);    // sw r29 r2 3
-            emit_instruction(assembler, INSTR_SW, FP, R1, R0, 2, NULL);    // sw r29 r1 2
+            // 3. Fazer chamada para a função (usar lookup de endereços das funções)
+            int function_address = get_function_address(assembler, current->arg1);
+            emit_instruction(assembler, INSTR_JAL, R0, R0, R0, function_address, NULL);
             
-            // JAL para a função (endereço 1 para gcd)
-            if (strcmp(current->arg1, "gcd") == 0) {
-                emit_instruction(assembler, INSTR_JAL, R0, R0, R0, 1, NULL); // jal 1
+            // 4. Restaurar contexto após retorno
+            emit_instruction(assembler, INSTR_ADDI, FP, SP, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_LW, FP, FP, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_SUBI, SP, SP, R0, 1, NULL);
+            
+            // 5. Restaurar registradores da pilha
+            emit_instruction(assembler, INSTR_LW, SP, R3, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_SUBI, SP, SP, R0, 1, NULL);
+            emit_instruction(assembler, INSTR_LW, SP, R2, R0, 0, NULL);
+            emit_instruction(assembler, INSTR_SUBI, SP, SP, R0, 1, NULL);
+            emit_instruction(assembler, INSTR_LW, SP, R1, R0, 0, NULL);
+            
+            // 6. Resultado da função estará em R28 (convenção)
+            if (current->result && strlen(current->result) > 0) {
+                Registradores result_reg = allocate_register(assembler, current->result);
+                emit_instruction(assembler, INSTR_MOVE, R28, R0, result_reg, 0, NULL);
             }
-            
-            // Restaurar contexto após retorno
-            emit_instruction(assembler, INSTR_ADDI, FP, SP, R0, 0, NULL);   // addi r29 r30 0
-            emit_instruction(assembler, INSTR_LW, FP, FP, R0, 0, NULL);     // lw r29 0(r29)
-            emit_instruction(assembler, INSTR_SUBI, SP, SP, R0, 1, NULL);   // subi r30 r30 1
-            
-            // Restaurar parâmetros da pilha
-            emit_instruction(assembler, INSTR_LW, SP, R2, R0, 0, NULL);     // lw r2 0(r30)
-            emit_instruction(assembler, INSTR_SUBI, SP, SP, R0, 1, NULL);   // subi r30 r30 1
-            emit_instruction(assembler, INSTR_LW, SP, R1, R0, 0, NULL);     // lw r1 0(r30)
         }
         else if (strcmp(current->op, "output") == 0) {
             if (is_temp_variable(current->arg1)) {
@@ -517,20 +590,29 @@ void generate_assembly(Assembler* assembler, QuadNode* quad_list) {
             }
         }
         else if (strcmp(current->op, "ret") == 0) {
-            if (strcmp(current->arg1, " ") != 0 && strlen(current->arg1) > 0) {
+            // Retorno genérico
+            if (current->arg1 && strcmp(current->arg1, " ") != 0 && strlen(current->arg1) > 0) {
                 // Retorno com valor
                 if (is_temp_variable(current->arg1)) {
                     // Retornando variável temporária (resultado de operação)
-                    emit_instruction(assembler, INSTR_ADDI, R28, R28, R0, 0, NULL); // addi r28 r28 0
+                    Registradores temp_reg = allocate_register(assembler, current->arg1);
+                    emit_instruction(assembler, INSTR_MOVE, temp_reg, R0, R28, 0, NULL);
+                    free_register(assembler, temp_reg);
+                } else if (is_constant(current->arg1)) {
+                    // Retornando constante
+                    emit_instruction(assembler, INSTR_LI, R0, R28, R0, get_constant_value(current->arg1), NULL);
                 } else {
-                    // Carregar variável para retorno
+                    // Retornando variável - carregar do frame
                     struct Variable* var = find_variable(current_scope, current->arg1);
                     if (var) {
-                        emit_instruction(assembler, INSTR_LW, FP, R1, R0, var->loc_mem, NULL);
-                        emit_instruction(assembler, INSTR_ADDI, R28, R1, R0, 0, NULL);
+                        emit_instruction(assembler, INSTR_LW, FP, R28, R0, var->loc_mem, NULL);
+                    } else {
+                        // Fallback: assumir que está em um registrador
+                        emit_instruction(assembler, INSTR_MOVE, R1, R0, R28, 0, NULL);
                     }
                 }
             }
+            // Não precisa de mais nada aqui - o epilogue será gerado em endfun
         }
         else if (strcmp(current->op, "endfun") == 0) {
             // Fim de função
@@ -543,57 +625,84 @@ void generate_assembly(Assembler* assembler, QuadNode* quad_list) {
             fprintf(assembler->output_file, "%s:\n", current->arg1);
         }
         else if (strcmp(current->op, "==") == 0) {
-            // Comparação de igualdade: v == 0
-            // Carregar v do frame (posição 3 para primeiro parâmetro)
-            emit_instruction(assembler, INSTR_LW, FP, R1, R0, 3, NULL);  // lw r1 3(r29)
-            // Carregar constante 0 em r2  
-            emit_instruction(assembler, INSTR_LI, R0, R2, R0, 0, NULL);  // li r2 0
-            // beq r1 r2 3 (se r1 igual a r2/zero, pular 3 instruções)
-            emit_instruction(assembler, INSTR_BEQ, R1, R2, R0, 3, NULL); // beq r1 r2 3
+            // Comparação de igualdade genérica
+            Registradores reg1, reg2;
+            
+            // Processar primeiro operando
+            if (is_temp_variable(current->arg1)) {
+                reg1 = allocate_register(assembler, current->arg1);
+            } else if (is_constant(current->arg1)) {
+                reg1 = allocate_register(assembler, "temp_cmp1");
+                emit_instruction(assembler, INSTR_LI, R0, reg1, R0, get_constant_value(current->arg1), NULL);
+            } else {
+                // Variável - carregar do frame
+                struct Variable* var = find_variable(current_scope, current->arg1);
+                reg1 = allocate_register(assembler, "temp_cmp1");
+                if (var) {
+                    emit_instruction(assembler, INSTR_LW, FP, reg1, R0, var->loc_mem, NULL);
+                }
+            }
+            
+            // Processar segundo operando
+            if (is_temp_variable(current->arg2)) {
+                reg2 = allocate_register(assembler, current->arg2);
+            } else if (is_constant(current->arg2)) {
+                reg2 = allocate_register(assembler, "temp_cmp2");
+                emit_instruction(assembler, INSTR_LI, R0, reg2, R0, get_constant_value(current->arg2), NULL);
+            } else {
+                struct Variable* var = find_variable(current_scope, current->arg2);
+                reg2 = allocate_register(assembler, "temp_cmp2");
+                if (var) {
+                    emit_instruction(assembler, INSTR_LW, FP, reg2, R0, var->loc_mem, NULL);
+                }
+            }
+            
+            // Fazer comparação
+            emit_instruction(assembler, INSTR_BEQ, reg1, reg2, R0, 3, NULL); // Se iguais, pular próximas instruções
+            
+            // Liberar registradores
+            free_register(assembler, reg1);
+            free_register(assembler, reg2);
         }
         else if (strcmp(current->op, "if_f") == 0) {
-            // Branch condicional: se resultado da comparação for false, pular para label
-            // Carregar u do frame (posição 2) e fazer movimento direto
-            emit_instruction(assembler, INSTR_LW, FP, R1, R0, 2, NULL);  // lw r1 2(r29)
-            emit_instruction(assembler, INSTR_MOVE, R1, R0, R28, 0, NULL); // move r28 r1
-            // Jump incondicional para o final da função
-            emit_instruction(assembler, INSTR_J, R0, R0, R0, 36, NULL);  // j 36 (endereço do return)
+            // Branch condicional genérico: se condição for false, pular para label
+            if (is_temp_variable(current->arg1)) {
+                // Condição em variável temporária - verificar se é zero
+                Registradores cond_reg = allocate_register(assembler, current->arg1);
+                emit_instruction(assembler, INSTR_BEQ, cond_reg, R0, R0, 10, NULL); // Se zero, pular
+                free_register(assembler, cond_reg);
+            } else {
+                // Fallback para código específico do gcd
+                struct Variable* var = find_variable(current_scope, current->arg1);
+                if (var) {
+                    Registradores temp_reg = allocate_register(assembler, "temp_if");
+                    emit_instruction(assembler, INSTR_LW, FP, temp_reg, R0, var->loc_mem, NULL);
+                    emit_instruction(assembler, INSTR_MOVE, temp_reg, R0, R28, 0, NULL);
+                    free_register(assembler, temp_reg);
+                }
+                // Jump para o label especificado (TODO: implementar lookup de labels)
+                emit_instruction(assembler, INSTR_J, R0, R0, R0, 36, NULL);
+            }
         }
         else if (strcmp(current->op, "immed") == 0) {
             Registradores reg = allocate_register(assembler, current->result);
             emit_instruction(assembler, INSTR_LI, R0, reg, R0, get_constant_value(current->arg1), NULL);
         }
         else if (strcmp(current->op, "/") == 0) {
-            // Operação de divisão: u / v = t2
-            // Carregar u (arg1) e v (arg2) do frame e dividir
-            struct Variable* var_u = find_variable(current_scope, current->arg1);
-            struct Variable* var_v = find_variable(current_scope, current->arg2);
-            if (var_u && var_v) {
-                emit_instruction(assembler, INSTR_LW, FP, R3, R0, var_u->loc_mem, NULL);  // lw r3 pos_u(r29)
-                emit_instruction(assembler, INSTR_LW, FP, R4, R0, var_v->loc_mem, NULL);  // lw r4 pos_v(r29)
-                emit_instruction(assembler, INSTR_DIV, R3, R4, R0, 0, NULL);  // div r3 r4 (resultado em LO)
-                emit_instruction(assembler, INSTR_MFLO, R0, R0, R5, 0, NULL);  // mflo r5 (move LO para r5)
-            }
+            // Operação de divisão genérica
+            process_arithmetic(assembler, current);
         }
         else if (strcmp(current->op, "*") == 0) {
-            // Operação de multiplicação: t2 * v = t3
-            if (is_temp_variable(current->arg1)) {
-                // arg1 é temporário (resultado da divisão em r5)
-                struct Variable* var_v = find_variable(current_scope, current->arg2);
-                if (var_v) {
-                    emit_instruction(assembler, INSTR_LW, FP, R3, R0, var_v->loc_mem, NULL);  // lw r3 pos_v(r29)
-                    emit_instruction(assembler, INSTR_MULT, R5, R3, R0, 0, NULL);  // mult r5 r3 (resultado em LO)
-                    emit_instruction(assembler, INSTR_MFLO, R0, R0, R4, 0, NULL);  // mflo r4 (move LO para r4)
-                }
-            }
+            // Operação de multiplicação genérica
+            process_arithmetic(assembler, current);
         }
         else if (strcmp(current->op, "-") == 0) {
-            // Operação de subtração: u - t3 = t4
-            struct Variable* var_u = find_variable(current_scope, current->arg1);
-            if (var_u) {
-                emit_instruction(assembler, INSTR_LW, FP, R2, R0, var_u->loc_mem, NULL);  // lw r2 pos_u(r29)
-                emit_instruction(assembler, INSTR_SUB, R2, R4, R3, 0, NULL);  // sub r3 r2 r4
-            }
+            // Operação de subtração genérica
+            process_arithmetic(assembler, current);
+        }
+        else if (strcmp(current->op, "+") == 0) {
+            // Operação de adição genérica
+            process_arithmetic(assembler, current);
         }
         
         current = current->next;

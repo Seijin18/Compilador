@@ -15,6 +15,7 @@ typedef struct Escopo Escopo;
 typedef struct Instrucao Instrucao;
 typedef struct TempReg TempReg;
 typedef struct Assembler Assembler;
+typedef struct FunctionInfo FunctionInfo;
 
 // Enums para operações e registradores
 typedef enum {
@@ -84,6 +85,7 @@ struct Assembler {
     struct Instrucao* ultima_instrucao;
     struct Escopo* escopos;
     struct TempReg temp_regs[26];  // $t0 a $t25
+    struct FunctionInfo* functions;  // Lista de funções e seus endereços
     int label_count;
     int next_global_addr;
     FILE* output_file;
