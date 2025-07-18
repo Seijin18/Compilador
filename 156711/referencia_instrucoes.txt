@@ -1,0 +1,97 @@
+REFERÊNCIA RÁPIDA - INSTRUÇÕES ASSEMBLY
+======================================
+
+FORMATO GERAL: <número>-<instrução> <operandos>
+
+INSTRUÇÕES ARITMÉTICAS:
+======================
+addi <dest> <source> <imediato>    - Soma valor imediato ao registrador
+add <op1> <op2> <result>           - Soma dois registradores  
+sub <op1> <op2> <result>           - Subtrai op2 de op1
+mult <op1> <op2> <result>          - Multiplica dois registradores
+div <dividend> <divisor> <result>   - Divide dividend por divisor
+
+INSTRUÇÕES DE MEMÓRIA:
+=====================
+lw <base> <dest> <offset>          - Carrega da memória: dest = mem[base + offset]
+sw <base> <source> <offset>        - Armazena na memória: mem[base + offset] = source
+
+INSTRUÇÕES DE CONTROLE:
+======================
+jump <endereço>                    - Salta incondicionalmente para endereço
+jal <endereço>                     - Salta para endereço e salva retorno em r31
+jr <reg> <unused> <unused>         - Salta para endereço contido no registrador
+beqz <reg1> <reg2> <offset>        - Salta se reg1 == 0, pulando offset instruções
+
+INSTRUÇÕES DE DADOS:
+===================
+seti <source> <dest> <imediato>    - Carrega valor imediato no registrador
+
+INSTRUÇÕES DE I/O:
+=================
+input <dest>                       - Lê da entrada padrão para registrador
+output <source>                    - Escreve registrador na saída padrão
+
+REGISTRADORES ESPECIAIS:
+=======================
+r0  - Sempre zero
+r28 - Registrador temporário principal / valor de retorno
+r29 - Frame Pointer (FP)
+r30 - Stack Pointer (SP)  
+r31 - Return Address (RA)
+
+PADRÕES COMUNS:
+==============
+
+PRÓLOGO DE FUNÇÃO:
+sw r29 r31 1        # Salvar return address
+addi r30 r30 1      # Alocar espaço na pilha
+addi r30 r30 1      # (repetir conforme necessário)
+
+EPÍLOGO DE FUNÇÃO:
+lw r29 r31 1        # Restaurar return address
+jr r31 r0 r0        # Retornar
+
+CHAMADA DE FUNÇÃO:
+sw r30 <param> 0    # Empilhar parâmetros
+addi r30 r30 1      # Incrementar SP
+sw r29 <param> <pos> # Colocar no frame da função
+jal <endereço>      # Chamar função
+# ... restaurar contexto ...
+
+CARREGAMENTO DE VARIÁVEL:
+lw r29 <reg> <offset>   # Carregar do frame local
+
+ARMAZENAMENTO DE VARIÁVEL:
+sw r29 <reg> <offset>   # Salvar no frame local
+
+OPERAÇÃO ARITMÉTICA:
+lw r29 r1 <pos1>    # Carregar operando 1
+lw r29 r2 <pos2>    # Carregar operando 2
+<op> r1 r2 r3       # Executar operação
+sw r29 r3 <result>  # Salvar resultado
+
+ALGORITMO GCD IMPLEMENTADO:
+==========================
+1. if (v == 0) return u;
+2. else return gcd(v, u % v);
+
+Onde u % v é calculado como:
+- quociente = u / v        (div)
+- produto = quociente * v  (mult)  
+- resto = u - produto      (sub)
+
+EXEMPLO DE EXECUÇÃO (gcd(12, 8)):
+================================
+1ª chamada: gcd(12, 8)
+   - 12 % 8 = 4 (12 - (12/8)*8 = 12 - 1*8 = 4)
+   - Chama gcd(8, 4)
+
+2ª chamada: gcd(8, 4)  
+   - 8 % 4 = 0 (8 - (8/4)*4 = 8 - 2*4 = 0)
+   - Chama gcd(4, 0)
+
+3ª chamada: gcd(4, 0)
+   - v == 0, retorna u = 4
+
+Resultado: GCD(12, 8) = 4

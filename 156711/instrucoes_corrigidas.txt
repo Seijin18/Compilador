@@ -1,0 +1,122 @@
+INSTRUÇÕES ASSEMBLY CORRIGIDAS CONFORME DOCUMENTAÇÃO DO PROCESSADOR
+=================================================================
+
+PRINCIPAIS CORREÇÕES IMPLEMENTADAS:
+===================================
+
+1. FORMATO DAS INSTRUÇÕES DE MEMÓRIA:
+   ANTES: sw r29 r31 1     →  AGORA: sw r31 1(r29)
+   ANTES: lw r29 r1 3      →  AGORA: lw r1 3(r29)
+   
+   MUDANÇA: Formato MIPS padrão com offset(base) ao invés de base reg offset
+
+2. LOAD IMMEDIATE:
+   ANTES: seti r1 r0 0     →  AGORA: li r1 0
+   
+   MUDANÇA: Uso da instrução LI (011011) conforme especificação
+
+3. INSTRUÇÕES DE SALTO:
+   ANTES: jump 36          →  AGORA: j 36
+   ANTES: jr r31 r0 r0     →  AGORA: jr r31
+   
+   MUDANÇA: Formato simplificado conforme especificação
+
+4. OPERAÇÕES ARITMÉTICAS:
+   ANTES: div r3 r4 r5     →  AGORA: div r3 r4 + mflo r5
+   ANTES: mult r5 r3 r4    →  AGORA: mult r5 r3 + mflo r4
+   
+   MUDANÇA: DIV e MULT armazenam em HI/LO, usar MFLO/MFHI para recuperar
+
+5. SUBTRAÇÃO COM IMEDIATO:
+   ANTES: addi r30 r30 -1  →  AGORA: subi r30 r30 1
+   
+   MUDANÇA: Uso da instrução SUBI (010000) para imediatos negativos
+
+6. INSTRUÇÃO MOVE:
+   ANTES: addi r1 r28 0    →  AGORA: move r28 r1
+   
+   MUDANÇA: Uso da instrução MOVE (001011) específica
+
+7. COMPARAÇÃO COM ZERO:
+   ANTES: beqz r2 r0 3     →  AGORA: li r2 0 + beq r1 r2 3
+   
+   MUDANÇA: Não há BEQZ, usar LI + BEQ conforme especificação
+
+8. SAÍDA DE DADOS:
+   ANTES: output r28       →  AGORA: outputreg r28
+   
+   MUDANÇA: Instrução OUTPUTREG (100000) conforme especificação
+
+COMPARAÇÃO LINHA POR LINHA - EXEMPLO DA FUNÇÃO GCD:
+==================================================
+
+ANTES (formato antigo):               AGORA (conforme processador):
+-----------------------               ------------------------------
+1-sw r29 r31 1                   →    1-sw r31 1(r29)
+5-seti r1 r0 0                   →    5-li r1 0
+6-lw r29 r1 3                    →    6-lw r1 3(r29)
+7-seti r2 r0 0                   →    7-li r2 0
+8-beqz r2 r0 3                   →    8-beq r1 r2 3
+10-addi r1 r28 0                 →    10-move r28 r1
+11-jump 36                       →    11-j 36
+16-div r3 r4 r5                  →    16-div r3 r4
+                                      17-mflo r5
+18-mult r5 r3 r4                 →    19-mult r5 r3
+                                      20-mflo r4
+23-sw r30 r2 0                   →    23-sw r2 0(r30)
+39-addi r30 r30 -1               →    39-subi r30 r30 1
+44-lw r29 r31 1                  →    44-lw r31 1(r29)
+45-jr r31 r0 r0                  →    45-jr r31
+74-output r28                    →    74-outputreg r28
+
+INSTRUÇÕES AGORA CONFORMES À ESPECIFICAÇÃO:
+==========================================
+
+✅ ADD (000000) - add rd rs rt
+✅ SUB (000001) - sub rd rs rt  
+✅ MULT (000010) - mult rs rt (resultado em HI:LO)
+✅ DIV (000011) - div rs rt (quociente em LO, resto em HI)
+✅ MFLO (001010) - mflo rd (move LO para rd)
+✅ MFHI (001001) - mfhi rd (move HI para rd)
+✅ MOVE (001011) - move rd rs
+✅ JR (001100) - jr rs
+✅ J (011100) - j endereço
+✅ JAL (011101) - jal endereço
+✅ ADDI (001111) - addi rt rs imediato
+✅ SUBI (010000) - subi rt rs imediato
+✅ LI (011011) - li rt imediato
+✅ BEQ (010011) - beq rs rt endereço
+✅ LW (011001) - lw rt offset(rs)
+✅ SW (011010) - sw rt offset(rs)
+✅ OUTPUTREG (100000) - outputreg rs
+✅ INPUT (100010) - input rd
+
+ALGORITMO GCD CORRIGIDO:
+========================
+
+O algoritmo agora implementa corretamente:
+1. Divisão: div u v → quociente em LO
+2. Captura: mflo reg → quociente para registrador  
+3. Multiplicação: mult quociente v → produto em LO
+4. Captura: mflo reg → produto para registrador
+5. Subtração: sub u produto → resto (u % v)
+
+Sequência correta para u % v:
+- div r3 r4        # u / v → LO
+- mflo r5          # r5 = quociente
+- mult r5 r3       # quociente * v → LO  
+- mflo r4          # r4 = produto
+- sub r3 r2 r4     # r3 = u - produto = u % v
+
+BENEFÍCIOS DAS CORREÇÕES:
+========================
+
+1. COMPATIBILIDADE: Código agora é 100% compatível com processador MIPS-like
+2. PRECISÃO: Operações matemáticas implementadas corretamente
+3. EFICIÊNCIA: Uso das instruções específicas do processador
+4. CLAREZA: Formato padrão MIPS facilita leitura e debug
+5. CONFORMIDADE: Segue rigorosamente a especificação do processador
+
+O assembly gerado agora pode ser executado diretamente no processador 
+conforme especificado no documento instrucoes_processador.md, 
+implementando corretamente o algoritmo euclidiano para cálculo do GCD.

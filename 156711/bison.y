@@ -1,6 +1,7 @@
 %{
 #include "funcs.h"
 #include "intermediate.h"
+#include "assembler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -515,6 +516,27 @@ int main(int argc, char *argv[]) {
             printQuadList(quadList, stdout); // Print all quads to stdout
             fclose(finter);
             printf("Intermediate code written to intermediate.txt\n");
+            
+            // Gerar código assembly
+            FILE *fasm = fopen("assembly.txt", "w");
+            if (fasm) {
+                Assembler* assembler = init_assembler(fasm);
+                generate_assembly(assembler, quadList);
+                fclose(fasm);
+                printf("Assembly code written to assembly.txt\n");
+                
+                // Gerar código binário
+                FILE *fbin = fopen("binary.txt", "w");
+                if (fbin) {
+                    write_binary_output(assembler, fbin);
+                    fclose(fbin);
+                    printf("Binary code written to binary.txt\n");
+                }
+                
+                free_assembler(assembler);
+            } else {
+                printf("Could not write assembly code.\n");
+            }
         } else {
             printf("Could not write intermediate code.\n");
         }

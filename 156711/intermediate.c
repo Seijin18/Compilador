@@ -5,14 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct QuadNode {
-    char op[16];
-    char arg1[32];
-    char arg2[32];
-    char result[32];
-    struct QuadNode* next;
-} QuadNode;
-
 static int tempCount = 0;
 static int labelCount = 0;
 

@@ -1,0 +1,390 @@
+MAPEAMENTO LINHA POR LINHA - ASSEMBLY GERADO
+===========================================
+
+Análise detalhada de cada linha do arquivo assembly.txt gerado pelo compilador.
+
+SEÇÃO: INICIALIZAÇÃO
+===================
+Linha 0: jump 28
+  │ Instrução: Jump incondicional
+  │ Propósito: Pular para função main
+  │ Destino: Linha 44 (onde main realmente começa)
+  └ Nota: Evita execução acidental de gcd
+
+SEÇÃO: FUNÇÃO GCD - PRÓLOGO
+===========================
+Func gcd: (label)
+  └ Marca início da função gcd
+
+Linha 1: sw r29 r31 1
+  │ Instrução: Store Word
+  │ Operação: mem[r29 + 1] = r31
+  │ Propósito: Salvar return address na pilha
+  └ Padrão: Protocolo de chamada de função
+
+Linha 2: addi r30 r30 1
+Linha 3: addi r30 r30 1  
+Linha 4: addi r30 r30 1
+  │ Instrução: Add Immediate
+  │ Operação: r30 = r30 + 1 (3 vezes)
+  │ Propósito: Alocar 3 posições na pilha
+  └ Uso: Espaço para variáveis locais e temporários
+
+SEÇÃO: VERIFICAÇÃO CONDIÇÃO BASE (v == 0)
+========================================
+Linha 5: seti r1 r0 0
+  │ Instrução: Set Immediate
+  │ Operação: r1 = 0
+  │ Propósito: Inicializar registrador com constante
+  └ Prepara para comparação
+
+Linha 6: lw r29 r1 3
+  │ Instrução: Load Word
+  │ Operação: r1 = mem[r29 + 3]
+  │ Propósito: Carregar parâmetro 'v'
+  └ Posição 3: segundo parâmetro no frame
+
+Linha 7: seti r2 r0 0
+  │ Instrução: Set Immediate
+  │ Operação: r2 = 0
+  │ Propósito: Valor para comparação com v
+  └ Implementa teste "v == 0"
+
+Linha 8: beqz r2 r0 3
+  │ Instrução: Branch if Equal Zero
+  │ Operação: if (r2 == 0) PC = PC + 3
+  │ Propósito: Pular se v == 0
+  └ Implementa condição do caso base
+
+SEÇÃO: CASO BASE (RETORNAR U)
+============================
+Linha 9: lw r29 r1 2
+  │ Instrução: Load Word
+  │ Operação: r1 = mem[r29 + 2]
+  │ Propósito: Carregar parâmetro 'u'
+  └ Posição 2: primeiro parâmetro no frame
+
+Linha 10: addi r1 r28 0
+  │ Instrução: Add Immediate
+  │ Operação: r28 = r1 + 0 (move)
+  │ Propósito: Colocar 'u' no registrador de retorno
+  └ r28 usado para valor de retorno
+
+Linha 11: jump 36
+  │ Instrução: Jump incondicional
+  │ Operação: PC = 36
+  │ Propósito: Pular para epílogo da função
+  └ Evita execução do caso recursivo
+
+SEÇÃO: CÓDIGO MORTO
+==================
+Linha 12: lw r29 r1 0
+Linha 13: addi r28 r1 0
+  │ Status: Nunca executado
+  │ Motivo: Jump da linha 11 bypassa estas instruções
+  └ Artefato da geração de código
+
+SEÇÃO: CASO RECURSIVO - CÁLCULO DO MÓDULO
+=========================================
+L0: (label)
+  └ Marca início do caso recursivo
+
+Linha 14: lw r29 r3 0
+  │ Instrução: Load Word
+  │ Operação: r3 = mem[r29 + 0]
+  │ Propósito: Carregar 'u' para divisão
+  └ Primeiro operando da divisão
+
+Linha 15: lw r29 r4 1
+  │ Instrução: Load Word
+  │ Operação: r4 = mem[r29 + 1]
+  │ Propósito: Carregar 'v' para divisão
+  └ Segundo operando da divisão
+
+Linha 16: div r3 r4 r5
+  │ Instrução: Division
+  │ Operação: r5 = r3 / r4
+  │ Propósito: Calcular u / v (quociente)
+  └ Parte 1 do cálculo u % v
+
+Linha 17: lw r29 r3 1
+  │ Instrução: Load Word
+  │ Operação: r3 = mem[r29 + 1]
+  │ Propósito: Recarregar 'v' para multiplicação
+  └ Necessário pois r3 foi usado na divisão
+
+Linha 18: mult r5 r3 r4
+  │ Instrução: Multiplication
+  │ Operação: r4 = r5 * r3
+  │ Propósito: Calcular (u/v) * v
+  └ Parte 2 do cálculo u % v
+
+Linha 19: lw r29 r2 0
+  │ Instrução: Load Word
+  │ Operação: r2 = mem[r29 + 0]
+  │ Propósito: Recarregar 'u' para subtração
+  └ Operando da subtração final
+
+Linha 20: sub r2 r4 r3
+  │ Instrução: Subtraction
+  │ Operação: r3 = r2 - r4
+  │ Propósito: Calcular u - ((u/v) * v) = u % v
+  └ Completa o cálculo do módulo
+
+SEÇÃO: PREPARAÇÃO CHAMADA RECURSIVA
+===================================
+Linha 21: sw r30 r2 0
+  │ Instrução: Store Word
+  │ Operação: mem[r30 + 0] = r2
+  │ Propósito: Empilhar primeiro parâmetro (v)
+  └ Preparação para gcd(v, u%v)
+
+Linha 22: addi r30 r30 1
+  │ Instrução: Add Immediate
+  │ Operação: r30 = r30 + 1
+  │ Propósito: Incrementar stack pointer
+  └ Avançar posição na pilha
+
+Linha 23: sw r30 r3 0
+  │ Instrução: Store Word
+  │ Operação: mem[r30 + 0] = r3
+  │ Propósito: Empilhar segundo parâmetro (u%v)
+  └ Resultado do módulo calculado
+
+Linha 24: addi r30 r30 1
+Linha 25: sw r30 r1 0
+Linha 26: addi r30 r30 1
+Linha 27: sw r30 r2 0
+Linha 28: addi r30 r30 1
+  │ Padrão: Continua empilhando valores
+  │ Propósito: Salvar contexto adicional
+  └ Protocolo de chamada
+
+Linha 29: sw r30 r29 0
+  │ Instrução: Store Word
+  │ Operação: mem[r30 + 0] = r29
+  │ Propósito: Salvar frame pointer atual
+  └ Necessário para restaurar após chamada
+
+Linha 30: addi r30 r29 0
+  │ Instrução: Add Immediate
+  │ Operação: r29 = r30 + 0 (move)
+  │ Propósito: Atualizar frame pointer
+  └ Novo frame para função chamada
+
+Linha 31: addi r30 r30 1
+  │ Instrução: Add Immediate
+  │ Operação: r30 = r30 + 1
+  │ Propósito: Finalizar setup da pilha
+  └ Espaço para frame da função chamada
+
+Linha 32: sw r29 r2 3
+  │ Instrução: Store Word
+  │ Operação: mem[r29 + 3] = r2
+  │ Propósito: Colocar 'v' na posição 3 do novo frame
+  └ Primeiro parâmetro para gcd(v, u%v)
+
+Linha 33: sw r29 r1 2
+  │ Instrução: Store Word
+  │ Operação: mem[r29 + 2] = r1
+  │ Propósito: Colocar 'u%v' na posição 2 do novo frame
+  └ Segundo parâmetro para gcd(v, u%v)
+
+Linha 34: jal 1
+  │ Instrução: Jump and Link
+  │ Operação: r31 = PC + 1; PC = 1
+  │ Propósito: Chamar recursivamente gcd
+  └ Endereço 1 = início da função gcd
+
+SEÇÃO: RESTAURAÇÃO PÓS-CHAMADA
+==============================
+Linha 35: addi r29 r30 0
+  │ Instrução: Add Immediate
+  │ Operação: r29 = r30 + 0 (move)
+  │ Propósito: Restaurar frame pointer
+  └ Executado após retorno da chamada
+
+Linha 36: lw r29 r29 0
+  │ Instrução: Load Word
+  │ Operação: r29 = mem[r29 + 0]
+  │ Propósito: Restaurar frame pointer original
+  └ Valor salvo antes da chamada
+
+Linha 37: addi r30 r30 -1
+  │ Instrução: Add Immediate
+  │ Operação: r30 = r30 - 1
+  │ Propósito: Decrementar stack pointer
+  └ Desempilhar valores
+
+Linha 38: lw r30 r2 0
+  │ Instrução: Load Word
+  │ Operação: r2 = mem[r30 + 0]
+  │ Propósito: Restaurar registrador da pilha
+  └ Desfazer empilhamento
+
+Linha 39: addi r30 r30 -1
+Linha 40: lw r30 r1 0
+  │ Padrão: Continua desempilhamento
+  │ Propósito: Restaurar estado anterior
+  └ Limpar pilha
+
+Linha 41: addi r28 r28 0
+  │ Instrução: Add Immediate
+  │ Operação: r28 = r28 + 0 (nop)
+  │ Propósito: Manter valor de retorno em r28
+  └ Resultado da chamada recursiva
+
+SEÇÃO: EPÍLOGO FUNÇÃO GCD
+========================
+L1: (label)
+  └ Ponto de convergência para retorno
+
+Linha 42: lw r29 r31 1
+  │ Instrução: Load Word
+  │ Operação: r31 = mem[r29 + 1]
+  │ Propósito: Restaurar return address
+  └ Valor salvo no prólogo (linha 1)
+
+Linha 43: jr r31 r0 r0
+  │ Instrução: Jump Register
+  │ Operação: PC = r31
+  │ Propósito: Retornar para função chamadora
+  └ Fim da execução de gcd
+
+SEÇÃO: FUNÇÃO MAIN
+==================
+Func main: (label)
+  └ Marca início da função principal
+
+Linha 44: addi r30 r30 1
+Linha 45: addi r30 r30 1
+  │ Instrução: Add Immediate
+  │ Operação: r30 = r30 + 1 (2 vezes)
+  │ Propósito: Alocar espaço para variáveis x, y
+  └ Frame da função main
+
+Linha 46: input r28
+  │ Instrução: Input
+  │ Operação: r28 = input_stream
+  │ Propósito: Ler primeiro número do usuário
+  └ Valor para variável x
+
+Linha 47: sw r29 r28 0
+  │ Instrução: Store Word
+  │ Operação: mem[r29 + 0] = r28
+  │ Propósito: Salvar x no frame local
+  └ Posição 0: primeira variável local
+
+Linha 48: input r28
+  │ Instrução: Input
+  │ Operação: r28 = input_stream
+  │ Propósito: Ler segundo número do usuário
+  └ Valor para variável y
+
+Linha 49: sw r29 r28 1
+  │ Instrução: Store Word
+  │ Operação: mem[r29 + 1] = r28
+  │ Propósito: Salvar y no frame local
+  └ Posição 1: segunda variável local
+
+SEÇÃO: PREPARAÇÃO CHAMADA GCD EM MAIN
+====================================
+Linha 50: lw r29 r1 0
+  │ Instrução: Load Word
+  │ Operação: r1 = mem[r29 + 0]
+  │ Propósito: Carregar x para chamada
+  └ Primeiro parâmetro de gcd(x, y)
+
+Linha 51: sw r30 r1 0
+  │ Instrução: Store Word
+  │ Operação: mem[r30 + 0] = r1
+  │ Propósito: Empilhar x
+  └ Protocolo de chamada
+
+Linha 52: addi r30 r30 1
+  │ Instrução: Add Immediate
+  │ Operação: r30 = r30 + 1
+  │ Propósito: Incrementar stack pointer
+  └ Avançar na pilha
+
+Linha 53: lw r29 r1 1
+  │ Instrução: Load Word
+  │ Operação: r1 = mem[r29 + 1]
+  │ Propósito: Carregar y para chamada
+  └ Segundo parâmetro de gcd(x, y)
+
+Linha 54: sw r30 r1 0
+Linha 55: addi r30 r30 1
+Linha 56: sw r30 r1 0
+Linha 57: addi r30 r30 1
+Linha 58: sw r30 r2 0
+Linha 59: addi r30 r30 1
+  │ Padrão: Empilhamento de parâmetros
+  │ Propósito: Protocolo de chamada
+  └ Preparar contexto para gcd
+
+Linha 60: sw r30 r29 0
+  │ Instrução: Store Word
+  │ Operação: mem[r30 + 0] = r29
+  │ Propósito: Salvar frame pointer de main
+  └ Para restaurar após chamada
+
+Linha 61: addi r30 r29 0
+  │ Instrução: Add Immediate
+  │ Operação: r29 = r30 + 0 (move)
+  │ Propósito: Setup novo frame pointer
+  └ Frame para função gcd
+
+Linha 62: addi r30 r30 1
+  │ Instrução: Add Immediate
+  │ Operação: r30 = r30 + 1
+  │ Propósito: Finalizar setup da pilha
+  └ Completar protocolo de chamada
+
+Linha 63: sw r29 r2 3
+  │ Instrução: Store Word
+  │ Operação: mem[r29 + 3] = r2
+  │ Propósito: Colocar y na posição 3
+  └ Segundo parâmetro no frame de gcd
+
+Linha 64: sw r29 r1 2
+  │ Instrução: Store Word
+  │ Operação: mem[r29 + 2] = r1
+  │ Propósito: Colocar x na posição 2
+  └ Primeiro parâmetro no frame de gcd
+
+Linha 65: jal 1
+  │ Instrução: Jump and Link
+  │ Operação: r31 = PC + 1; PC = 1
+  │ Propósito: Chamar gcd(x, y)
+  └ Execução principal do programa
+
+SEÇÃO: LIMPEZA E SAÍDA EM MAIN
+=============================
+Linha 66: addi r29 r30 0
+Linha 67: lw r29 r29 0
+Linha 68: addi r30 r30 -1
+Linha 69: lw r30 r2 0
+Linha 70: addi r30 r30 -1
+Linha 71: lw r30 r1 0
+  │ Padrão: Restauração pós-chamada
+  │ Propósito: Limpar pilha e restaurar contexto
+  └ Protocolo de retorno de chamada
+
+Linha 72: output r28
+  │ Instrução: Output
+  │ Operação: output_stream = r28
+  │ Propósito: Exibir resultado do GCD
+  └ r28 contém valor retornado por gcd
+
+RESUMO DA EXECUÇÃO:
+==================
+1. Jump para main (linha 0)
+2. Main lê dois números (linhas 46-49)
+3. Main chama gcd(x, y) (linhas 50-65)
+4. gcd verifica se v == 0:
+   - Se sim: retorna u (linhas 9-11)
+   - Se não: calcula u % v e chama gcd(v, u%v) (linhas 14-34)
+5. Resultado é retornado e exibido (linha 72)
+
+Total: 73 linhas de assembly para implementar algoritmo GCD completo.

@@ -1,0 +1,316 @@
+DOCUMENTAÇÃO DAS INSTRUÇÕES ASSEMBLY GERADAS
+============================================
+
+Este documento explica cada instrução assembly gerada pelo compilador C- para a arquitetura MIPS-like RISC.
+
+CONVENÇÕES DE REGISTRADORES:
+- r0: Registrador zero (sempre contém valor 0)
+- r1-r27: Registradores de uso geral
+- r28: Registrador temporário principal
+- r29 (FP): Frame Pointer - aponta para o frame atual da função
+- r30 (SP): Stack Pointer - aponta para o topo da pilha
+- r31 (RA): Return Address - contém endereço de retorno
+
+ANÁLISE DAS INSTRUÇÕES DO ASSEMBLY GERADO:
+==========================================
+
+LINHA 0: jump 28
+----------------
+NOME: Jump Incondicional
+FORMATO: jump <endereço>
+DESCRIÇÃO: Salta incondicionalmente para o endereço especificado
+USO: Pula para o início da função main (linha 44 no código)
+EXEMPLO: "0-jump 28" - salta para a linha onde main começa
+
+LINHAS 1-4: Prólogo da Função gcd
+---------------------------------
+LINHA 1: sw r29 r31 1
+NOME: Store Word
+FORMATO: sw <base> <source> <offset>
+DESCRIÇÃO: Armazena o conteúdo de r31 na memória no endereço (r29 + 1)
+USO: Salva o return address na pilha antes de executar a função
+
+LINHA 2-4: addi r30 r30 1
+NOME: Add Immediate
+FORMATO: addi <dest> <source> <imediato>
+DESCRIÇÃO: Adiciona um valor imediato ao registrador
+USO: Incrementa o stack pointer para alocar espaço na pilha (3 posições)
+
+LINHAS 5-8: Verificação de Condição (v == 0)
+--------------------------------------------
+LINHA 5: seti r1 r0 0
+NOME: Set Immediate
+FORMATO: seti <source> <dest> <imediato>
+DESCRIÇÃO: Carrega um valor imediato no registrador
+USO: Inicializa r1 com valor 0
+
+LINHA 6: lw r29 r1 3
+NOME: Load Word
+FORMATO: lw <base> <dest> <offset>
+DESCRIÇÃO: Carrega valor da memória no endereço (r29 + 3) para r1
+USO: Carrega o parâmetro 'v' do frame da função
+
+LINHA 7: seti r2 r0 0
+NOME: Set Immediate
+FORMATO: seti <source> <dest> <imediato>
+DESCRIÇÃO: Carrega valor 0 em r2
+USO: Prepara r2 para comparação com zero
+
+LINHA 8: beqz r2 r0 3
+NOME: Branch if Equal to Zero
+FORMATO: beqz <reg1> <reg2> <offset>
+DESCRIÇÃO: Salta se r2 for igual a zero, pulando 3 instruções
+USO: Implementa a condição "if (v == 0)"
+
+LINHAS 9-11: Caso Base (v == 0, retornar u)
+-------------------------------------------
+LINHA 9: lw r29 r1 2
+NOME: Load Word
+FORMATO: lw <base> <dest> <offset>
+DESCRIÇÃO: Carrega valor da memória no endereço (r29 + 2) para r1
+USO: Carrega o parâmetro 'u' do frame da função
+
+LINHA 10: addi r1 r28 0
+NOME: Add Immediate
+FORMATO: addi <source> <dest> <imediato>
+DESCRIÇÃO: Move o valor de r1 para r28 (registrador de retorno)
+USO: Prepara o valor de retorno (u)
+
+LINHA 11: jump 36
+NOME: Jump Incondicional
+FORMATO: jump <endereço>
+DESCRIÇÃO: Salta incondicionalmente para o endereço especificado
+USO: Pula para o epilogo da função (retorno)
+
+LINHAS 12-13: Código Morto (não executado)
+------------------------------------------
+LINHA 12: lw r29 r1 0
+LINHA 13: addi r28 r1 0
+DESCRIÇÃO: Estas instruções não são executadas devido ao jump da linha 11
+
+LINHAS 14-20: Algoritmo GCD (Caso Recursivo)
+--------------------------------------------
+LABEL L0: (linha 14)
+NOME: Label
+DESCRIÇÃO: Marca o início do caso recursivo
+
+LINHA 14: lw r29 r3 0
+NOME: Load Word
+DESCRIÇÃO: Carrega valor da posição 0 do frame para r3
+USO: Carrega 'u' para operação de divisão
+
+LINHA 15: lw r29 r4 1
+NOME: Load Word
+DESCRIÇÃO: Carrega valor da posição 1 do frame para r4
+USO: Carrega 'v' para operação de divisão
+
+LINHA 16: div r3 r4 r5
+NOME: Division
+FORMATO: div <dividend> <divisor> <result>
+DESCRIÇÃO: Divide r3 por r4 e armazena o quociente em r5
+USO: Calcula u / v (parte do cálculo do módulo)
+
+LINHA 17: lw r29 r3 1
+NOME: Load Word
+DESCRIÇÃO: Recarrega 'v' em r3 para multiplicação
+USO: Prepara para calcular (u/v) * v
+
+LINHA 18: mult r5 r3 r4
+NOME: Multiplication
+FORMATO: mult <op1> <op2> <result>
+DESCRIÇÃO: Multiplica r5 por r3 e armazena em r4
+USO: Calcula (u/v) * v
+
+LINHA 19: lw r29 r2 0
+NOME: Load Word
+DESCRIÇÃO: Carrega 'u' em r2
+USO: Prepara para calcular u - ((u/v) * v)
+
+LINHA 20: sub r2 r4 r3
+NOME: Subtraction
+FORMATO: sub <op1> <op2> <result>
+DESCRIÇÃO: Subtrai r4 de r2 e armazena em r3
+USO: Calcula u % v = u - ((u/v) * v)
+
+LINHAS 21-34: Preparação para Chamada Recursiva
+-----------------------------------------------
+LINHAS 21-31: Empilhamento de Parâmetros
+LINHA 21: sw r30 r2 0
+NOME: Store Word
+DESCRIÇÃO: Armazena r2 na pilha
+USO: Salva primeiro parâmetro (v)
+
+LINHA 22: addi r30 r30 1
+NOME: Add Immediate
+DESCRIÇÃO: Incrementa stack pointer
+USO: Move ponteiro da pilha para próxima posição
+
+LINHAS 23-31: Repetição do padrão de empilhamento
+DESCRIÇÃO: Salva mais parâmetros e contexto na pilha
+
+LINHA 32: sw r29 r2 3
+LINHA 33: sw r29 r1 2
+NOME: Store Word
+DESCRIÇÃO: Armazena parâmetros no frame da função chamada
+USO: Prepara parâmetros para gcd(v, u%v)
+
+LINHA 34: jal 1
+NOME: Jump and Link
+FORMATO: jal <endereço>
+DESCRIÇÃO: Salta para endereço e salva endereço de retorno em r31
+USO: Chama recursivamente gcd(v, u%v)
+
+LINHAS 35-40: Restauração após Chamada
+--------------------------------------
+LINHA 35: addi r29 r30 0
+NOME: Add Immediate
+DESCRIÇÃO: Restaura frame pointer
+USO: Restaura contexto após retorno da função
+
+LINHA 36: lw r29 r29 0
+NOME: Load Word
+DESCRIÇÃO: Carrega valor do frame
+USO: Restaura estado da função
+
+LINHAS 37-40: Desempilhamento
+LINHA 37: addi r30 r30 -1
+LINHA 38: lw r30 r2 0
+LINHA 39: addi r30 r30 -1
+LINHA 40: lw r30 r1 0
+DESCRIÇÃO: Restaura registradores da pilha
+
+LINHA 41: addi r28 r28 0
+NOME: Add Immediate
+DESCRIÇÃO: Move resultado para registrador de retorno
+USO: Prepara valor de retorno da função
+
+LINHAS 42-43: Epílogo da Função
+-------------------------------
+LABEL L1: (linha 42)
+LINHA 42: lw r29 r31 1
+NOME: Load Word
+DESCRIÇÃO: Restaura return address da pilha
+USO: Prepara para retorno da função
+
+LINHA 43: jr r31 r0 r0
+NOME: Jump Register
+FORMATO: jr <reg> <unused> <unused>
+DESCRIÇÃO: Salta para endereço contido em r31
+USO: Retorna para função chamadora
+
+FUNÇÃO MAIN (LINHAS 44-72):
+===========================
+
+LINHAS 44-45: Prólogo da Main
+-----------------------------
+LINHA 44-45: addi r30 r30 1
+NOME: Add Immediate
+DESCRIÇÃO: Aloca espaço na pilha para variáveis locais
+USO: Reserva espaço para x e y
+
+LINHAS 46-49: Entrada de Dados
+------------------------------
+LINHA 46: input r28
+NOME: Input
+FORMATO: input <dest>
+DESCRIÇÃO: Lê valor da entrada padrão para registrador
+USO: Lê primeiro número do usuário
+
+LINHA 47: sw r29 r28 0
+NOME: Store Word
+DESCRIÇÃO: Armazena valor lido na posição 0 do frame
+USO: Salva primeiro número (x)
+
+LINHA 48: input r28
+NOME: Input
+DESCRIÇÃO: Lê segundo valor da entrada
+USO: Lê segundo número do usuário
+
+LINHA 49: sw r29 r28 1
+NOME: Store Word
+DESCRIÇÃO: Armazena segundo valor na posição 1 do frame
+USO: Salva segundo número (y)
+
+LINHAS 50-65: Preparação para Chamada de gcd
+--------------------------------------------
+LINHAS 50-62: Carregamento e Empilhamento de Parâmetros
+LINHA 50: lw r29 r1 0
+LINHA 53: lw r29 r1 1
+NOME: Load Word
+DESCRIÇÃO: Carrega variáveis locais x e y
+USO: Prepara parâmetros para gcd(x, y)
+
+LINHAS 51-62: Empilhamento
+DESCRIÇÃO: Salva parâmetros e contexto na pilha seguindo protocolo de chamada
+
+LINHAS 63-64: Configuração de Parâmetros
+LINHA 63: sw r29 r2 3
+LINHA 64: sw r29 r1 2
+DESCRIÇÃO: Coloca parâmetros nas posições corretas do frame de gcd
+
+LINHA 65: jal 1
+NOME: Jump and Link
+DESCRIÇÃO: Chama função gcd
+USO: Executa gcd(x, y)
+
+LINHAS 66-71: Limpeza após Chamada
+----------------------------------
+LINHAS 66-71: Restauração
+DESCRIÇÃO: Restaura registradores e ponteiros após retorno de gcd
+
+LINHA 72: output r28
+NOME: Output
+FORMATO: output <source>
+DESCRIÇÃO: Escreve valor do registrador na saída padrão
+USO: Exibe resultado do GCD
+
+RESUMO DAS INSTRUÇÕES UTILIZADAS:
+=================================
+
+1. ARITMÉTICAS:
+   - addi: Soma com imediato
+   - add: Soma de registradores
+   - sub: Subtração
+   - mult: Multiplicação
+   - div: Divisão
+
+2. MEMÓRIA:
+   - lw: Carrega da memória
+   - sw: Armazena na memória
+
+3. CONTROLE:
+   - jump: Salto incondicional
+   - jal: Salto com link (chamada de função)
+   - jr: Salto para registrador (retorno)
+   - beqz: Salto condicional se zero
+
+4. DADOS:
+   - seti: Carrega valor imediato
+
+5. I/O:
+   - input: Entrada de dados
+   - output: Saída de dados
+
+PADRÕES DE USO:
+==============
+
+1. PRÓLOGO DE FUNÇÃO:
+   - Salvar return address: sw fp ra offset
+   - Alocar espaço na pilha: addi sp sp 1
+
+2. CHAMADA DE FUNÇÃO:
+   - Empilhar parâmetros
+   - Configurar frame
+   - jal para função
+   - Restaurar contexto
+
+3. EPÍLOGO DE FUNÇÃO:
+   - Restaurar return address: lw fp ra offset
+   - Retornar: jr ra
+
+4. OPERAÇÕES ARITMÉTICAS:
+   - Carregar operandos: lw
+   - Executar operação: add/sub/mult/div
+   - Armazenar resultado: sw
+
+Este padrão implementa corretamente o algoritmo euclidiano para cálculo do GCD usando recursão.
