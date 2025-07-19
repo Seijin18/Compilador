@@ -31,6 +31,16 @@ static char* newLabel() {
 // Forward declaration
 static char* genNode(AASNode* node, FILE* out);
 
+// Function to check if a node ends with a return statement
+static int endsWithReturn(AASNode* node) {
+    if (!node) return 0;
+    
+    // Check if this node is a return statement
+    if (node->node == KStmt && node->stmt == KReturn) return 1;
+    
+    return 0;
+}
+
 static FILE* quadOut = NULL;
 
 static QuadNode* quadListHead = NULL;
@@ -144,8 +154,16 @@ static char* genNode(AASNode* node, FILE* out) {
                     char* labelElse = newLabel();
                     char* labelEnd = newLabel();
                     emitQuad("if_f", cond, labelElse, " ");
-                    genNode(node->children->sibling, out); // then
-                    emitQuad("goto", labelEnd, " ", " ");
+                    
+                    // Generate the 'then' block
+                    AASNode* thenBlock = node->children->sibling;
+                    genNode(thenBlock, out);
+                    
+                    // Only generate goto if the 'then' block doesn't end with return
+                    if (!endsWithReturn(thenBlock)) {
+                        emitQuad("goto", labelEnd, " ", " ");
+                    }
+                    
                     emitQuad("label", labelElse, " ", " ");
                     if (node->children->sibling->sibling)
                         genNode(node->children->sibling->sibling, out); // else

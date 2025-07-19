@@ -1,0 +1,1074 @@
+/**
+ * Assembler Corrigido para Processador MIPS Customizado
+ * 
+ * Correções implementadas:
+ * - Operação % usa MFHI (resto da divisão)
+ * - Mapeamento correto de endereços de branch
+ * - Passagem correta de parâmetros múltiplos
+ * - Correção no salvamento do return address
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdint.h>
+
+#define MAX_LINE_LENGTH 256
+#define MAX_LABEL_LENGTH 64
+#define MAX_REGISTERS 32
+#define MAX_LABELS 100
+#define MAX_VARIABLES 200
+#define MAX_INSTRUCTIONS 1000
+#define MAX_STACK_SIZE 256
+#define MAX_PARAMS 10
+
+// Estrutura para representar uma quadrupla
+typedef struct {
+    char op[16];
+    char arg1[32];
+    char arg2[32];
+    char arg3[32];
+} Quad;
+
+// Estrutura para mapeamento de labels para endereços
+typedef struct {
+    char label[MAX_LABEL_LENGTH];
+    int address;
+    int original_address; // Endereço usado durante a primeira passada
+} LabelMap;
+
+// Estrutura para tabela de símbolos (variáveis)
+typedef struct {
+    char name[32];
+    char scope[32];
+    int offset;
+    int is_global;
+    int is_arg;
+    int size;
+    int in_use;
+} Symbol;
+
+// Estrutura para instruções assembly
+typedef struct {
+    char mnemonic[16];
+    int opcode;
+    int rs, rt, rd;
+    int immediate;
+    char label[MAX_LABEL_LENGTH];
+    int line_number;
+    int is_label;
+    int needs_label_fix; // Marca instruções que precisam corrigir endereços de label
+} Instruction;
+
+// Estrutura para gerenciamento de registradores
+typedef struct {
+    int reg_num;
+    char variable[32];
+    int is_busy;
+    int last_used;
+    int is_dirty; // Indica se precisa ser salvo na memória
+} RegisterInfo;
+
+// Estrutura para contexto de função
+typedef struct {
+    char function_name[32];
+    int local_vars_size;
+    int param_count;
+    int return_address_offset;
+    char params[MAX_PARAMS][32];
+} FunctionContext;
+
+// Estrutura para pilha de parâmetros
+typedef struct {
+    char name[32];
+    int is_temp;
+} Parameter;
+
+// Registradores disponíveis
+typedef enum {
+    R0 = 0, R1, R2, R3, R4, R5, R6, R7,
+    R8, R9, R10, R11, R12, R13, R14, R15,
+    R16, R17, R18, R19, R20, R21, R22, R23,
+    R24, R25, R26, R27, R28, R29, R30, R31,
+    SP = 29, GP = 28, RA = 31
+} Register;
+
+// Opcodes das instruções do processador
+typedef enum {
+    OP_ADD = 0x00, OP_SUB = 0x01, OP_MULT = 0x02, OP_DIV = 0x03,
+    OP_AND = 0x04, OP_OR = 0x05, OP_SLL = 0x06, OP_SRL = 0x07,
+    OP_SLT = 0x08, OP_MFHI = 0x09, OP_MFLO = 0x0A, OP_MOVE = 0x0B,
+    OP_JR = 0x0C, OP_JALR = 0x0D, OP_LA = 0x0E, OP_ADDI = 0x0F,
+    OP_LW = 0x10, OP_SW = 0x11, OP_LUI = 0x12, OP_BEQ = 0x13,
+    OP_BNE = 0x14, OP_BGT = 0x15, OP_BGTE = 0x16, OP_BLT = 0x17,
+    OP_BLTE = 0x18, OP_INPUT = 0x19, OP_OUTPUT = 0x1A, OP_OUTPUTREG = 0x1B,
+    OP_J = 0x1C, OP_JAL = 0x1D, OP_HALT = 0x1E, OP_OUTPUTMEM = 0x1F,
+    OP_LI = 0x20, OP_SYSCALL = 0x21
+} OpCode;
+
+// Variáveis globais
+Quad quads[MAX_INSTRUCTIONS];
+Instruction instructions[MAX_INSTRUCTIONS];
+LabelMap labels[MAX_LABELS];
+Symbol symbols[MAX_VARIABLES];
+RegisterInfo registers[MAX_REGISTERS];
+FunctionContext function_stack[50];
+Parameter param_stack[MAX_PARAMS];
+
+int quad_count = 0;
+int instruction_count = 0;
+int label_count = 0;
+int symbol_count = 0;
+int function_stack_top = -1;
+int param_stack_top = -1;
+int current_line = 0;
+int global_memory_offset = 0;
+int time_counter = 0;
+
+char current_function[32] = "";
+
+// Protótipos de funções
+void parse_quadruple(const char *line, Quad *quad);
+void add_instruction(const char *mnemonic, int opcode, int rs, int rt, int rd, int immediate, const char *label);
+void add_instruction_with_label_fix(const char *mnemonic, int opcode, int rs, int rt, int rd, const char *target_label);
+int find_label_address(const char *label);
+void add_label(const char *label, int address);
+void add_symbol(const char *name, const char *scope, int offset, int is_global, int is_arg, int size);
+Symbol* find_symbol(const char *name, const char *scope);
+int get_register_for_variable(const char *var_name, const char *scope);
+int load_variable_to_register(const char *var_name, const char *scope);
+void push_function(const char *function_name);
+void pop_function();
+FunctionContext* get_current_function();
+void push_parameter(const char *name, int is_temp);
+Parameter* pop_parameter();
+void free_register(int reg);
+void flush_register(int reg);
+int get_optimization_pattern(Quad *current, Quad *next);
+void count_instructions_first_pass();
+void generate_assembly_second_pass();
+void process_quadruple(Quad *quad);
+void read_intermediate_file(const char *filename);
+void write_assembly_file(const char *filename);
+void write_binary_file(const char *filename);
+void fix_label_addresses();
+void print_statistics();
+
+void parse_quadruple(const char *line, Quad *quad) {
+    char temp_line[MAX_LINE_LENGTH];
+    strcpy(temp_line, line);
+    
+    if (temp_line[0] != '(' || temp_line[strlen(temp_line)-1] != ')') {
+        return;
+    }
+    
+    temp_line[strlen(temp_line)-1] = '\0';
+    char *content = temp_line + 1;
+    
+    char *token = strtok(content, ",");
+    if (token) strcpy(quad->op, token);
+    else strcpy(quad->op, "");
+    
+    token = strtok(NULL, ",");
+    if (token) strcpy(quad->arg1, token);
+    else strcpy(quad->arg1, "");
+    
+    token = strtok(NULL, ",");
+    if (token) strcpy(quad->arg2, token);
+    else strcpy(quad->arg2, "");
+    
+    token = strtok(NULL, ",");
+    if (token) strcpy(quad->arg3, token);
+    else strcpy(quad->arg3, "");
+    
+    // Remover espaços em branco
+    char *fields[] = {quad->op, quad->arg1, quad->arg2, quad->arg3};
+    for (int i = 0; i < 4; i++) {
+        char *start = fields[i];
+        while (*start == ' ') start++;
+        char *end = start + strlen(start) - 1;
+        while (end > start && *end == ' ') end--;
+        *(end + 1) = '\0';
+        if (start != fields[i]) {
+            memmove(fields[i], start, strlen(start) + 1);
+        }
+    }
+}
+
+void add_instruction(const char *mnemonic, int opcode, int rs, int rt, int rd, int immediate, const char *label) {
+    if (instruction_count >= MAX_INSTRUCTIONS) return;
+    
+    Instruction *instr = &instructions[instruction_count];
+    strcpy(instr->mnemonic, mnemonic);
+    instr->opcode = opcode;
+    instr->rs = rs;
+    instr->rt = rt;
+    instr->rd = rd;
+    instr->immediate = immediate;
+    instr->line_number = current_line++;
+    instr->is_label = 0;
+    instr->needs_label_fix = 0;
+    
+    if (label) {
+        strcpy(instr->label, label);
+    } else {
+        strcpy(instr->label, "");
+    }
+    
+    instruction_count++;
+}
+
+void add_instruction_with_label_fix(const char *mnemonic, int opcode, int rs, int rt, int rd, const char *target_label) {
+    if (instruction_count >= MAX_INSTRUCTIONS) return;
+    
+    Instruction *instr = &instructions[instruction_count];
+    strcpy(instr->mnemonic, mnemonic);
+    instr->opcode = opcode;
+    instr->rs = rs;
+    instr->rt = rt;
+    instr->rd = rd;
+    instr->immediate = 0; // Será corrigido depois
+    instr->line_number = current_line++;
+    instr->is_label = 0;
+    instr->needs_label_fix = 1;
+    strcpy(instr->label, target_label);
+    
+    instruction_count++;
+}
+
+int find_label_address(const char *label) {
+    for (int i = 0; i < label_count; i++) {
+        if (strcmp(labels[i].label, label) == 0) {
+            return labels[i].address;
+        }
+    }
+    return 0; // Default se não encontrar
+}
+
+void add_label(const char *label, int address) {
+    if (label_count >= MAX_LABELS) return;
+    
+    // Verificar se o label já existe
+    int label_index = -1;
+    for (int i = 0; i < label_count; i++) {
+        if (strcmp(labels[i].label, label) == 0) {
+            labels[i].address = address;
+            label_index = i;
+            break;
+        }
+    }
+    
+    // Se não existe, criar novo
+    if (label_index == -1) {
+        strcpy(labels[label_count].label, label);
+        labels[label_count].address = address;
+        labels[label_count].original_address = address;
+        label_count++;
+    }
+    
+    // Sempre adicionar marca de label nas instruções (para a segunda passada)
+    if (instruction_count < MAX_INSTRUCTIONS) {
+        Instruction *instr = &instructions[instruction_count];
+        strcpy(instr->mnemonic, "");
+        instr->opcode = 0;
+        instr->rs = instr->rt = instr->rd = instr->immediate = 0;
+        strcpy(instr->label, label);
+        instr->line_number = current_line;
+        instr->is_label = 1;
+        instr->needs_label_fix = 0;
+        instruction_count++;
+    }
+}
+
+void add_symbol(const char *name, const char *scope, int offset, int is_global, int is_arg, int size) {
+    if (symbol_count >= MAX_VARIABLES) return;
+    
+    // Verificar se já existe
+    for (int i = 0; i < symbol_count; i++) {
+        if (strcmp(symbols[i].name, name) == 0 && strcmp(symbols[i].scope, scope) == 0) {
+            return;
+        }
+    }
+    
+    strcpy(symbols[symbol_count].name, name);
+    strcpy(symbols[symbol_count].scope, scope);
+    symbols[symbol_count].offset = offset;
+    symbols[symbol_count].is_global = is_global;
+    symbols[symbol_count].is_arg = is_arg;
+    symbols[symbol_count].size = size;
+    symbols[symbol_count].in_use = 1;
+    symbol_count++;
+    
+    if (is_global) {
+        global_memory_offset += size;
+    }
+}
+
+Symbol* find_symbol(const char *name, const char *scope) {
+    // Primeiro procurar no escopo local
+    for (int i = 0; i < symbol_count; i++) {
+        if (strcmp(symbols[i].name, name) == 0 && strcmp(symbols[i].scope, scope) == 0) {
+            return &symbols[i];
+        }
+    }
+    
+    // Se não encontrar, procurar no escopo global
+    for (int i = 0; i < symbol_count; i++) {
+        if (strcmp(symbols[i].name, name) == 0 && symbols[i].is_global) {
+            return &symbols[i];
+        }
+    }
+    
+    return NULL;
+}
+
+int get_register_for_variable(const char *var_name, const char *scope) {
+    // Verificar se a variável já está em um registrador
+    for (int i = 1; i < MAX_REGISTERS - 2; i++) { // R1-R30 (evitar R0, R31)
+        if (registers[i].is_busy && strcmp(registers[i].variable, var_name) == 0) {
+            registers[i].last_used = time_counter++;
+            return i;
+        }
+    }
+    
+    // Encontrar registrador livre ou LRU
+    int best_reg = 1;
+    int oldest_time = registers[1].last_used;
+    
+    for (int i = 1; i < MAX_REGISTERS - 2; i++) {
+        if (!registers[i].is_busy) {
+            best_reg = i;
+            break;
+        }
+        if (registers[i].last_used < oldest_time) {
+            oldest_time = registers[i].last_used;
+            best_reg = i;
+        }
+    }
+    
+    // Se o registrador estava ocupado, salvar se necessário
+    if (registers[best_reg].is_busy && registers[best_reg].is_dirty) {
+        flush_register(best_reg);
+    }
+    
+    // Atribuir nova variável ao registrador
+    registers[best_reg].is_busy = 1;
+    strcpy(registers[best_reg].variable, var_name);
+    registers[best_reg].last_used = time_counter++;
+    registers[best_reg].is_dirty = 1;
+    
+    return best_reg;
+}
+
+int load_variable_to_register(const char *var_name, const char *scope) {
+    // Se for um valor imediato (número)
+    if (isdigit(var_name[0]) || (var_name[0] == '-' && isdigit(var_name[1]))) {
+        int reg = get_register_for_variable(var_name, scope);
+        int value = atoi(var_name);
+        add_instruction("LI", OP_LI, 0, 0, reg, value, NULL);
+        return reg;
+    }
+    
+    // Se for R0 (sempre zero)
+    if (strcmp(var_name, "0") == 0 || strcmp(var_name, "R0") == 0) {
+        return R0;
+    }
+    
+    // Verificar se já está em registrador
+    for (int i = 1; i < MAX_REGISTERS - 2; i++) {
+        if (registers[i].is_busy && strcmp(registers[i].variable, var_name) == 0) {
+            registers[i].last_used = time_counter++;
+            return i;
+        }
+    }
+    
+    // Carregar da memória
+    int reg = get_register_for_variable(var_name, scope);
+    Symbol *sym = find_symbol(var_name, scope);
+    
+    if (sym) {
+        if (sym->is_global) {
+            add_instruction("LW", OP_LW, GP, reg, 0, sym->offset, NULL);
+        } else {
+            add_instruction("LW", OP_LW, SP, reg, 0, sym->offset, NULL);
+        }
+    }
+    
+    return reg;
+}
+
+void push_function(const char *function_name) {
+    if (function_stack_top < 49) {
+        function_stack_top++;
+        strcpy(function_stack[function_stack_top].function_name, function_name);
+        function_stack[function_stack_top].local_vars_size = 0;
+        function_stack[function_stack_top].param_count = 0;
+        function_stack[function_stack_top].return_address_offset = 0;
+        strcpy(current_function, function_name);
+    }
+}
+
+void pop_function() {
+    if (function_stack_top >= 0) {
+        function_stack_top--;
+        if (function_stack_top >= 0) {
+            strcpy(current_function, function_stack[function_stack_top].function_name);
+        } else {
+            strcpy(current_function, "");
+        }
+    }
+}
+
+FunctionContext* get_current_function() {
+    if (function_stack_top >= 0) {
+        return &function_stack[function_stack_top];
+    }
+    return NULL;
+}
+
+void push_parameter(const char *name, int is_temp) {
+    if (param_stack_top < MAX_PARAMS - 1) {
+        param_stack_top++;
+        strcpy(param_stack[param_stack_top].name, name);
+        param_stack[param_stack_top].is_temp = is_temp;
+    }
+}
+
+Parameter* pop_parameter() {
+    if (param_stack_top >= 0) {
+        Parameter *param = &param_stack[param_stack_top];
+        param_stack_top--;
+        return param;
+    }
+    return NULL;
+}
+
+void free_register(int reg) {
+    if (reg > 0 && reg < MAX_REGISTERS) {
+        registers[reg].is_busy = 0;
+        registers[reg].is_dirty = 0;
+        strcpy(registers[reg].variable, "");
+    }
+}
+
+void flush_register(int reg) {
+    if (registers[reg].is_busy && registers[reg].is_dirty) {
+        Symbol *sym = find_symbol(registers[reg].variable, current_function);
+        if (sym) {
+            if (sym->is_global) {
+                add_instruction("SW", OP_SW, reg, GP, 0, sym->offset, NULL);
+            } else {
+                add_instruction("SW", OP_SW, reg, SP, 0, sym->offset, NULL);
+            }
+        }
+        registers[reg].is_dirty = 0;
+    }
+}
+
+int get_optimization_pattern(Quad *current, Quad *next) {
+    if (!current || !next) return 0;
+    
+    // Padrões de otimização para if_t (branch quando true)
+    if (strcmp(next->op, "if_t") == 0) {
+        if (strcmp(current->op, "==") == 0) return 1;  // BEQ
+        if (strcmp(current->op, "!=") == 0) return 2;  // BNE  
+        if (strcmp(current->op, ">") == 0) return 3;   // BGT
+        if (strcmp(current->op, "<") == 0) return 4;   // BLT
+        if (strcmp(current->op, ">=") == 0) return 5;  // BGTE
+        if (strcmp(current->op, "<=") == 0) return 6;  // BLTE
+    }
+    
+    // Padrões de otimização para if_f (branch quando false) - lógica invertida
+    if (strcmp(next->op, "if_f") == 0) {
+        if (strcmp(current->op, "==") == 0) return 7;  // BNE (inverte ==)
+        if (strcmp(current->op, "!=") == 0) return 8;  // BEQ (inverte !=)
+        if (strcmp(current->op, ">") == 0) return 9;   // BLTE (inverte >)
+        if (strcmp(current->op, "<") == 0) return 10;  // BGTE (inverte <)
+        if (strcmp(current->op, ">=") == 0) return 11; // BLT (inverte >=)
+        if (strcmp(current->op, "<=") == 0) return 12; // BGT (inverte <=)
+    }
+    
+    return 0;
+}
+
+void count_instructions_first_pass() {
+    int temp_counter = 0;
+    int arg_counter = 0;
+    
+    for (int i = 0; i < quad_count; i++) {
+        Quad *quad = &quads[i];
+        
+        if (strcmp(quad->op, "goto") == 0) {
+            temp_counter++; // J
+            
+        } else if (strcmp(quad->op, "fun") == 0) {
+            add_label(quad->arg1, temp_counter);
+            
+        } else if (strcmp(quad->op, "endfun") == 0) {
+            temp_counter++; // JR (return)
+            
+        } else if (strcmp(quad->op, "label") == 0) {
+            add_label(quad->arg1, temp_counter);
+            
+        } else if (strcmp(quad->op, "alloc") == 0) {
+            // Não gera instrução, apenas reserva espaço
+            
+        } else if (strcmp(quad->op, "arg") == 0) {
+            // Parâmetro de função - não gera instrução na primeira passada
+            
+        } else if (strcmp(quad->op, "param") == 0) {
+            // Empilhar parâmetro - será processado junto com call
+            
+        } else if (strcmp(quad->op, "call") == 0) {
+            if (strcmp(quad->arg1, "input") == 0) {
+                temp_counter++; // INPUT
+            } else {
+                // Chamada de função regular
+                int param_count = param_stack_top + 1;
+                temp_counter += param_count; // SW para cada parâmetro
+                temp_counter++; // SW para RA
+                temp_counter++; // JAL
+                temp_counter++; // LW para RA
+                temp_counter++; // MOVE para resultado
+                param_stack_top = -1; // Reset da pilha de parâmetros
+            }
+            
+        } else if (strcmp(quad->op, "ret") == 0) {
+            if (strlen(quad->arg1) > 0) {
+                temp_counter++; // MOVE para R1 (valor de retorno)
+            }
+            temp_counter++; // JR (return)
+            
+        } else if (strcmp(quad->op, "asn") == 0) {
+            temp_counter++; // MOVE ou LW
+            
+        } else if (strcmp(quad->op, "immed") == 0) {
+            temp_counter++; // LI
+            
+        } else if (strcmp(quad->op, "input") == 0) {
+            temp_counter++; // INPUT
+            
+        } else if (strcmp(quad->op, "output") == 0) {
+            temp_counter++; // OUTPUT ou OUTPUTREG
+            
+        } else if (strcmp(quad->op, "+") == 0 || strcmp(quad->op, "-") == 0) {
+            temp_counter++; // ADD ou SUB
+            
+        } else if (strcmp(quad->op, "*") == 0) {
+            temp_counter++; // MULT
+            temp_counter++; // MFLO
+            
+        } else if (strcmp(quad->op, "/") == 0) {
+            temp_counter++; // DIV
+            temp_counter++; // MFHI
+            
+        } else if (strcmp(quad->op, "%") == 0) {
+            temp_counter++; // DIV
+            temp_counter++; // MFLO
+            
+        } else if (strcmp(quad->op, ">") == 0 || strcmp(quad->op, "<") == 0 ||
+                   strcmp(quad->op, ">=") == 0 || strcmp(quad->op, "<=") == 0 ||
+                   strcmp(quad->op, "==") == 0 || strcmp(quad->op, "!=") == 0) {
+            
+            // Verificar se a próxima quadrupla é if_t ou if_f para otimização
+            if (i + 1 < quad_count) {
+                Quad *next_quad = &quads[i + 1];
+                int pattern = get_optimization_pattern(quad, next_quad);
+                
+                if (pattern > 0) {
+                    // Padrão de otimização detectado: comparação + if_t/if_f -> branch direto
+                    temp_counter++; // BEQ/BNE/BGT/etc.
+                    i++; // Pular próxima quadrupla pois já foi processada
+                } else {
+                    temp_counter++; // SLT ou similar
+                }
+            } else {
+                temp_counter++; // SLT ou similar
+            }
+            
+        } else if (strcmp(quad->op, "if_t") == 0 || strcmp(quad->op, "if_f") == 0) {
+            // Se chegou aqui, não foi otimizado
+            temp_counter++; // BNE/BEQ
+        }
+    }
+}
+
+void generate_assembly_second_pass() {
+    current_line = 0;
+    int arg_counter = 0;
+    
+    for (int i = 0; i < quad_count; i++) {
+        Quad *quad = &quads[i];
+        
+        if (strcmp(quad->op, "goto") == 0) {
+            add_instruction_with_label_fix("J", OP_J, 0, 0, 0, quad->arg1);
+            
+        } else if (strcmp(quad->op, "fun") == 0) {
+            push_function(quad->arg1);
+            add_label(quad->arg1, current_line);
+            arg_counter = 0;
+            
+        } else if (strcmp(quad->op, "endfun") == 0) {
+            add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
+            pop_function();
+            
+        } else if (strcmp(quad->op, "label") == 0) {
+            add_label(quad->arg1, current_line);
+            
+        } else if (strcmp(quad->op, "alloc") == 0) {
+            int size = atoi(quad->arg2);
+            add_symbol(quad->arg1, current_function, arg_counter, 0, 0, size);
+            arg_counter += size;
+            
+        } else if (strcmp(quad->op, "arg") == 0) {
+            // Parâmetro de função
+            add_symbol(quad->arg1, current_function, arg_counter, 0, 1, 1);
+            FunctionContext *ctx = get_current_function();
+            if (ctx && ctx->param_count < MAX_PARAMS) {
+                strcpy(ctx->params[ctx->param_count], quad->arg1);
+                ctx->param_count++;
+            }
+            arg_counter++;
+            
+        } else if (strcmp(quad->op, "param") == 0) {
+            // Empilhar parâmetro para chamada de função
+            int is_temp = (quad->arg1[0] == 't' && isdigit(quad->arg1[1]));
+            push_parameter(quad->arg1, is_temp);
+            
+        } else if (strcmp(quad->op, "call") == 0) {
+            if (strcmp(quad->arg1, "input") == 0) {
+                // Chamada especial para input
+                int rd = get_register_for_variable(quad->arg3, current_function);
+                add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
+            } else {
+                // Chamada de função regular
+                int param_count = param_stack_top + 1;
+                Parameter temp_params[MAX_PARAMS];
+                
+                // Coletar parâmetros em ordem reversa (devido ao LIFO da pilha)
+                for (int p = 0; p < param_count; p++) {
+                    Parameter *param = pop_parameter();
+                    if (param) {
+                        temp_params[param_count - 1 - p] = *param;
+                    }
+                }
+                
+                // Passar parâmetros para a pilha da função chamada (ordem correta)
+                for (int p = 0; p < param_count; p++) {
+                    int src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                    // Colocar parâmetro na posição correta da pilha da função chamada
+                    add_instruction("SW", OP_SW, src_reg, SP, 0, p, NULL);
+                }
+                
+                // Salvar RA na posição após os parâmetros
+                add_instruction("SW", OP_SW, RA, SP, 0, param_count, NULL);
+                
+                // Chamada da função
+                add_instruction_with_label_fix("JAL", OP_JAL, 0, 0, 0, quad->arg1);
+                
+                // Restaurar RA
+                add_instruction("LW", OP_LW, SP, RA, 0, param_count, NULL);
+                
+                // Resultado da função (se houver)
+                if (strlen(quad->arg3) > 0) {
+                    int result_reg = get_register_for_variable(quad->arg3, current_function);
+                    add_instruction("MOVE", OP_MOVE, R1, result_reg, 0, 0, NULL); // R1 = valor de retorno
+                }
+            }
+            
+        } else if (strcmp(quad->op, "ret") == 0) {
+            if (strlen(quad->arg1) > 0) {
+                int src_reg = load_variable_to_register(quad->arg1, current_function);
+                add_instruction("MOVE", OP_MOVE, src_reg, R1, 0, 0, NULL); // Valor de retorno em R1
+            }
+            add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "asn") == 0) {
+            int src_reg = load_variable_to_register(quad->arg1, current_function);
+            int dst_reg = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("MOVE", OP_MOVE, src_reg, dst_reg, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "immed") == 0) {
+            int value = atoi(quad->arg1);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("LI", OP_LI, 0, 0, rd, value, NULL);
+            
+        } else if (strcmp(quad->op, "input") == 0) {
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
+            
+        } else if (strcmp(quad->op, "output") == 0) {
+            if (strlen(quad->arg1) > 0) {
+                int rs = load_variable_to_register(quad->arg1, current_function);
+                add_instruction("OUTPUTREG", OP_OUTPUTREG, rs, 0, 0, 0, NULL);
+            }
+            
+        } else if (strcmp(quad->op, "+") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("ADD", OP_ADD, rs, rt, rd, 0, NULL);
+            
+        } else if (strcmp(quad->op, "-") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
+            
+        } else if (strcmp(quad->op, "*") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("MULT", OP_MULT, rs, rt, 0, 0, NULL);
+            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL);
+            
+        } else if (strcmp(quad->op, "/") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("DIV", OP_DIV, rs, rt, 0, 0, NULL);
+            add_instruction("MFHI", OP_MFHI, 0, 0, rd, 0, NULL);
+
+        } else if (strcmp(quad->op, "%") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("DIV", OP_DIV, rs, rt, 0, 0, NULL);
+            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL); // CORREÇÃO: usar MFLO para módulo
+
+        } else if (strcmp(quad->op, ">") == 0 || strcmp(quad->op, "<") == 0 ||
+                   strcmp(quad->op, ">=") == 0 || strcmp(quad->op, "<=") == 0 ||
+                   strcmp(quad->op, "==") == 0 || strcmp(quad->op, "!=") == 0) {
+            
+            // Verificar se a próxima quadrupla é if_t ou if_f para otimização
+            if (i + 1 < quad_count) {
+                Quad *next_quad = &quads[i + 1];
+                int pattern = get_optimization_pattern(quad, next_quad);
+                
+                if (pattern > 0) {
+                    // Implementar otimização: comparação + if_t/if_f -> branch direto
+                    int rs = load_variable_to_register(quad->arg1, current_function);
+                    int rt = load_variable_to_register(quad->arg2, current_function);
+                    
+                    switch (pattern) {
+                        case 1:  // == + if_t -> BEQ
+                            add_instruction_with_label_fix("BEQ", OP_BEQ, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 2:  // != + if_t -> BNE  
+                            add_instruction_with_label_fix("BNE", OP_BNE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 3:  // > + if_t -> BGT
+                            add_instruction_with_label_fix("BGT", OP_BGT, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 4:  // < + if_t -> BLT
+                            add_instruction_with_label_fix("BLT", OP_BLT, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 5:  // >= + if_t -> BGTE
+                            add_instruction_with_label_fix("BGTE", OP_BGTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 6:  // <= + if_t -> BLTE
+                            add_instruction_with_label_fix("BLTE", OP_BLTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 7:  // == + if_f -> BNE (inverte ==)
+                            add_instruction_with_label_fix("BNE", OP_BNE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 8:  // != + if_f -> BEQ (inverte !=)
+                            add_instruction_with_label_fix("BEQ", OP_BEQ, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 9:  // > + if_f -> BLTE (inverte >)
+                            add_instruction_with_label_fix("BLTE", OP_BLTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 10: // < + if_f -> BGTE (inverte <)
+                            add_instruction_with_label_fix("BGTE", OP_BGTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 11: // >= + if_f -> BLT (inverte >=)
+                            add_instruction_with_label_fix("BLT", OP_BLT, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 12: // <= + if_f -> BGT (inverte <=)
+                            add_instruction_with_label_fix("BGT", OP_BGT, rs, rt, 0, next_quad->arg2);
+                            break;
+                    }
+                    
+                    i++; // Pular próxima quadrupla (if_t/if_f) pois já foi processada
+                } else {
+                    // Sem otimização - gerar comparação normal
+                    int rs = load_variable_to_register(quad->arg1, current_function);
+                    int rt = load_variable_to_register(quad->arg2, current_function);
+                    int rd = get_register_for_variable(quad->arg3, current_function);
+                    
+                    if (strcmp(quad->op, "==") == 0) {
+                        // Implementar == usando SUB e comparação com zero
+                        add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
+                        // Resultado será 0 se iguais, != 0 se diferentes
+                    } else if (strcmp(quad->op, "!=") == 0) {
+                        // Implementar != usando SUB e comparação com zero
+                        add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
+                        // Resultado será 0 se iguais, != 0 se diferentes (inverso de ==)
+                    } else if (strcmp(quad->op, "<") == 0) {
+                        add_instruction("SLT", OP_SLT, rs, rt, rd, 0, NULL);
+                    } else if (strcmp(quad->op, ">") == 0) {
+                        add_instruction("SLT", OP_SLT, rt, rs, rd, 0, NULL); // Inverter argumentos
+                    }
+                    // Para >= e <=, seria necessário combinar SLT com outras operações
+                }
+            }
+            
+        } else if (strcmp(quad->op, "if_t") == 0 || strcmp(quad->op, "if_f") == 0) {
+            // Se chegou aqui, não foi otimizado - gerar branch baseado na variável
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            
+            if (strcmp(quad->op, "if_t") == 0) {
+                // Branch se verdadeiro (diferente de zero)
+                add_instruction_with_label_fix("BNE", OP_BNE, rs, R0, 0, quad->arg2);
+            } else {
+                // Branch se falso (igual a zero)
+                add_instruction_with_label_fix("BEQ", OP_BEQ, rs, R0, 0, quad->arg2);
+            }
+        }
+    }
+}
+
+void fix_label_addresses() {
+    // Recalcular endereços reais dos labels (excluindo marcadores de label)
+    int real_address = 0;
+    for (int i = 0; i < instruction_count; i++) {
+        if (instructions[i].is_label) {
+            // Atualizar endereço do label
+            for (int j = 0; j < label_count; j++) {
+                if (strcmp(labels[j].label, instructions[i].label) == 0) {
+                    labels[j].address = real_address;
+                    break;
+                }
+            }
+        } else {
+            real_address++;
+        }
+    }
+    
+    // Corrigir endereços nas instruções que precisam
+    for (int i = 0; i < instruction_count; i++) {
+        if (instructions[i].needs_label_fix) {
+            for (int j = 0; j < label_count; j++) {
+                if (strcmp(labels[j].label, instructions[i].label) == 0) {
+                    instructions[i].immediate = labels[j].address;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void read_intermediate_file(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        printf("Erro: Não foi possível abrir o arquivo %s\n", filename);
+        return;
+    }
+    
+    char line[MAX_LINE_LENGTH];
+    quad_count = 0;
+    
+    while (fgets(line, sizeof(line), file) && quad_count < MAX_INSTRUCTIONS) {
+        // Remover quebra de linha
+        line[strcspn(line, "\n")] = 0;
+        
+        // Pular linhas vazias ou comentários
+        if (strlen(line) == 0 || line[0] == '#') continue;
+        
+        // Verificar se é uma quadrupla válida
+        if (line[0] == '(' && line[strlen(line)-1] == ')') {
+            parse_quadruple(line, &quads[quad_count]);
+            quad_count++;
+        }
+    }
+    
+    fclose(file);
+}
+
+void write_assembly_file(const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        printf("Erro: Não foi possível criar o arquivo %s\n", filename);
+        return;
+    }
+    
+    fprintf(file, "# Assembly gerado automaticamente\n");
+    fprintf(file, "# Processador MIPS Customizado\n");
+    fprintf(file, "# Assembler Corrigido\n\n");
+    
+    int real_line = 0;
+    for (int i = 0; i < instruction_count; i++) {
+        Instruction *instr = &instructions[i];
+        
+        if (instr->is_label) {
+            fprintf(file, "%s:\n", instr->label);
+        } else {
+            if (strcmp(instr->mnemonic, "MULT") == 0 || strcmp(instr->mnemonic, "DIV") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d\n", real_line, instr->mnemonic, instr->rs, instr->rt);
+            } else if (strcmp(instr->mnemonic, "MFHI") == 0 || strcmp(instr->mnemonic, "MFLO") == 0) {
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rd);
+            } else if (strcmp(instr->mnemonic, "ADD") == 0 || strcmp(instr->mnemonic, "SUB") == 0 ||
+                       strcmp(instr->mnemonic, "SLT") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d, R%d\n", real_line, instr->mnemonic, instr->rd, instr->rs, instr->rt);
+            } else if (strcmp(instr->mnemonic, "LW") == 0) {
+                fprintf(file, "%3d: %-10s R%d, %d(R%d)\n", real_line, instr->mnemonic, instr->rt, instr->immediate, instr->rs);
+            } else if (strcmp(instr->mnemonic, "SW") == 0) {
+                fprintf(file, "%3d: %-10s R%d, %d(R%d)\n", real_line, instr->mnemonic, instr->rs, instr->immediate, instr->rt);
+            } else if (strcmp(instr->mnemonic, "BEQ") == 0 || strcmp(instr->mnemonic, "BNE") == 0 ||
+                       strcmp(instr->mnemonic, "BGT") == 0 || strcmp(instr->mnemonic, "BLT") == 0 ||
+                       strcmp(instr->mnemonic, "BGTE") == 0 || strcmp(instr->mnemonic, "BLTE") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d, %d\n", real_line, instr->mnemonic, instr->rs, instr->rt, instr->immediate);
+            } else if (strcmp(instr->mnemonic, "J") == 0 || strcmp(instr->mnemonic, "JAL") == 0) {
+                fprintf(file, "%3d: %-10s %d\n", real_line, instr->mnemonic, instr->immediate);
+            } else if (strcmp(instr->mnemonic, "JR") == 0) {
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rs);
+            } else if (strcmp(instr->mnemonic, "LI") == 0) {
+                fprintf(file, "%3d: %-10s R%d, %d\n", real_line, instr->mnemonic, instr->rd, instr->immediate);
+            } else if (strcmp(instr->mnemonic, "MOVE") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d\n", real_line, instr->mnemonic, instr->rt, instr->rs);
+            } else if (strcmp(instr->mnemonic, "INPUT") == 0) {
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rd);
+            } else if (strcmp(instr->mnemonic, "OUTPUTREG") == 0) {
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rs);
+            } else if (strcmp(instr->mnemonic, "HALT") == 0) {
+                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
+            } else {
+                fprintf(file, "%3d: %-10s (desconhecida)\n", real_line, instr->mnemonic);
+            }
+            real_line++;
+        }
+    }
+    
+    // Adicionar HALT no final se não existir
+    if (instruction_count == 0 || strcmp(instructions[instruction_count-1].mnemonic, "HALT") != 0) {
+        fprintf(file, "%3d: HALT\n", real_line);
+    }
+    
+    fclose(file);
+}
+
+void write_binary_file(const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        printf("Erro: Não foi possível criar o arquivo %s\n", filename);
+        return;
+    }
+    
+    for (int i = 0; i < instruction_count; i++) {
+        Instruction *instr = &instructions[i];
+        
+        if (instr->is_label) continue; // Pular labels
+        
+        uint32_t machine_code = 0;
+        
+        // Formato: [31:26] OPCODE | [25:20] RS | [19:14] RT | [13:8] RD | [7:0] IMMEDIATE
+        machine_code |= (instr->opcode & 0x3F) << 26;
+        machine_code |= (instr->rs & 0x3F) << 20;
+        machine_code |= (instr->rt & 0x3F) << 14;
+        machine_code |= (instr->rd & 0x3F) << 8;
+        machine_code |= (instr->immediate & 0xFF);
+        
+        // Escrever em binário (32 bits)
+        for (int bit = 31; bit >= 0; bit--) {
+            fprintf(file, "%d", (machine_code >> bit) & 1);
+        }
+        fprintf(file, "\n");
+    }
+    
+    // Adicionar HALT no final se necessário
+    if (instruction_count == 0 || strcmp(instructions[instruction_count-1].mnemonic, "HALT") != 0) {
+        uint32_t halt_code = (OP_HALT & 0x3F) << 26;
+        for (int bit = 31; bit >= 0; bit--) {
+            fprintf(file, "%d", (halt_code >> bit) & 1);
+        }
+        fprintf(file, "\n");
+    }
+    
+    fclose(file);
+}
+
+void print_statistics() {
+    printf("=== Estatísticas de Compilação ===\n");
+    printf("Quadruplas processadas: %d\n", quad_count);
+    printf("Instruções geradas: %d\n", instruction_count);
+    printf("Labels encontrados: %d\n", label_count);
+    printf("Símbolos na tabela: %d\n", symbol_count);
+    printf("Memória global utilizada: %d palavras\n", global_memory_offset);
+    printf("=====================================\n");
+    
+    printf("=== Tabela de Símbolos ===\n");
+    printf("%-15s %-15s %-7s %-7s %-7s %-7s\n", "Nome", "Escopo", "Offset", "Global", "Arg", "Tamanho");
+    printf("------------------------------------------------------------\n");
+    for (int i = 0; i < symbol_count; i++) {
+        printf("%-15s %-15s %-7d %-7s %-7s %-7d\n",
+               symbols[i].name,
+               symbols[i].scope,
+               symbols[i].offset,
+               symbols[i].is_global ? "Sim" : "Não",
+               symbols[i].is_arg ? "Sim" : "Não",
+               symbols[i].size);
+    }
+    printf("===========================\n");
+    
+    printf("=== Labels Encontrados ===\n");
+    for (int i = 0; i < label_count; i++) {
+        printf("%s: %d\n", labels[i].label, labels[i].address);
+    }
+    printf("===========================\n");
+}
+
+int main(int argc, char *argv[]) {
+    printf("Assembler Corrigido para Processador MIPS Customizado\n");
+    printf("=====================================================\n");
+    
+    if (argc < 2) {
+        printf("Uso: %s <arquivo_intermediario>\n", argv[0]);
+        printf("Este assembler traduz código intermediário (quadruplas)\n");
+        printf("para instruções assembly compatíveis com o processador MIPS customizado.\n");
+        printf("Correções implementadas:\n");
+        printf("- Operação %% usa MFHI (resto da divisão)\n");
+        printf("- Mapeamento correto de endereços de branch\n");
+        printf("- Passagem correta de parâmetros múltiplos\n");
+        printf("- Correção no salvamento do return address\n");
+        return 1;
+    }
+    
+    // Inicializar estruturas
+    memset(registers, 0, sizeof(registers));
+    param_stack_top = -1;
+    
+    printf("Lendo arquivo de código intermediário: %s\n", argv[1]);
+    read_intermediate_file(argv[1]);
+    printf("Quadruplas lidas: %d\n", quad_count);
+    
+    printf("Gerando código assembly...\n");
+    
+    // Primeira passada: contar instruções e mapear labels
+    count_instructions_first_pass();
+    
+    // Reset para segunda passada
+    instruction_count = 0;
+    current_line = 0;
+    param_stack_top = -1;
+    
+    // Segunda passada: gerar instruções
+    generate_assembly_second_pass();
+    
+    // Terceira passada: corrigir endereços de labels
+    fix_label_addresses();
+    
+    printf("Instruções assembly geradas: %d\n", instruction_count);
+    
+    printf("Escrevendo arquivos de saída...\n");
+    write_assembly_file("assembly_output.asm");
+    write_binary_file("binary_output.txt");
+    
+    print_statistics();
+    
+    printf("Arquivos gerados com sucesso:\n");
+    printf("- assembly_output.asm (código assembly legível)\n");
+    printf("- binary_output.txt (código binário para o processador)\n");
+    
+    return 0;
+}

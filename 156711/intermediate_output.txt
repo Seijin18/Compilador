@@ -1,3 +1,5 @@
+Tree written to tree.txt
+Symbol table written to symbol_table.txt
 (goto,main, , )
 (fun,gcd, , )
 (alloc,u,1, )
@@ -28,3 +30,4 @@
 (call,gcd,x,t8)
 (output,t8,0, )
 (endfun, , , )
+Intermediate code written to intermediate.txt
