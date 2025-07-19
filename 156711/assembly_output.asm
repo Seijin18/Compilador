@@ -1,51 +1,49 @@
 # Assembly gerado automaticamente
 # Processador MIPS Customizado
-# Assembler Corrigido
+# Assembler Avançado com suporte a funções
 
-  0: J          26
+  0: J           21
 gcd:
-  1: LI         R1, 0
-  2: LW         R2, 1(R29)
-  3: BNE        R2, R1, 8
-  4: LW         R3, 0(R29)
-  5: MOVE       R1, R3
-  6: LW         R31, 6(R29)
-  7: JR         R31
+  1: LW          R1, 1(R29)
+  2: BNE         R1, R0, 6
+  3: LW          R2, 0(R29)
+  4: MOVE        R1, R2
+  5: JR          R31
 L0:
-  8: LW         R3, 0(R29)
-  9: LW         R2, 1(R29)
- 10: DIV        R3, R2
- 11: MFHI       R4
- 12: LW         R2, 1(R29)
- 13: MULT       R4, R2
- 14: MFLO       R5
- 15: LW         R3, 0(R29)
- 16: SUB        R6, R3, R5
- 17: LW         R2, 1(R29)
- 18: SW         R2, 0(R29)
- 19: SW         R6, 1(R29)
- 20: SW         R31, 8(R29)
- 21: JAL        1
- 22: MOVE       R7, R1
- 23: MOVE       R1, R7
- 24: LW         R31, 6(R29)
- 25: JR         R31
+  6: LW          R2, 0(R29)
+  7: LW          R1, 1(R29)
+  8: DIV         R2, R1
+  9: MFLO        R3
+ 10: LW          R1, 1(R29)
+ 11: MULT        R3, R1
+ 12: MFLO        R4
+ 13: LW          R2, 0(R29)
+ 14: SUB         R5, R2, R4
+ 15: LW          R1, 1(R29)
+ 16: SUBI        R29, R29, 3
+ 17: SW          R1, 0(R29)
+ 18: SW          R5, 1(R29)
+ 19: SW          R31, 2(R29)
+ 20: JAL         1
+ 21: LW          R31, 2(R29)
+ 22: ADDI        R29, R29, 3
+ 23: MOVE        R6, R1
+ 24: MOVE        R1, R6
+ 25: JR          R31
 L1:
+ 26: JR          R31
 main:
- 26: INPUT      R8
- 27: MOVE       R9, R8
- 28: SW         R9, 0(R29)
- 29: INPUT      R10
- 30: MOVE       R11, R10
- 31: SW         R11, 1(R29)
- 32: LW         R9, 0(R29)
- 33: SW         R9, 0(R29)
- 34: LW         R11, 1(R29)
- 35: SW         R11, 1(R29)
- 36: SW         R31, 6(R29)
- 37: JAL        1
- 38: LW         R31, 6(R29)
- 39: MOVE       R12, R1
- 40: OUTPUTREG  R12
- 41: JR         R31
- 42: HALT
+ 27: INPUT       R7
+ 28: SW          R7, 0(R29)
+ 29: INPUT       R8
+ 30: SW          R8, 1(R29)
+ 31: SUBI        R29, R29, 3
+ 32: SW          R7, 0(R29)
+ 33: SW          R8, 1(R29)
+ 34: SW          R31, 2(R29)
+ 35: JAL         1
+ 36: LW          R31, 2(R29)
+ 37: ADDI        R29, R29, 3
+ 38: MOVE        R9, R1
+ 39: OUTPUTREG   R9
+ 40: HALT        

@@ -1,0 +1,59 @@
+# ===== ESTRATÉGIA DE GERENCIAMENTO DE MEMÓRIA =====
+# 1. Organização da Memória:
+#    - 1 endereço = 1 palavra (32 bits)
+#    - Pilha cresce para endereços menores
+#    - $sp: topo da pilha, $fp: base do frame atual
+
+# 2. Template de Função:
+minha_funcao:
+    # Prólogo
+    # Aloca frame (ex: 5 palavras = $ra, $fp, $s0, arg, local)
+    addi $sp, $sp, -5       # Desce 5 endereços na pilha
+
+    # Salva registradores críticos
+    sw $ra, 4($sp)          # Salva $ra no topo do frame
+    sw $fp, 3($sp)          # Salva $fp anterior
+    sw $s0, 2($sp)          # Salva registrador $s0
+
+    # Configura novo $fp
+    addi $fp, $sp, 3        # $fp aponta para slot do $fp salvo
+
+    # Armazena argumentos (se necessário)
+    sw $a0, 1($sp)          # Salva argumento (ex: em offset 1)
+
+    # Corpo da função
+    # ... código ...
+    
+    # Chamada recursiva:
+exemplo_recursivo:
+    # ... código anterior ...
+
+    # Prepara nova chamada
+    lw $a0, 1($sp)          # Carrega argumento atual
+    addi $a0, $a0, -1       # Atualiza argumento (ex: n-1)
+    
+    jal exemplo_recursivo    # Chamada recursiva
+    
+    # Pós-retorno (resultado em $v0)
+    sw $v0, -1($fp)         # Armazena resultado em temporário
+
+    # Epílogo
+fim_funcao:
+    # Restaura registradores
+    lw $s0, 2($sp)          # Restaura $s0
+    lw $fp, 3($sp)          # Restaura $fp anterior
+    lw $ra, 4($sp)          # Restaura $ra
+
+    # Desaloca frame
+    addi $sp, $sp, 5        # Sobe 5 endereços na pilha
+
+    # Retorna
+    jr $ra
+
+# 3. Layout do Activation Record (offsets relativos a $fp):
+#    +1 : Argumentos extras
+#     0 : $fp anterior (salvo)
+#    -1 : $ra (salvo)
+#    -2 : Registradores salvos ($s0-$s7)
+#    -3 : Variáveis locais
+#    -4 : Temporários

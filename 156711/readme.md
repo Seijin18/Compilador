@@ -2,6 +2,8 @@
 
 Sistema de compilação completo para o processador MIPS customizado, incluindo compilador, gerador de código intermediário e assembler avançado.
 
+> 📚 **DOCUMENTAÇÃO COMPLETA**: Veja [`DOCUMENTACAO_SINTESE.md`](./DOCUMENTACAO_SINTESE.md) para documentação detalhada unificada da síntese (gerador de código intermediário, assembler e gerador de código binário).
+
 ## 🏗️ **Estrutura do Projeto**
 
 ### **Arquivos Principais**

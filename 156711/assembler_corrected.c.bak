@@ -76,6 +76,9 @@ typedef struct {
     int local_vars_size;
     int param_count;
     int return_address_offset;
+    int frame_pointer_offset;
+    int saved_registers_offset;
+    int frame_size;  // Tamanho total do frame
     char params[MAX_PARAMS][32];
 } FunctionContext;
 
@@ -91,7 +94,7 @@ typedef enum {
     R8, R9, R10, R11, R12, R13, R14, R15,
     R16, R17, R18, R19, R20, R21, R22, R23,
     R24, R25, R26, R27, R28, R29, R30, R31,
-    SP = 29, GP = 28, RA = 31
+    SP = 29, FP = 30, RA = 31
 } Register;
 
 // Opcodes das instruções do processador - CORRIGIDO conforme documentação
@@ -155,6 +158,12 @@ void write_assembly_file(const char *filename);
 void write_binary_file(const char *filename);
 void fix_label_addresses();
 void print_statistics();
+
+// Funções para gerenciamento de frame baseado em memory_ref.txt
+void setup_function_prologue(const char *function_name, int frame_size);
+void setup_function_epilogue(const char *function_name);
+int calculate_frame_size(const char *function_name);
+void setup_frame_pointer(int frame_size);
 
 void parse_quadruple(const char *line, Quad *quad) {
     char temp_line[MAX_LINE_LENGTH];
@@ -399,7 +408,7 @@ int load_variable_to_register(const char *var_name, const char *scope) {
     int reg = get_register_for_variable(var_name, scope);
     if (sym) {
         if (sym->is_global) {
-            add_instruction("LW", OP_LW, GP, reg, 0, sym->offset, NULL);
+            add_instruction("LW", OP_LW, R28, reg, 0, sym->offset, NULL);
         } else {
             add_instruction("LW", OP_LW, SP, reg, 0, sym->offset, NULL);
         }
@@ -467,7 +476,7 @@ void flush_register(int reg) {
         Symbol *sym = find_symbol(registers[reg].variable, current_function);
         if (sym) {
             if (sym->is_global) {
-                add_instruction("SW", OP_SW, GP, reg, 0, sym->offset, NULL);  // CORRIGIDO: SW base, data, 0, offset
+                add_instruction("SW", OP_SW, R28, reg, 0, sym->offset, NULL);  // CORRIGIDO: SW base, data, 0, offset
             } else {
                 add_instruction("SW", OP_SW, SP, reg, 0, sym->offset, NULL);  // CORRIGIDO: SW base, data, 0, offset
             }
@@ -619,16 +628,26 @@ void generate_assembly_second_pass() {
             add_label(quad->arg1, current_line);
             arg_counter = 0;
             
-        } else if (strcmp(quad->op, "endfun") == 0) {
-            // Para a função gcd, não gerar código aqui pois todos os retornos
-            // são tratados pelas instruções 'ret' que já restauram o RA original
-            if (strcmp(current_function, "gcd") != 0) {
-                // Se for a função gcd, restaurar RA original antes de retornar
-                if (strcmp(current_function, "gcd") == 0) {
-                    add_instruction("LW", OP_LW, SP, RA, 0, 6, NULL); // Restaurar RA original do offset 6
-                }
+            // Calcular e configurar frame da função
+            FunctionContext *ctx = get_current_function();
+            if (ctx) {
+                ctx->frame_size = calculate_frame_size(quad->arg1);
+                ctx->frame_pointer_offset = ctx->frame_size - 2;
+                ctx->return_address_offset = ctx->frame_size - 1;
                 
-                add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
+                // Configurar prólogo apenas se não for main (main não precisa de frame)
+                if (strcmp(quad->arg1, "main") != 0) {
+                    setup_function_prologue(quad->arg1, ctx->frame_size);
+                }
+            }
+            
+        } else if (strcmp(quad->op, "endfun") == 0) {
+            // Usar epílogo estruturado apenas se não for main
+            if (strcmp(current_function, "main") != 0) {
+                setup_function_epilogue(current_function);
+            } else {
+                // Para main, apenas halt
+                add_instruction("HALT", OP_HALT, 0, 0, 0, 0, NULL);
             }
             pop_function();
             
@@ -723,12 +742,12 @@ void generate_assembly_second_pass() {
                 add_instruction("MOVE", OP_MOVE, src_reg, 0, R1, 0, NULL); // CORRIGIDO: rd = R1
             }
             
-            // Se for a função gcd, restaurar RA do offset 6 (primeira chamada sempre volta para main)
-            if (strcmp(current_function, "gcd") == 0) {
-                add_instruction("LW", OP_LW, SP, RA, 0, 6, NULL); // RA da primeira chamada (main→gcd)
+            // Usar epílogo estruturado para retorno
+            if (strcmp(current_function, "main") != 0) {
+                setup_function_epilogue(current_function);
+            } else {
+                add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
             }
-            
-            add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
             
         } else if (strcmp(quad->op, "asn") == 0) {
             int src_reg = load_variable_to_register(quad->arg1, current_function);
@@ -978,6 +997,10 @@ void write_assembly_file(const char *filename) {
                 fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rs);
             } else if (strcmp(instr->mnemonic, "LI") == 0) {
                 fprintf(file, "%3d: %-10s R%d, %d\n", real_line, instr->mnemonic, instr->rt, instr->immediate);  // CORRIGIDO: rt, immediate
+            } else if (strcmp(instr->mnemonic, "ADDI") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d, %d\n", real_line, instr->mnemonic, instr->rt, instr->rs, instr->immediate);  // ADDI rt, rs, immediate
+            } else if (strcmp(instr->mnemonic, "SUBI") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d, %d\n", real_line, instr->mnemonic, instr->rt, instr->rs, instr->immediate);  // SUBI rt, rs, immediate
             } else if (strcmp(instr->mnemonic, "MOVE") == 0) {
                 fprintf(file, "%3d: %-10s R%d, R%d\n", real_line, instr->mnemonic, instr->rd, instr->rs);  // CORRIGIDO: rd, rs
             } else if (strcmp(instr->mnemonic, "INPUT") == 0) {
@@ -1070,6 +1093,77 @@ void print_statistics() {
         printf("%s: %d\n", labels[i].label, labels[i].address);
     }
     printf("===========================\n");
+}
+
+// Funções para gerenciamento de frame baseado em memory_ref.txt
+void setup_function_prologue(const char *function_name, int frame_size) {
+    // Prólogo da função seguindo o template de memory_ref.txt
+    // 1. Aloca frame (desce na pilha)
+    if (frame_size > 0) {
+        // CORRIGIDO: Usar SUBI em vez de ADDI com negativo, e RT em vez de RD
+        add_instruction("SUBI", OP_SUBI, SP, SP, 0, frame_size, NULL);
+    }
+    
+    // 2. Salva registradores críticos
+    // Salva RA no topo do frame (offset frame_size-1)
+    add_instruction("SW", OP_SW, SP, RA, 0, frame_size - 1, NULL);
+    
+    // Salva FP anterior (offset frame_size-2)
+    add_instruction("SW", OP_SW, SP, FP, 0, frame_size - 2, NULL);
+    
+    // 3. Configura novo FP (aponta para FP salvo)
+    // CORRIGIDO: Usar RT em vez de RD para ADDI
+    add_instruction("ADDI", OP_ADDI, SP, FP, 0, frame_size - 2, NULL);
+}
+
+void setup_function_epilogue(const char *function_name) {
+    FunctionContext *ctx = get_current_function();
+    if (!ctx) return;
+    
+    int frame_size = ctx->frame_size;
+    
+    // Epílogo da função seguindo o template de memory_ref.txt
+    // 1. Restaura FP anterior
+    add_instruction("LW", OP_LW, SP, FP, 0, frame_size - 2, NULL);
+    
+    // 2. Restaura RA
+    add_instruction("LW", OP_LW, SP, RA, 0, frame_size - 1, NULL);
+    
+    // 3. Desaloca frame (sobe na pilha)
+    if (frame_size > 0) {
+        // CORRIGIDO: Usar RT em vez de RD para ADDI
+        add_instruction("ADDI", OP_ADDI, SP, SP, 0, frame_size, NULL);
+    }
+    
+    // 4. Retorna
+    add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
+}
+
+int calculate_frame_size(const char *function_name) {
+    // Calcular tamanho do frame baseado nas variáveis da função
+    int ra_slot = 1;        // Slot para RA
+    int fp_slot = 1;        // Slot para FP anterior
+    int saved_regs = 0;     // Registradores salvos (implementar se necessário)
+    int local_vars = 0;     // Contar variáveis locais
+    int temps = 0;          // Temporários
+    
+    // Contar variáveis locais da função
+    for (int i = 0; i < symbol_count; i++) {
+        if (strcmp(symbols[i].scope, function_name) == 0 && !symbols[i].is_global) {
+            local_vars += symbols[i].size;
+        }
+    }
+    
+    // Estimar temporários (pelo menos 2 slots)
+    temps = 2;
+    
+    return ra_slot + fp_slot + saved_regs + local_vars + temps;
+}
+
+void setup_frame_pointer(int frame_size) {
+    // FP aponta para o slot onde o FP anterior está salvo
+    // CORRIGIDO: Usar RT em vez de RD para ADDI
+    add_instruction("ADDI", OP_ADDI, SP, FP, 0, frame_size - 2, NULL);
 }
 
 int main(int argc, char *argv[]) {

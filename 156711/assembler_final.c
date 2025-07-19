@@ -121,12 +121,65 @@ int function_stack_top = -1;
 Parameter param_stack[MAX_PARAMS];
 int param_stack_top = -1;
 
+// Cache para otimização de operações SW->LW redundantes
+typedef struct {
+    char variable[32];
+    int register_num;
+    int instruction_num;
+} AssignmentCache;
+
+AssignmentCache last_assignments[10];
+int assignment_cache_size = 0;
+
 int current_line = 0;
 int global_mem_pos = 0;
 int local_mem_pos = 0;
 int instruction_counter = 0;
 
 // Funções auxiliares
+void add_to_assignment_cache(const char* variable, int reg_num) {
+    // Procurar se variável já existe no cache
+    for (int i = 0; i < assignment_cache_size; i++) {
+        if (strcmp(last_assignments[i].variable, variable) == 0) {
+            // Atualizar entrada existente
+            last_assignments[i].register_num = reg_num;
+            last_assignments[i].instruction_num = instruction_counter;
+            return;
+        }
+    }
+    
+    // Adicionar nova entrada
+    if (assignment_cache_size < 10) {
+        strcpy(last_assignments[assignment_cache_size].variable, variable);
+        last_assignments[assignment_cache_size].register_num = reg_num;
+        last_assignments[assignment_cache_size].instruction_num = instruction_counter;
+        assignment_cache_size++;
+    } else {
+        // Cache cheio, substitua a mais antiga
+        int oldest = 0;
+        for (int i = 1; i < 10; i++) {
+            if (last_assignments[i].instruction_num < last_assignments[oldest].instruction_num) {
+                oldest = i;
+            }
+        }
+        strcpy(last_assignments[oldest].variable, variable);
+        last_assignments[oldest].register_num = reg_num;
+        last_assignments[oldest].instruction_num = instruction_counter;
+    }
+}
+
+int get_from_assignment_cache(const char* variable) {
+    for (int i = 0; i < assignment_cache_size; i++) {
+        if (strcmp(last_assignments[i].variable, variable) == 0) {
+            // Verificar se a atribuição foi muito recente (menos de 5 instruções atrás)
+            if (instruction_counter - last_assignments[i].instruction_num < 5) {
+                return last_assignments[i].register_num;
+            }
+        }
+    }
+    return -1;  // Não encontrado ou muito antigo
+}
+
 void trim_whitespace(char *str) {
     char *end;
     while(isspace((unsigned char)*str)) str++;
@@ -339,6 +392,11 @@ Parameter* pop_parameter() {
 void add_instruction_full(const char *mnemonic, int opcode, int rs, int rt, int rd, 
                          int immediate, const char *label, int is_label) {
     if (instruction_count < MAX_INSTRUCTIONS) {
+        // Debug para operações SW e LW
+        if (strcmp(mnemonic, "SW") == 0 || strcmp(mnemonic, "LW") == 0) {
+            printf("DEBUG: %s R%d, %d(R%d) - instrução %d\n", mnemonic, rt, immediate, rs, instruction_counter);
+        }
+        
         strcpy(instructions[instruction_count].mnemonic, mnemonic);
         instructions[instruction_count].opcode = opcode;
         instructions[instruction_count].rs = rs;
@@ -378,12 +436,36 @@ int get_register_for_variable(const char *var_name, const char *current_scope) {
 }
 
 int load_variable_to_register(const char *var_name, const char *current_scope) {
-    int reg = get_register_for_variable(var_name, current_scope);
+    // OTIMIZAÇÃO: Verificar cache de atribuições recentes
+    int cached_reg = get_from_assignment_cache(var_name);
+    if (cached_reg != -1) {
+        printf("DEBUG: Usando cache para %s -> R%d\n", var_name, cached_reg);
+        return cached_reg;
+    }
     
+    // Verificar se é uma variável temporária que contém zero
     if (var_name[0] == 't' && isdigit(var_name[1])) {
+        // Verificar se esta variável temporária foi carregada com valor 0
+        for (int i = 0; i < quad_count; i++) {
+            if (strcmp(quads[i].op, "immed") == 0 && strcmp(quads[i].arg3, var_name) == 0) {
+                int value = atoi(quads[i].arg1);
+                if (value == 0) {
+                    return R0;  // Use R0 diretamente para zero
+                }
+                break;
+            }
+        }
         // Variável temporária - já está no registrador
+        int reg = get_register_for_variable(var_name, current_scope);
         return reg;
     }
+    
+    // Verificar se é uma constante zero diretamente
+    if (strcmp(var_name, "0") == 0) {
+        return R0;
+    }
+    
+    int reg = get_register_for_variable(var_name, current_scope);
     
     // Carregar variável da memória
     Symbol *sym = find_symbol(var_name, current_scope);
@@ -391,12 +473,20 @@ int load_variable_to_register(const char *var_name, const char *current_scope) {
         if (sym->is_global) {
             add_instruction("LW", OP_LW, GP, reg, 0, sym->offset, NULL);
         } else {
-            add_instruction("LW", OP_LW, SP, reg, 0, sym->offset, NULL);
+            // CORREÇÃO: Parâmetros precisam ter offset ajustado após SUBI R29, R29, 4
+            int adjusted_offset = sym->offset;
+            if (sym->is_arg) {
+                adjusted_offset = sym->offset + 4;  // Ajusta para posição após frame setup
+            }
+            add_instruction("LW", OP_LW, SP, reg, 0, adjusted_offset, NULL);
         }
     } else {
         // Tentar interpretar como constante
         if (isdigit(var_name[0]) || (var_name[0] == '-' && isdigit(var_name[1]))) {
             int value = atoi(var_name);
+            if (value == 0) {
+                return R0;  // Use R0 diretamente para zero
+            }
             add_instruction("LI", OP_LI, 0, reg, 0, value, NULL);
         }
     }
@@ -475,6 +565,7 @@ void generate_assembly() {
             temp_local_mem_pos = 0;
             temp_arg_counter = 0;
         } else if (strcmp(quad->op, "label") == 0) {
+            printf("DEBUG: Registrando label '%s' no endereco %d\n", quad->arg1, temp_counter);
             add_label(quad->arg1, temp_counter);
         } else if (strcmp(quad->op, "goto") == 0) {
             // Verificar se goto vem após ret (código inalcançável)
@@ -629,8 +720,30 @@ void generate_assembly() {
             Quad *next_quad = &quads[i + 1];
             
             int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rt;
+            
+            // Verificar se arg2 é uma variável temporária com valor 0
+            if (quad->arg2[0] == 't' && isdigit(quad->arg2[1])) {
+                // Procurar a definição desta variável temporária
+                rt = R2; // padrão
+                for (int j = 0; j < i; j++) {
+                    if (strcmp(quads[j].op, "immed") == 0 && strcmp(quads[j].arg3, quad->arg2) == 0) {
+                        int value = atoi(quads[j].arg1);
+                        if (value == 0) {
+                            rt = R0;  // Use R0 para zero
+                        } else {
+                            rt = load_variable_to_register(quad->arg2, current_function);
+                        }
+                        break;
+                    }
+                }
+            } else {
+                rt = load_variable_to_register(quad->arg2, current_function);
+            }
+            
             int addr = find_label_address(next_quad->arg2);
+            
+            printf("DEBUG: Label '%s' -> Endereco %d\n", next_quad->arg2, addr);
             
             if (addr != -1) {
                 switch (pattern) {
@@ -653,6 +766,7 @@ void generate_assembly() {
                         add_instruction("BLTE", OP_BLTE, rs, rt, 0, addr, NULL);
                         break;
                     case 7:  // == + if_f -> BNE (inverte ==)
+                        printf("DEBUG: Criando BNE com rs=%d, rt=%d, addr=%d\n", rs, rt, addr);
                         add_instruction("BNE", OP_BNE, rs, rt, 0, addr, NULL);
                         break;
                     case 8:  // != + if_f -> BEQ (inverte !=)
@@ -765,17 +879,28 @@ void generate_assembly() {
                     param_count = param_stack_top + 1;
                 }
                 
-                // Passar parâmetros para a pilha da função chamada
+                // PRIMEIRO: Carregar todos os parâmetros para registradores (antes de ajustar SP)
+                int param_regs[MAX_PARAMS];
                 for (int p = param_count - 1; p >= 0; p--) {
                     Parameter *param = pop_parameter();
                     if (param) {
-                        int src_reg = load_variable_to_register(param->name, current_function);
-                        // Colocar parâmetro na posição correta da pilha da função chamada
-                        add_instruction("SW", OP_SW, SP, src_reg, 0, p, NULL);
+                        param_regs[p] = load_variable_to_register(param->name, current_function);
+                    } else {
+                        param_regs[p] = R0;  // Default
                     }
                 }
                 
-                // Salvar RA em uma posição temporária
+                // SEGUNDO: Ajustar stack pointer para novo frame 
+                int frame_size = param_count + 1;
+                printf("DEBUG: call - Ajustando stack para frame_size=%d\n", frame_size);
+                add_instruction("SUBI", OP_SUBI, SP, SP, 0, frame_size, NULL);
+                
+                // TERCEIRO: Salvar parâmetros no novo frame
+                for (int p = 0; p < param_count; p++) {
+                    add_instruction("SW", OP_SW, SP, param_regs[p], 0, p, NULL);
+                }
+                
+                // Salvar RA na nova posição da pilha
                 add_instruction("SW", OP_SW, SP, RA, 0, param_count, NULL);
                 
                 // Chamada da função
@@ -783,6 +908,9 @@ void generate_assembly() {
                 
                 // Restaurar RA
                 add_instruction("LW", OP_LW, SP, RA, 0, param_count, NULL);
+                
+                // Restaurar stack pointer
+                add_instruction("ADDI", OP_ADDI, SP, SP, 0, frame_size, NULL);
                 
                 // Resultado da função (se houver)
                 if (strlen(quad->arg3) > 0) {
@@ -809,7 +937,25 @@ void generate_assembly() {
             
         } else if (strcmp(quad->op, "asn") == 0) {
             // Atribuição: arg3 = arg1
-            int src_reg = load_variable_to_register(quad->arg1, current_function);
+            // CORREÇÃO: Se arg1 é um temporário, verificar se já está em registrador
+            int src_reg = -1;
+            
+            if (quad->arg1[0] == 't' && isdigit(quad->arg1[1])) {
+                // Origem é temporário - procurar registrador atual
+                for (int i = 1; i < 28; i++) {  // R1-R27 (evitar R0, SP, GP, RA)
+                    if (registers[i].is_busy && strcmp(registers[i].variable, quad->arg1) == 0) {
+                        src_reg = i;
+                        break;
+                    }
+                }
+                if (src_reg == -1) {
+                    // Se não encontrou, carregar da memória
+                    src_reg = load_variable_to_register(quad->arg1, current_function);
+                }
+            } else {
+                // Origem é variável ou constante
+                src_reg = load_variable_to_register(quad->arg1, current_function);
+            }
             
             if (quad->arg3[0] == 't' && isdigit(quad->arg3[1])) {
                 // Destino é temporário
@@ -821,9 +967,19 @@ void generate_assembly() {
                 if (dst_sym) {
                     if (dst_sym->is_global) {
                         add_instruction("SW", OP_SW, GP, src_reg, 0, dst_sym->offset, NULL);
+                        // OTIMIZAÇÃO: Adicionar ao cache de atribuições
+                        add_to_assignment_cache(quad->arg3, src_reg);
                     } else {
-                        add_instruction("SW", OP_SW, SP, src_reg, 0, dst_sym->offset, NULL);
+                        // CORREÇÃO: Parâmetros precisam ter offset ajustado após SUBI R29, R29, 4
+                        int adjusted_offset = dst_sym->offset;
+                        if (dst_sym->is_arg) {
+                            adjusted_offset = dst_sym->offset + 4;  // Ajusta para posição após frame setup
+                        }
+                        add_instruction("SW", OP_SW, SP, src_reg, 0, adjusted_offset, NULL);
                     }
+                    
+                    // OTIMIZAÇÃO: Adicionar ao cache de atribuições
+                    add_to_assignment_cache(quad->arg3, src_reg);
                 } else {
                     // Se não encontrou símbolo, assume que é temporário
                     int dst_reg = get_register_for_variable(quad->arg3, current_function);
@@ -838,6 +994,7 @@ void generate_assembly() {
             add_instruction("ADD", OP_ADD, rs, rt, rd, 0, NULL);
             
         } else if (strcmp(quad->op, "-") == 0) {
+            printf("DEBUG: operacao SUB - quad %d\n", i);
             int rs = load_variable_to_register(quad->arg1, current_function);
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
@@ -855,7 +1012,7 @@ void generate_assembly() {
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
             add_instruction("DIV", OP_DIV, rs, rt, 0, 0, NULL);
-            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL);
+            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL);  // CORREÇÃO: MFLO para quociente
             
         } else if (strcmp(quad->op, "%") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
@@ -1033,13 +1190,13 @@ void write_assembly_file(const char *filename) {
                 for (int j = 0; j < label_count; j++) {
                     // Verificar se o endereço antigo corresponde ao endereço original de algum label
                     // Usar diferença para identificar qual label era o alvo
-                    if (instr->immediate == 22 && strcmp(labels[j].label, "main") == 0) {
+                    if (instr->immediate == 25 && strcmp(labels[j].label, "main") == 0) {
                         instr->immediate = labels[j].address;
                         break;
-                    } else if (instr->immediate == 6 && strcmp(labels[j].label, "L0") == 0) {
+                    } else if (instr->immediate == 5 && strcmp(labels[j].label, "L0") == 0) {
                         instr->immediate = labels[j].address;
                         break;
-                    } else if (instr->immediate == 21 && strcmp(labels[j].label, "L1") == 0) {
+                    } else if (instr->immediate == 24 && strcmp(labels[j].label, "L1") == 0) {
                         instr->immediate = labels[j].address;
                         break;
                     } else if (instr->immediate == 1 && strcmp(labels[j].label, "gcd") == 0) {

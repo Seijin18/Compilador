@@ -2,6 +2,8 @@
 
 ## 🎯 Status do Projeto: **COMPLETO**
 
+> 📚 **DOCUMENTAÇÃO DETALHADA**: Consulte [`DOCUMENTACAO_SINTESE.md`](./DOCUMENTACAO_SINTESE.md) para documentação técnica completa e unificada do sistema de síntese.
+
 ### Objetivo Inicial
 > "gostaria que você criasse um assembler que utilize de base o resultado do gerador de código intermediário do compilador 156711, estabelecendo uma camada de tradução das quadruplas para as instruções em assembly, levando em conta o gerenciamento dos registradores e da memória, de modo a garantir a troca de escopo, gerenciamento de variáveis globais e locais e de passagem de parâmetros com a utilização de uma ou mais pilhas"
 
