@@ -1,0 +1,95 @@
+ANÁLISE DO PROBLEMA COM REGISTRADOR RA - RELATÓRIO DE DEBUG
+===========================================================
+
+PROBLEMA IDENTIFICADO:
+=====================
+
+1. INFINITE LOOP DETECTADO:
+   - O programa entra em loop infinito nas instruções PC=36→37→38
+   - Sequência problemática:
+     * PC=36: MOVE R7, R1    (R7 = R1 = 6)
+     * PC=37: MOVE R1, R7    (R1 = R7 = 6) 
+     * PC=38: JR RA          (Jump para R31 = 36)
+
+2. PROBLEMA COM REGISTRADOR RA:
+   - RA permanece com valor 36 ao invés de ser restaurado
+   - O valor 36 corresponde à instrução MOVE R7, R1
+   - Isso indica que o RA não está sendo corretamente restaurado da pilha
+
+3. ANÁLISE DO FLUXO DE EXECUÇÃO:
+   - GCD está calculando corretamente (resultado=6 em R1)
+   - O problema ocorre no retorno da função GCD
+   - Na linha PC=22: JR RA funciona corretamente (RA=66 volta para main)
+   - Mas nas chamadas recursivas, RA=36 não é o endereço correto
+
+4. PROBLEMA NO GERENCIAMENTO DA PILHA:
+
+4.1. PRÓLOGO DUPLICADO:
+   - Há dois prólogos sendo executados para cada função:
+     * Primeiro prólogo: PC=3-8 (correto)
+     * Segundo prólogo: PC=9-14 (DUPLICADO!)
+   - Isso causa desalinhamento na pilha
+
+4.2. SALVAMENTO DUPLICADO DE RA:
+   - PC=4: SW RA, 0(R2)  [MEM[250] = 66] ✓ Correto
+   - PC=10: SW RA, 0(R2) [MEM[248] = 66] ✗ Duplicado!
+
+4.3. ENDEREÇOS DE MEMÓRIA CORROMPIDOS:
+   - O RA sendo salvo em múltiplos locais
+   - SP não está sendo gerenciado corretamente devido ao prólogo duplo
+
+5. ANÁLISE DETALHADA DAS CHAMADAS GCD:
+
+5.1. Primeira chamada GCD (PC=65: JAL 3):
+   - RA = 66 (correto endereço de retorno)
+   - Salvamento: MEM[250] = 66, MEM[248] = 66
+   - Retorno: PC=22: JR RA (RA=66) ✓ FUNCIONA
+
+5.2. Segunda chamada GCD (PC=35: JAL 3):
+   - RA = 36 (correto endereço de retorno)
+   - Salvamento: MEM[246] = 36, MEM[244] = 36
+   - Mas o RA não é restaurado corretamente!
+
+5.3. Restauração de RA problemática:
+   - O epílogo não está sendo chamado nas funções recursivas
+   - O JR RA nas linhas 22 e 38 usa o valor corrente de RA
+   - Mas RA não foi restaurado da pilha
+
+6. RAIZ DO PROBLEMA:
+
+6.1. PRÓLOGO DUPLICADO no assembler_corrected.c:
+   - generate_function_prologue() está sendo chamado duas vezes
+   - Isso gera instruções 3-8 E 9-14 para a mesma função
+
+6.2. EPÍLOGO NUNCA EXECUTADO:
+   - As funções recursivas terminam com JR RA direto
+   - O epílogo que restaura RA da pilha nunca é executado
+   - Labels L1 (epílogo) existem mas nunca são alcançados
+
+7. SOLUÇÃO NECESSÁRIA:
+
+7.1. ELIMINAR PRÓLOGO DUPLICADO:
+   - Verificar why generate_function_prologue() é chamado duas vezes
+   - Garantir que cada função tenha apenas um prólogo
+
+7.2. IMPLEMENTAR EPÍLOGO CORRETO:
+   - As instruções JR RA devem ser precedidas pelo epílogo
+   - O epílogo deve restaurar RA da pilha antes do jump
+
+7.3. CORRIGIR FLUXO DE RETORNO:
+   - ret quadrupla deve gerar:
+     * Movimento do resultado para R1
+     * Jump para epílogo (não JR RA direto)
+     * Epílogo restaura RA e depois faz JR RA
+
+8. ESTADO ATUAL DA EXECUÇÃO:
+   - GCD calcula corretamente: gcd(48,18) = 6
+   - R1 contém o resultado correto (6)
+   - Problema: não consegue retornar para main
+   - Loop infinito impede OUTPUTREG e HALT
+
+9. PRÓXIMOS PASSOS:
+   - Corrigir prólogo duplicado no assembler
+   - Implementar epílogo apropriado
+   - Garantir que ret gere jump para epílogo ao invés de JR RA direto
+   - Testar restauração correta do RA da pilha

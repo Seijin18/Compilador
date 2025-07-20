@@ -13,8 +13,8 @@ gcd:
   4: SW         RA, 0(R2)
   5: SUBI       R2, SP, 2
   6: SW         FP, 0(R2)
-  7: SUBI       SP, SP, 8
-  8: ADDI       FP, SP, 4
+  7: SUBI       SP, SP, 2
+  8: MOVE       FP, SP
   9: SW         R4, 0(FP)
  10: SW         R5, 1(FP)
  11: LI         R1, 0
@@ -22,12 +22,12 @@ gcd:
  13: BNE        R2, R1, 23
  14: LW         R3, 0(FP)
  15: MOVE       R1, R3
- 16: ADDI       SP, FP, 4
+ 16: MOVE       SP, FP
  17: SUBI       R2, SP, 2
  18: LW         FP, 0(R2)
  19: SUBI       R2, SP, 1
  20: LW         RA, 0(R2)
- 21: ADDI       SP, SP, 8
+ 21: ADDI       SP, SP, 2
  22: JR         RA
 L0:
  23: LW         R3, 0(FP)
@@ -45,20 +45,20 @@ L0:
  35: JAL        3
  36: MOVE       R7, R1
  37: MOVE       R1, R7
- 38: ADDI       SP, FP, 4
+ 38: MOVE       SP, FP
  39: SUBI       R2, SP, 2
  40: LW         FP, 0(R2)
  41: SUBI       R2, SP, 1
  42: LW         RA, 0(R2)
- 43: ADDI       SP, SP, 8
+ 43: ADDI       SP, SP, 2
  44: JR         RA
 L1:
- 45: ADDI       SP, FP, 4
+ 45: MOVE       SP, FP
  46: SUBI       R2, SP, 2
  47: LW         FP, 0(R2)
  48: SUBI       R2, SP, 1
  49: LW         RA, 0(R2)
- 50: ADDI       SP, SP, 8
+ 50: ADDI       SP, SP, 2
 main:
  51: SUBI       R2, SP, 2
  52: SW         FP, 0(R2)
