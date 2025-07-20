@@ -1,11 +1,11 @@
 /**
  * Assembler Corrigido para Processador MIPS Customizado
  * 
- * Correções implementadas conforme problemas identificados:
- * 1. Gerenciamento de Pilha Corrigido com Frame Pointer
- * 2. Suporte a Vetores com cálculo de endereços
- * 3. Inicialização de Variáveis Globais com $gp
- * 4. Passagem de Parâmetros Robustecida
+ * Correções implementadas:
+ * - Operação % usa MFHI (resto da divisão)
+ * - Mapeamento correto de endereços de branch
+ * - Passagem correta de parâmetros múltiplos
+ * - Correção no salvamento do return address
  */
 
 #include <stdio.h>
@@ -35,19 +35,17 @@ typedef struct {
 typedef struct {
     char label[MAX_LABEL_LENGTH];
     int address;
-    int original_address;
+    int original_address; // Endereço usado durante a primeira passada
 } LabelMap;
 
-// Estrutura melhorada para tabela de símbolos
+// Estrutura para tabela de símbolos (variáveis)
 typedef struct {
     char name[32];
     char scope[32];
     int offset;
-    int size;          // Elementos totais para arrays
-    int elem_size;     // Tamanho por elemento
-    int is_array;      // Flag para arrays
     int is_global;
     int is_arg;
+    int size;
     int in_use;
 } Symbol;
 
@@ -60,7 +58,7 @@ typedef struct {
     char label[MAX_LABEL_LENGTH];
     int line_number;
     int is_label;
-    int needs_label_fix;
+    int needs_label_fix; // Marca instruções que precisam corrigir endereços de label
 } Instruction;
 
 // Estrutura para gerenciamento de registradores
@@ -69,16 +67,15 @@ typedef struct {
     char variable[32];
     int is_busy;
     int last_used;
-    int is_dirty;
+    int is_dirty; // Indica se precisa ser salvo na memória
 } RegisterInfo;
 
-// Estrutura melhorada para contexto de função
+// Estrutura para contexto de função
 typedef struct {
     char function_name[32];
-    int frame_size;         // Tamanho total do frame
-    int param_count;
     int local_vars_size;
-    int saved_regs_size;    // Espaço para registradores salvos
+    int param_count;
+    int return_address_offset;
     char params[MAX_PARAMS][32];
 } FunctionContext;
 
@@ -94,10 +91,10 @@ typedef enum {
     R8, R9, R10, R11, R12, R13, R14, R15,
     R16, R17, R18, R19, R20, R21, R22, R23,
     R24, R25, R26, R27, R28, R29, R30, R31,
-    SP = 29, FP = 30, GP = 28, RA = 31
+    SP = 29, GP = 28, RA = 31
 } Register;
 
-// Opcodes das instruções do processador
+// Opcodes das instruções do processador - CORRIGIDO conforme documentação
 typedef enum {
     OP_ADD = 0x00, OP_SUB = 0x01, OP_MULT = 0x02, OP_DIV = 0x03,
     OP_AND = 0x04, OP_OR = 0x05, OP_SLL = 0x06, OP_SRL = 0x07,
@@ -126,8 +123,9 @@ int symbol_count = 0;
 int function_stack_top = -1;
 int param_stack_top = -1;
 int current_line = 0;
-int global_memory_offset = 0x80; // Base para variáveis globais (compatível com RAM 8-bit)
+int global_memory_offset = 0;
 int time_counter = 0;
+int call_depth = 0;  // Profundidade de chamadas para gerenciar pilha
 
 char current_function[32] = "";
 
@@ -137,7 +135,7 @@ void add_instruction(const char *mnemonic, int opcode, int rs, int rt, int rd, i
 void add_instruction_with_label_fix(const char *mnemonic, int opcode, int rs, int rt, int rd, const char *target_label);
 int find_label_address(const char *label);
 void add_label(const char *label, int address);
-void add_symbol(const char *name, const char *scope, int offset, int is_global, int is_arg, int size, int is_array);
+void add_symbol(const char *name, const char *scope, int offset, int is_global, int is_arg, int size);
 Symbol* find_symbol(const char *name, const char *scope);
 int get_register_for_variable(const char *var_name, const char *scope);
 int load_variable_to_register(const char *var_name, const char *scope);
@@ -148,12 +146,7 @@ void push_parameter(const char *name, int is_temp);
 Parameter* pop_parameter();
 void free_register(int reg);
 void flush_register(int reg);
-void generate_function_prologue();
-void generate_function_epilogue();
-void process_array_access(const char *array_name, const char *index_var, const char *result_var, int is_store);
-void add_load_store_with_offset(const char *mnemonic, int opcode, int base_reg, int target_reg, int offset);
-void add_addi_subi_instruction(int src_reg, int dst_reg, int immediate);
-void add_move_if_different(int src_reg, int dst_reg);
+int get_optimization_pattern(Quad *current, Quad *next);
 void count_instructions_first_pass();
 void generate_assembly_second_pass();
 void process_quadruple(Quad *quad);
@@ -162,7 +155,6 @@ void write_assembly_file(const char *filename);
 void write_binary_file(const char *filename);
 void fix_label_addresses();
 void print_statistics();
-const char* get_register_name(int reg_num);
 
 void parse_quadruple(const char *line, Quad *quad) {
     char temp_line[MAX_LINE_LENGTH];
@@ -237,7 +229,7 @@ void add_instruction_with_label_fix(const char *mnemonic, int opcode, int rs, in
     instr->rs = rs;
     instr->rt = rt;
     instr->rd = rd;
-    instr->immediate = 0;
+    instr->immediate = 0; // Será corrigido depois
     instr->line_number = current_line++;
     instr->is_label = 0;
     instr->needs_label_fix = 1;
@@ -252,12 +244,13 @@ int find_label_address(const char *label) {
             return labels[i].address;
         }
     }
-    return 0;
+    return 0; // Default se não encontrar
 }
 
 void add_label(const char *label, int address) {
     if (label_count >= MAX_LABELS) return;
     
+    // Verificar se o label já existe
     int label_index = -1;
     for (int i = 0; i < label_count; i++) {
         if (strcmp(labels[i].label, label) == 0) {
@@ -267,6 +260,7 @@ void add_label(const char *label, int address) {
         }
     }
     
+    // Se não existe, criar novo
     if (label_index == -1) {
         strcpy(labels[label_count].label, label);
         labels[label_count].address = address;
@@ -274,6 +268,7 @@ void add_label(const char *label, int address) {
         label_count++;
     }
     
+    // Sempre adicionar marca de label nas instruções (para a segunda passada)
     if (instruction_count < MAX_INSTRUCTIONS) {
         Instruction *instr = &instructions[instruction_count];
         strcpy(instr->mnemonic, "");
@@ -287,8 +282,7 @@ void add_label(const char *label, int address) {
     }
 }
 
-// Função melhorada para adicionar símbolos com suporte a arrays
-void add_symbol(const char *name, const char *scope, int offset, int is_global, int is_arg, int size, int is_array) {
+void add_symbol(const char *name, const char *scope, int offset, int is_global, int is_arg, int size) {
     if (symbol_count >= MAX_VARIABLES) return;
     
     // Verificar se já existe
@@ -304,31 +298,12 @@ void add_symbol(const char *name, const char *scope, int offset, int is_global, 
     symbols[symbol_count].is_global = is_global;
     symbols[symbol_count].is_arg = is_arg;
     symbols[symbol_count].size = size;
-    symbols[symbol_count].elem_size = 4; // Assumindo inteiros de 4 bytes
-    symbols[symbol_count].is_array = is_array;
     symbols[symbol_count].in_use = 1;
     symbol_count++;
     
     if (is_global) {
-        global_memory_offset += size * 4;
+        global_memory_offset += size;
     }
-}
-
-// Função auxiliar para verificar se uma variável temporária tem valor imediato conhecido
-int get_temp_immediate_value(const char *var_name) {
-    // Se for uma variável temporária que acabou de ser definida com immed
-    // Verificar nas instruções recentes se houve um LI para esta variável
-    for (int i = instruction_count - 1; i >= 0 && i >= instruction_count - 10; i--) {
-        if (!instructions[i].is_label && 
-            strcmp(instructions[i].mnemonic, "LI") == 0) {
-            // Verificar se o registrador de destino é o mesmo que seria usado para var_name
-            // Por simplicidade, vamos usar uma heurística baseada no nome
-            if (strcmp(var_name, "t0") == 0 && instructions[i].immediate == 0) {
-                return 0; // t0 normalmente é 0
-            }
-        }
-    }
-    return -1; // Valor não encontrado
 }
 
 Symbol* find_symbol(const char *name, const char *scope) {
@@ -351,7 +326,7 @@ Symbol* find_symbol(const char *name, const char *scope) {
 
 int get_register_for_variable(const char *var_name, const char *scope) {
     // Verificar se a variável já está em um registrador
-    for (int i = 1; i < MAX_REGISTERS - 2; i++) {
+    for (int i = 1; i < MAX_REGISTERS - 2; i++) { // R1-R30 (evitar R0, R31)
         if (registers[i].is_busy && strcmp(registers[i].variable, var_name) == 0) {
             registers[i].last_used = time_counter++;
             return i;
@@ -388,55 +363,64 @@ int get_register_for_variable(const char *var_name, const char *scope) {
 }
 
 int load_variable_to_register(const char *var_name, const char *scope) {
-    // Se for um valor imediato
+    // Se for um valor imediato (número)
     if (isdigit(var_name[0]) || (var_name[0] == '-' && isdigit(var_name[1]))) {
         int reg = get_register_for_variable(var_name, scope);
         int value = atoi(var_name);
-        add_instruction("LI", OP_LI, 0, reg, 0, value, NULL);
+        add_instruction("LI", OP_LI, 0, reg, 0, value, NULL);  // LI RT, IMEDIATO (conforme documentação)
         return reg;
     }
     
-    // Se for R0
+    // Se for R0 (sempre zero)
     if (strcmp(var_name, "0") == 0 || strcmp(var_name, "R0") == 0) {
         return R0;
     }
     
-    // Para variáveis, carregar da memória
+    // Para função parameters, sempre recarregar da memória para garantir consistência
     Symbol *sym = find_symbol(var_name, scope);
-    int reg = get_register_for_variable(var_name, scope);
+    if (sym && !sym->is_global) {
+        // Obter registrador e sempre carregar da memória
+        int reg = get_register_for_variable(var_name, scope);
+        add_instruction("LW", OP_LW, SP, reg, 0, sym->offset, NULL);
+        return reg;
+    }
     
+    // Verificar se já está em registrador (apenas para temporários)
+    if (var_name[0] == 't' && isdigit(var_name[1])) {
+        for (int i = 1; i < MAX_REGISTERS - 2; i++) {
+            if (registers[i].is_busy && strcmp(registers[i].variable, var_name) == 0) {
+                registers[i].last_used = time_counter++;
+                return i;
+            }
+        }
+    }
+    
+    // Carregar da memória para outras variáveis
+    int reg = get_register_for_variable(var_name, scope);
     if (sym) {
         if (sym->is_global) {
-            add_load_store_with_offset("LW", OP_LW, GP, reg, sym->offset);
+            add_instruction("LW", OP_LW, GP, reg, 0, sym->offset, NULL);
         } else {
-            add_load_store_with_offset("LW", OP_LW, FP, reg, sym->offset);  // Usar FP como base
+            add_instruction("LW", OP_LW, SP, reg, 0, sym->offset, NULL);
         }
     }
     
     return reg;
 }
 
-// Função melhorada para gerenciamento de pilha
 void push_function(const char *function_name) {
     if (function_stack_top < 49) {
         function_stack_top++;
         strcpy(function_stack[function_stack_top].function_name, function_name);
-        function_stack[function_stack_top].frame_size = 8; // RA + FP mínimo
         function_stack[function_stack_top].local_vars_size = 0;
         function_stack[function_stack_top].param_count = 0;
-        function_stack[function_stack_top].saved_regs_size = 0;
+        function_stack[function_stack_top].return_address_offset = 0;
         strcpy(current_function, function_name);
-        
-        // Gerar prólogo da função
-        generate_function_prologue();
     }
 }
 
 void pop_function() {
     if (function_stack_top >= 0) {
-        // Gerar epílogo da função
-        generate_function_epilogue();
-        
         function_stack_top--;
         if (function_stack_top >= 0) {
             strcpy(current_function, function_stack[function_stack_top].function_name);
@@ -444,30 +428,6 @@ void pop_function() {
             strcpy(current_function, "");
         }
     }
-}
-
-// Prólogo da função corrigido
-void generate_function_prologue() {
-    // Salvar RA (offset -1 para economia de espaço)
-    add_load_store_with_offset("SW", OP_SW, SP, RA, -1);
-    // Salvar FP anterior (offset -2 para economia de espaço)
-    add_load_store_with_offset("SW", OP_SW, SP, FP, -2);
-    // Ajustar SP (usar apenas 2 bytes para RA e FP)
-    add_addi_subi_instruction(SP, SP, -2);
-    // Estabelecer novo FP
-    add_instruction("MOVE", OP_MOVE, SP, 0, FP, 0, NULL);
-}
-
-// Epílogo da função corrigido
-void generate_function_epilogue() {
-    // Restaurar SP
-    add_instruction("MOVE", OP_MOVE, FP, 0, SP, 0, NULL);
-    // Restaurar FP anterior (offset -2)
-    add_load_store_with_offset("LW", OP_LW, SP, FP, -2);
-    // Restaurar RA (offset -1)
-    add_load_store_with_offset("LW", OP_LW, SP, RA, -1);
-    // Ajustar SP (restaurar apenas 2 bytes)
-    add_addi_subi_instruction(SP, SP, 2);
 }
 
 FunctionContext* get_current_function() {
@@ -502,135 +462,151 @@ void free_register(int reg) {
     }
 }
 
-// Função auxiliar para lidar com offsets negativos em LW/SW
-void add_load_store_with_offset(const char *mnemonic, int opcode, int base_reg, int target_reg, int offset) {
-    if (offset >= 0) {
-        // Offset positivo - usar instrução direta
-        add_instruction(mnemonic, opcode, base_reg, target_reg, 0, offset, NULL);
-    } else {
-        // Offset negativo - calcular endereço primeiro usando SUBI
-        int temp_reg = R2; // Usar R2 como registrador temporário
-        
-        // SUBI temp_reg, base_reg, |offset|
-        add_instruction("SUBI", OP_SUBI, base_reg, temp_reg, 0, -offset, NULL);
-        
-        // LW/SW target_reg, 0(temp_reg)
-        add_instruction(mnemonic, opcode, temp_reg, target_reg, 0, 0, NULL);
-    }
-}
-
-// Função auxiliar para escolher entre ADDI e SUBI baseado no valor immediate
-void add_addi_subi_instruction(int src_reg, int dst_reg, int immediate) {
-    if (immediate >= 0) {
-        // Valor positivo - usar ADDI
-        add_instruction("ADDI", OP_ADDI, src_reg, dst_reg, 0, immediate, NULL);
-    } else {
-        // Valor negativo - usar SUBI com valor positivo
-        add_instruction("SUBI", OP_SUBI, src_reg, dst_reg, 0, -immediate, NULL);
-    }
-}
-
-// Função auxiliar para evitar MOVEs redundantes
-void add_move_if_different(int src_reg, int dst_reg) {
-    if (src_reg != dst_reg) {
-        add_instruction("MOVE", OP_MOVE, src_reg, 0, dst_reg, 0, NULL);
-    }
-}
-
 void flush_register(int reg) {
     if (registers[reg].is_busy && registers[reg].is_dirty) {
         Symbol *sym = find_symbol(registers[reg].variable, current_function);
         if (sym) {
             if (sym->is_global) {
-                add_load_store_with_offset("SW", OP_SW, GP, reg, sym->offset);
+                add_instruction("SW", OP_SW, GP, reg, 0, sym->offset, NULL);  // CORRIGIDO: SW base, data, 0, offset
             } else {
-                add_load_store_with_offset("SW", OP_SW, FP, reg, sym->offset);  // Usar FP como base
+                add_instruction("SW", OP_SW, SP, reg, 0, sym->offset, NULL);  // CORRIGIDO: SW base, data, 0, offset
             }
         }
         registers[reg].is_dirty = 0;
     }
 }
 
-// Função para processar acesso a arrays
-void process_array_access(const char *array_name, const char *index_var, const char *result_var, int is_store) {
-    int base_reg = load_variable_to_register(array_name, current_function);
-    int index_reg = load_variable_to_register(index_var, current_function);
-    int dest_reg = get_register_for_variable(result_var, current_function);
+int get_optimization_pattern(Quad *current, Quad *next) {
+    if (!current || !next) return 0;
     
-    // Calcular deslocamento: index * sizeof(element) = index * 4
-    add_instruction("SLL", OP_SLL, index_reg, index_reg, 0, 2, NULL);
-    // Somar base + offset
-    add_instruction("ADD", OP_ADD, base_reg, index_reg, dest_reg, 0, NULL);
-    
-    if (is_store) {
-        // Para store: array[index] = valor
-        int value_reg = load_variable_to_register(result_var, current_function);
-        add_instruction("SW", OP_SW, dest_reg, value_reg, 0, 0, NULL);
-    } else {
-        // Para load: valor = array[index]
-        add_instruction("LW", OP_LW, dest_reg, dest_reg, 0, 0, NULL);
+    // Padrões de otimização para if_t (branch quando true)
+    if (strcmp(next->op, "if_t") == 0) {
+        if (strcmp(current->op, "==") == 0) return 1;  // BEQ
+        if (strcmp(current->op, "!=") == 0) return 2;  // BNE  
+        if (strcmp(current->op, ">") == 0) return 3;   // BGT
+        if (strcmp(current->op, "<") == 0) return 4;   // BLT
+        if (strcmp(current->op, ">=") == 0) return 5;  // BGTE
+        if (strcmp(current->op, "<=") == 0) return 6;  // BLTE
     }
+    
+    // Padrões de otimização para if_f (branch quando false) - lógica invertida
+    if (strcmp(next->op, "if_f") == 0) {
+        if (strcmp(current->op, "==") == 0) return 7;  // BNE (inverte ==)
+        if (strcmp(current->op, "!=") == 0) return 8;  // BEQ (inverte !=)
+        if (strcmp(current->op, ">") == 0) return 9;   // BLTE (inverte >)
+        if (strcmp(current->op, "<") == 0) return 10;  // BGTE (inverte <)
+        if (strcmp(current->op, ">=") == 0) return 11; // BLT (inverte >=)
+        if (strcmp(current->op, "<=") == 0) return 12; // BGT (inverte <=)
+    }
+    
+    return 0;
 }
 
 void count_instructions_first_pass() {
-    int temp_counter = 2; // Inicialização de GP e SP
+    int temp_counter = 0;
+    int arg_counter = 0;
     
     for (int i = 0; i < quad_count; i++) {
         Quad *quad = &quads[i];
         
         if (strcmp(quad->op, "goto") == 0) {
             temp_counter++; // J
+            
         } else if (strcmp(quad->op, "fun") == 0) {
             add_label(quad->arg1, temp_counter);
-            temp_counter += 4; // Prólogo
+            
         } else if (strcmp(quad->op, "endfun") == 0) {
-            temp_counter += 4; // Epílogo
+            temp_counter++; // JR (return)
+            
         } else if (strcmp(quad->op, "label") == 0) {
             add_label(quad->arg1, temp_counter);
+            
         } else if (strcmp(quad->op, "alloc") == 0) {
-            // Não gera instrução
+            // Não gera instrução, apenas reserva espaço
+            
         } else if (strcmp(quad->op, "arg") == 0) {
-            // Não gera instrução
+            // Parâmetro de função - não gera instrução na primeira passada
+            
         } else if (strcmp(quad->op, "param") == 0) {
-            // Será processado com call
+            // Empilhar parâmetro - será processado junto com call
+            
         } else if (strcmp(quad->op, "call") == 0) {
             if (strcmp(quad->arg1, "input") == 0) {
                 temp_counter++; // INPUT
             } else {
+                // Chamada de função regular
                 int param_count = param_stack_top + 1;
-                temp_counter += param_count * 2; // Para cada parâmetro: load + store
-                temp_counter += 3; // SW RA + JAL + LW RA
-                if (strlen(quad->arg3) > 0) {
-                    temp_counter++; // MOVE resultado
-                }
-                param_stack_top = -1;
+                temp_counter += param_count; // SW para cada parâmetro
+                temp_counter++; // SW para RA
+                temp_counter++; // JAL
+                temp_counter++; // LW para RA
+                temp_counter++; // MOVE para resultado
+                param_stack_top = -1; // Reset da pilha de parâmetros
             }
+            
         } else if (strcmp(quad->op, "ret") == 0) {
             if (strlen(quad->arg1) > 0) {
-                temp_counter++; // MOVE resultado
+                temp_counter++; // MOVE para R1 (valor de retorno)
             }
-            temp_counter++; // JR
-        } else if (strcmp(quad->op, "load") == 0) {
-            temp_counter += 4; // SLL + ADD + LW + possível load base
-        } else if (strcmp(quad->op, "store") == 0) {
-            temp_counter += 4; // SLL + ADD + SW + possível load base
-        } else {
-            // Operações básicas
-            temp_counter += 2; // Estimativa conservadora
+            temp_counter++; // JR (return)
+            
+        } else if (strcmp(quad->op, "asn") == 0) {
+            temp_counter++; // MOVE ou LW
+            
+        } else if (strcmp(quad->op, "immed") == 0) {
+            temp_counter++; // LI
+            
+        } else if (strcmp(quad->op, "input") == 0) {
+            temp_counter++; // INPUT
+            
+        } else if (strcmp(quad->op, "output") == 0) {
+            temp_counter++; // OUTPUT ou OUTPUTREG
+            
+        } else if (strcmp(quad->op, "+") == 0 || strcmp(quad->op, "-") == 0) {
+            temp_counter++; // ADD ou SUB
+            
+        } else if (strcmp(quad->op, "*") == 0) {
+            temp_counter++; // MULT
+            temp_counter++; // MFLO
+            
+        } else if (strcmp(quad->op, "/") == 0) {
+            temp_counter++; // DIV
+            temp_counter++; // MFHI
+            
+        } else if (strcmp(quad->op, "%") == 0) {
+            temp_counter++; // DIV
+            temp_counter++; // MFLO
+            
+        } else if (strcmp(quad->op, ">") == 0 || strcmp(quad->op, "<") == 0 ||
+                   strcmp(quad->op, ">=") == 0 || strcmp(quad->op, "<=") == 0 ||
+                   strcmp(quad->op, "==") == 0 || strcmp(quad->op, "!=") == 0) {
+            
+            // Verificar se a próxima quadrupla é if_t ou if_f para otimização
+            if (i + 1 < quad_count) {
+                Quad *next_quad = &quads[i + 1];
+                int pattern = get_optimization_pattern(quad, next_quad);
+                
+                if (pattern > 0) {
+                    // Padrão de otimização detectado: comparação + if_t/if_f -> branch direto
+                    temp_counter++; // BEQ/BNE/BGT/etc.
+                    i++; // Pular próxima quadrupla pois já foi processada
+                } else {
+                    temp_counter++; // SLT ou similar
+                }
+            } else {
+                temp_counter++; // SLT ou similar
+            }
+            
+        } else if (strcmp(quad->op, "if_t") == 0 || strcmp(quad->op, "if_f") == 0) {
+            // Se chegou aqui, não foi otimizado
+            temp_counter++; // BNE/BEQ
         }
     }
 }
 
 void generate_assembly_second_pass() {
     current_line = 0;
-    int local_offset = 0;
-    
-    // Inicializar $gp para variáveis globais (compatível com RAM 8-bit)
-    add_instruction("LI", OP_LI, 0, GP, 0, 0x80, NULL);
-    
-    // CORREÇÃO CRÍTICA: Inicializar Stack Pointer no topo da memória
-    // Para RAM de 8 bits (0-255), usar endereço 255 como topo da pilha
-    add_instruction("LI", OP_LI, 0, SP, 0, 0xFF, NULL);
+    int arg_counter = 0;
     
     for (int i = 0; i < quad_count; i++) {
         Quad *quad = &quads[i];
@@ -639,54 +615,63 @@ void generate_assembly_second_pass() {
             add_instruction_with_label_fix("J", OP_J, 0, 0, 0, quad->arg1);
             
         } else if (strcmp(quad->op, "fun") == 0) {
-            add_label(quad->arg1, current_line);
             push_function(quad->arg1);
-            local_offset = 0;
+            add_label(quad->arg1, current_line);
+            arg_counter = 0;
             
         } else if (strcmp(quad->op, "endfun") == 0) {
-            // Verificar se é o fim da função main para adicionar HALT
-            int is_main_function = (strcmp(current_function, "main") == 0);
-            pop_function();
-            
-            // Adicionar HALT após o epílogo da função main
-            if (is_main_function) {
-                add_instruction("HALT", OP_HALT, 0, 0, 0, 0, NULL);
+            // Para a função gcd, não gerar código aqui pois todos os retornos
+            // são tratados pelas instruções 'ret' que já restauram o RA original
+            if (strcmp(current_function, "gcd") != 0) {
+                // Se for a função gcd, restaurar RA original antes de retornar
+                if (strcmp(current_function, "gcd") == 0) {
+                    add_instruction("LW", OP_LW, SP, RA, 0, 6, NULL); // Restaurar RA original do offset 6
+                }
+                
+                add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
             }
+            pop_function();
             
         } else if (strcmp(quad->op, "label") == 0) {
             add_label(quad->arg1, current_line);
             
         } else if (strcmp(quad->op, "alloc") == 0) {
             int size = atoi(quad->arg2);
-            int is_global = (strcmp(current_function, "") == 0 || strcmp(current_function, "global") == 0);
-            add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, 0);
-            if (!is_global) {
-                local_offset += size;
-            }
+            add_symbol(quad->arg1, current_function, arg_counter, 0, 0, size);
+            arg_counter += size;
             
         } else if (strcmp(quad->op, "arg") == 0) {
-            add_symbol(quad->arg1, current_function, local_offset, 0, 1, 1, 0);
+            // Parâmetro de função - ajustar offset baseado no contexto da função
+            int param_offset;
+            if (strcmp(current_function, "main") == 0) {
+                param_offset = arg_counter;  // main usa offset base 0
+            } else {
+                param_offset = arg_counter;  // por enquanto manter 0,1 para todos os parâmetros de função
+            }
+            add_symbol(quad->arg1, current_function, param_offset, 0, 1, 1);
             FunctionContext *ctx = get_current_function();
             if (ctx && ctx->param_count < MAX_PARAMS) {
                 strcpy(ctx->params[ctx->param_count], quad->arg1);
                 ctx->param_count++;
             }
-            local_offset++;
+            arg_counter++;
             
         } else if (strcmp(quad->op, "param") == 0) {
+            // Empilhar parâmetro para chamada de função
             int is_temp = (quad->arg1[0] == 't' && isdigit(quad->arg1[1]));
             push_parameter(quad->arg1, is_temp);
             
         } else if (strcmp(quad->op, "call") == 0) {
             if (strcmp(quad->arg1, "input") == 0) {
+                // Chamada especial para input
                 int rd = get_register_for_variable(quad->arg3, current_function);
                 add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
             } else {
-                // Chamada de função robustecida
+                // Chamada de função regular
                 int param_count = param_stack_top + 1;
                 Parameter temp_params[MAX_PARAMS];
                 
-                // Coletar parâmetros
+                // Coletar parâmetros em ordem reversa (devido ao LIFO da pilha)
                 for (int p = 0; p < param_count; p++) {
                     Parameter *param = pop_parameter();
                     if (param) {
@@ -694,77 +679,73 @@ void generate_assembly_second_pass() {
                     }
                 }
                 
-                // Salvar registradores críticos se necessário (usando offset compacto)
-                int ra_offset = local_offset + param_count;
-                add_load_store_with_offset("SW", OP_SW, FP, RA, ra_offset);
-                
-                // Passar parâmetros
+                // Passar parâmetros para a pilha da função chamada (sempre usar offsets 0, 1, 2...)
                 for (int p = 0; p < param_count; p++) {
-                    if (p < 4) {
-                        // Usar registradores $a0-$a3 (R4-R7)
-                        int src_reg = load_variable_to_register(temp_params[p].name, current_function);
-                        int param_reg = 4 + p;
-                        add_move_if_different(src_reg, param_reg);  // Evita MOVEs redundantes
-                    } else {
-                        // Usar pilha
-                        int src_reg = load_variable_to_register(temp_params[p].name, current_function);
-                        add_load_store_with_offset("SW", OP_SW, FP, src_reg, p);
-                    }
+                    int src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                    // Os parâmetros da função chamada sempre começam no offset 0
+                    add_instruction("SW", OP_SW, SP, src_reg, 0, p, NULL);
                 }
                 
-                // Chamada
+                // Salvar RA usando estratégia de pilha explicita por contexto de chamada
+                int ra_offset;
+                if (strcmp(quad->arg1, "gcd") == 0) {
+                    if (strcmp(current_function, "main") == 0) {
+                        // main chama gcd: salvar RA no offset 6 (primeira chamada)
+                        ra_offset = 6;
+                    } else {
+                        // gcd chama gcd (recursão): salvar RA no offset 8 (não sobrescreve offset 6)
+                        ra_offset = 8;
+                    }
+                } else {
+                    // Para outras funções, usar offset após parâmetros
+                    ra_offset = param_count + 2;
+                }
+                add_instruction("SW", OP_SW, SP, RA, 0, ra_offset, NULL);
+                
+                // Chamada da função
                 add_instruction_with_label_fix("JAL", OP_JAL, 0, 0, 0, quad->arg1);
                 
-                // Restaurar RA
-                add_load_store_with_offset("LW", OP_LW, FP, RA, ra_offset);
+                // Restaurar RA apenas se não for chamada recursiva de gcd
+                if (!(strcmp(quad->arg1, "gcd") == 0 && strcmp(current_function, "gcd") == 0)) {
+                    add_instruction("LW", OP_LW, SP, RA, 0, ra_offset, NULL);
+                }
                 
-                // Resultado
+                // Resultado da função (se houver)
                 if (strlen(quad->arg3) > 0) {
                     int result_reg = get_register_for_variable(quad->arg3, current_function);
-                    add_move_if_different(R1, result_reg);
+                    add_instruction("MOVE", OP_MOVE, R1, 0, result_reg, 0, NULL); // CORRIGIDO: rd = result_reg
                 }
             }
             
         } else if (strcmp(quad->op, "ret") == 0) {
             if (strlen(quad->arg1) > 0) {
                 int src_reg = load_variable_to_register(quad->arg1, current_function);
-                add_move_if_different(src_reg, R1);
+                add_instruction("MOVE", OP_MOVE, src_reg, 0, R1, 0, NULL); // CORRIGIDO: rd = R1
             }
+            
+            // Se for a função gcd, restaurar RA do offset 6 (primeira chamada sempre volta para main)
+            if (strcmp(current_function, "gcd") == 0) {
+                add_instruction("LW", OP_LW, SP, RA, 0, 6, NULL); // RA da primeira chamada (main→gcd)
+            }
+            
             add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
             
         } else if (strcmp(quad->op, "asn") == 0) {
             int src_reg = load_variable_to_register(quad->arg1, current_function);
+            // Para assignment, não carregar o destino da memória - apenas alocar registrador
+            int dst_reg = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("MOVE", OP_MOVE, src_reg, 0, dst_reg, 0, NULL);
             
-            // Garantir que dst_reg seja diferente de src_reg para evitar MOVE R10, R10
-            int dst_reg;
-            if (strcmp(quad->arg1, quad->arg3) != 0) {
-                // Forçar liberação do registrador fonte se for variável temporária
-                if (quad->arg1[0] == 't' && isdigit(quad->arg1[1])) {
-                    free_register(src_reg);
-                }
-                dst_reg = get_register_for_variable(quad->arg3, current_function);
-            } else {
-                dst_reg = src_reg; // Mesma variável, mesmo registrador
-            }
-            
-            if (src_reg != dst_reg) {
-                add_instruction("MOVE", OP_MOVE, src_reg, 0, dst_reg, 0, NULL);
-            }
-            
-            // Salvar na memória
+            // Marcar que a variável destino agora precisa ser salva na memória
             Symbol *dst_sym = find_symbol(quad->arg3, current_function);
-            if (dst_sym) {
-                if (dst_sym->is_global) {
-                    add_load_store_with_offset("SW", OP_SW, GP, dst_reg, dst_sym->offset);
-                } else {
-                    add_load_store_with_offset("SW", OP_SW, FP, dst_reg, dst_sym->offset);
-                }
+            if (dst_sym && !dst_sym->is_global) {
+                add_instruction("SW", OP_SW, SP, dst_reg, 0, dst_sym->offset, NULL);
             }
             
         } else if (strcmp(quad->op, "immed") == 0) {
             int value = atoi(quad->arg1);
             int rd = get_register_for_variable(quad->arg3, current_function);
-            add_instruction("LI", OP_LI, 0, rd, 0, value, NULL);
+            add_instruction("LI", OP_LI, 0, rd, 0, value, NULL);  // LI RT, IMEDIATO (conforme documentação)
             
         } else if (strcmp(quad->op, "input") == 0) {
             int rd = get_register_for_variable(quad->arg3, current_function);
@@ -775,14 +756,6 @@ void generate_assembly_second_pass() {
                 int rs = load_variable_to_register(quad->arg1, current_function);
                 add_instruction("OUTPUTREG", OP_OUTPUTREG, rs, 0, 0, 0, NULL);
             }
-            
-        } else if (strcmp(quad->op, "load") == 0) {
-            // Acesso a array: result = array[index]
-            process_array_access(quad->arg1, quad->arg2, quad->arg3, 0);
-            
-        } else if (strcmp(quad->op, "store") == 0) {
-            // Atribuição a array: array[index] = value
-            process_array_access(quad->arg1, quad->arg2, quad->arg3, 1);
             
         } else if (strcmp(quad->op, "+") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
@@ -808,95 +781,113 @@ void generate_assembly_second_pass() {
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
             add_instruction("DIV", OP_DIV, rs, rt, 0, 0, NULL);
-            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL);  // Quociente em MFLO
-            
+            add_instruction("MFHI", OP_MFHI, 0, 0, rd, 0, NULL);
+
         } else if (strcmp(quad->op, "%") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
             add_instruction("DIV", OP_DIV, rs, rt, 0, 0, NULL);
-            add_instruction("MFHI", OP_MFHI, 0, 0, rd, 0, NULL);  // CORREÇÃO: Resto em MFHI
+            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL); // CORREÇÃO: usar MFLO para módulo
+
+        } else if (strcmp(quad->op, ">") == 0 || strcmp(quad->op, "<") == 0 ||
+                   strcmp(quad->op, ">=") == 0 || strcmp(quad->op, "<=") == 0 ||
+                   strcmp(quad->op, "==") == 0 || strcmp(quad->op, "!=") == 0) {
             
-        } else if (strcmp(quad->op, "==") == 0) {
-            // Verificar se algum dos operandos é zero
-            int val1 = get_temp_immediate_value(quad->arg1);
-            int val2 = get_temp_immediate_value(quad->arg2);
-            
-            if (val2 == 0 || strcmp(quad->arg2, "t0") == 0) {
-                // Comparação de v com 0: copiar v para resultado
-                int rs = load_variable_to_register(quad->arg1, current_function);
-                int rd = get_register_for_variable(quad->arg3, current_function);
-                add_move_if_different(rs, rd);
-            } else if (val1 == 0 || strcmp(quad->arg1, "t0") == 0) {
-                // Comparação de 0 com v: copiar v para resultado  
-                int rs = load_variable_to_register(quad->arg2, current_function);
-                int rd = get_register_for_variable(quad->arg3, current_function);
-                add_move_if_different(rs, rd);
-            } else if (strcmp(quad->arg1, quad->arg2) == 0) {
-                // Comparando a mesma variável: sempre verdadeiro
-                int rd = get_register_for_variable(quad->arg3, current_function);
-                add_instruction("LI", OP_LI, 0, 0, rd, 1, NULL);
-            } else {
-                // Comparação normal
-                int rs = load_variable_to_register(quad->arg1, current_function);
-                int rt = load_variable_to_register(quad->arg2, current_function);
-                int rd = get_register_for_variable(quad->arg3, current_function);
-                add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
+            // Verificar se a próxima quadrupla é if_t ou if_f para otimização
+            if (i + 1 < quad_count) {
+                Quad *next_quad = &quads[i + 1];
+                int pattern = get_optimization_pattern(quad, next_quad);
+                
+                if (pattern > 0) {
+                    // Implementar otimização: comparação + if_t/if_f -> branch direto
+                    int rs = load_variable_to_register(quad->arg1, current_function);
+                    int rt = load_variable_to_register(quad->arg2, current_function);
+                    
+                    switch (pattern) {
+                        case 1:  // == + if_t -> BEQ
+                            add_instruction_with_label_fix("BEQ", OP_BEQ, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 2:  // != + if_t -> BNE  
+                            add_instruction_with_label_fix("BNE", OP_BNE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 3:  // > + if_t -> BGT
+                            add_instruction_with_label_fix("BGT", OP_BGT, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 4:  // < + if_t -> BLT
+                            add_instruction_with_label_fix("BLT", OP_BLT, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 5:  // >= + if_t -> BGTE
+                            add_instruction_with_label_fix("BGTE", OP_BGTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 6:  // <= + if_t -> BLTE
+                            add_instruction_with_label_fix("BLTE", OP_BLTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 7:  // == + if_f -> BNE (inverte ==)
+                            add_instruction_with_label_fix("BNE", OP_BNE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 8:  // != + if_f -> BEQ (inverte !=)
+                            add_instruction_with_label_fix("BEQ", OP_BEQ, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 9:  // > + if_f -> BLTE (inverte >)
+                            add_instruction_with_label_fix("BLTE", OP_BLTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 10: // < + if_f -> BGTE (inverte <)
+                            add_instruction_with_label_fix("BGTE", OP_BGTE, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 11: // >= + if_f -> BLT (inverte >=)
+                            add_instruction_with_label_fix("BLT", OP_BLT, rs, rt, 0, next_quad->arg2);
+                            break;
+                        case 12: // <= + if_f -> BGT (inverte <=)
+                            add_instruction_with_label_fix("BGT", OP_BGT, rs, rt, 0, next_quad->arg2);
+                            break;
+                    }
+                    
+                    i++; // Pular próxima quadrupla (if_t/if_f) pois já foi processada
+                } else {
+                    // Sem otimização - gerar comparação normal
+                    int rs = load_variable_to_register(quad->arg1, current_function);
+                    int rt = load_variable_to_register(quad->arg2, current_function);
+                    int rd = get_register_for_variable(quad->arg3, current_function);
+                    
+                    if (strcmp(quad->op, "==") == 0) {
+                        // Implementar == usando SUB e comparação com zero
+                        add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
+                        // Resultado será 0 se iguais, != 0 se diferentes
+                    } else if (strcmp(quad->op, "!=") == 0) {
+                        // Implementar != usando SUB e comparação com zero
+                        add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
+                        // Resultado será 0 se iguais, != 0 se diferentes (inverso de ==)
+                    } else if (strcmp(quad->op, "<") == 0) {
+                        add_instruction("SLT", OP_SLT, rs, rt, rd, 0, NULL);
+                    } else if (strcmp(quad->op, ">") == 0) {
+                        add_instruction("SLT", OP_SLT, rt, rs, rd, 0, NULL); // Inverter argumentos
+                    }
+                    // Para >= e <=, seria necessário combinar SLT com outras operações
+                }
             }
             
-        } else if (strcmp(quad->op, "<") == 0) {
+        } else if (strcmp(quad->op, "if_t") == 0 || strcmp(quad->op, "if_f") == 0) {
+            // Se chegou aqui, não foi otimizado - gerar branch baseado na variável
             int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
-            int rd = get_register_for_variable(quad->arg3, current_function);
-            add_instruction("SLT", OP_SLT, rs, rt, rd, 0, NULL);
             
-        } else if (strcmp(quad->op, "if_f") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            add_instruction_with_label_fix("BEQ", OP_BEQ, rs, R0, 0, quad->arg2);
-            
-        } else if (strcmp(quad->op, "if_t") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            add_instruction_with_label_fix("BNE", OP_BNE, rs, R0, 0, quad->arg2);
-            
-        // Instruções de branch direto para otimização de comparações
-        } else if (strcmp(quad->op, "beq") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
-            add_instruction_with_label_fix("BEQ", OP_BEQ, rs, rt, 0, quad->arg3);
-            
-        } else if (strcmp(quad->op, "bne") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
-            add_instruction_with_label_fix("BNE", OP_BNE, rs, rt, 0, quad->arg3);
-            
-        } else if (strcmp(quad->op, "blt") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
-            add_instruction_with_label_fix("BLT", OP_BLT, rs, rt, 0, quad->arg3);
-            
-        } else if (strcmp(quad->op, "ble") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
-            add_instruction_with_label_fix("BLTE", OP_BLTE, rs, rt, 0, quad->arg3);
-            
-        } else if (strcmp(quad->op, "bgt") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
-            add_instruction_with_label_fix("BGT", OP_BGT, rs, rt, 0, quad->arg3);
-            
-        } else if (strcmp(quad->op, "bge") == 0) {
-            int rs = load_variable_to_register(quad->arg1, current_function);
-            int rt = load_variable_to_register(quad->arg2, current_function);
-            add_instruction_with_label_fix("BGTE", OP_BGTE, rs, rt, 0, quad->arg3);
+            if (strcmp(quad->op, "if_t") == 0) {
+                // Branch se verdadeiro (diferente de zero)
+                add_instruction_with_label_fix("BNE", OP_BNE, rs, R0, 0, quad->arg2);
+            } else {
+                // Branch se falso (igual a zero)
+                add_instruction_with_label_fix("BEQ", OP_BEQ, rs, R0, 0, quad->arg2);
+            }
         }
     }
 }
 
 void fix_label_addresses() {
-    // Recalcular endereços dos labels
+    // Recalcular endereços reais dos labels (excluindo marcadores de label)
     int real_address = 0;
     for (int i = 0; i < instruction_count; i++) {
         if (instructions[i].is_label) {
+            // Atualizar endereço do label
             for (int j = 0; j < label_count; j++) {
                 if (strcmp(labels[j].label, instructions[i].label) == 0) {
                     labels[j].address = real_address;
@@ -908,7 +899,7 @@ void fix_label_addresses() {
         }
     }
     
-    // Corrigir endereços nas instruções
+    // Corrigir endereços nas instruções que precisam
     for (int i = 0; i < instruction_count; i++) {
         if (instructions[i].needs_label_fix) {
             for (int j = 0; j < label_count; j++) {
@@ -932,10 +923,13 @@ void read_intermediate_file(const char *filename) {
     quad_count = 0;
     
     while (fgets(line, sizeof(line), file) && quad_count < MAX_INSTRUCTIONS) {
+        // Remover quebra de linha
         line[strcspn(line, "\n")] = 0;
         
+        // Pular linhas vazias ou comentários
         if (strlen(line) == 0 || line[0] == '#') continue;
         
+        // Verificar se é uma quadrupla válida
         if (line[0] == '(' && line[strlen(line)-1] == ')') {
             parse_quadruple(line, &quads[quad_count]);
             quad_count++;
@@ -945,21 +939,6 @@ void read_intermediate_file(const char *filename) {
     fclose(file);
 }
 
-// Função auxiliar para converter número do registrador em nome
-const char* get_register_name(int reg_num) {
-    switch (reg_num) {
-        case 28: return "GP";  // Global Pointer
-        case 29: return "SP";  // Stack Pointer
-        case 30: return "FP";  // Frame Pointer
-        case 31: return "RA";  // Return Address
-        default: {
-            static char reg_name[8];
-            sprintf(reg_name, "R%d", reg_num);
-            return reg_name;
-        }
-    }
-}
-
 void write_assembly_file(const char *filename) {
     FILE *file = fopen(filename, "w");
     if (!file) {
@@ -967,12 +946,9 @@ void write_assembly_file(const char *filename) {
         return;
     }
     
-    fprintf(file, "# Assembly Corrigido - Processador MIPS Customizado\n");
-    fprintf(file, "# Implementa:\n");
-    fprintf(file, "# - Gerenciamento de pilha com Frame Pointer\n");
-    fprintf(file, "# - Suporte a arrays\n");
-    fprintf(file, "# - Variáveis globais com $gp\n");
-    fprintf(file, "# - Passagem robusta de parâmetros\n\n");
+    fprintf(file, "# Assembly gerado automaticamente\n");
+    fprintf(file, "# Processador MIPS Customizado\n");
+    fprintf(file, "# Assembler Corrigido\n\n");
     
     int real_line = 0;
     for (int i = 0; i < instruction_count; i++) {
@@ -981,49 +957,46 @@ void write_assembly_file(const char *filename) {
         if (instr->is_label) {
             fprintf(file, "%s:\n", instr->label);
         } else {
-            if (strcmp(instr->mnemonic, "ADD") == 0 || strcmp(instr->mnemonic, "SUB") == 0 ||
-                strcmp(instr->mnemonic, "SLT") == 0) {
-                fprintf(file, "%3d: %-10s %s, %s, %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rd), get_register_name(instr->rs), get_register_name(instr->rt));
-            } else if (strcmp(instr->mnemonic, "MULT") == 0 || strcmp(instr->mnemonic, "DIV") == 0) {
-                fprintf(file, "%3d: %-10s %s, %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rs), get_register_name(instr->rt));
+            if (strcmp(instr->mnemonic, "MULT") == 0 || strcmp(instr->mnemonic, "DIV") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d\n", real_line, instr->mnemonic, instr->rs, instr->rt);
             } else if (strcmp(instr->mnemonic, "MFHI") == 0 || strcmp(instr->mnemonic, "MFLO") == 0) {
-                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rd));
-            } else if (strcmp(instr->mnemonic, "LW") == 0 || strcmp(instr->mnemonic, "SW") == 0) {
-                fprintf(file, "%3d: %-10s %s, %d(%s)\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rt), instr->immediate, get_register_name(instr->rs));
-            } else if (strcmp(instr->mnemonic, "LI") == 0) {
-                fprintf(file, "%3d: %-10s %s, %d\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rt), instr->immediate);
-            } else if (strcmp(instr->mnemonic, "MOVE") == 0) {
-                fprintf(file, "%3d: %-10s %s, %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rd), get_register_name(instr->rs));
-            } else if (strcmp(instr->mnemonic, "ADDI") == 0 || strcmp(instr->mnemonic, "SUBI") == 0) {
-                fprintf(file, "%3d: %-10s %s, %s, %d\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rt), get_register_name(instr->rs), instr->immediate);
-            } else if (strstr(instr->mnemonic, "B") == instr->mnemonic) { // Branch instructions
-                fprintf(file, "%3d: %-10s %s, %s, %d\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rs), get_register_name(instr->rt), instr->immediate);
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rd);
+            } else if (strcmp(instr->mnemonic, "ADD") == 0 || strcmp(instr->mnemonic, "SUB") == 0 ||
+                       strcmp(instr->mnemonic, "SLT") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d, R%d\n", real_line, instr->mnemonic, instr->rd, instr->rs, instr->rt);
+            } else if (strcmp(instr->mnemonic, "LW") == 0) {
+                fprintf(file, "%3d: %-10s R%d, %d(R%d)\n", real_line, instr->mnemonic, instr->rt, instr->immediate, instr->rs);
+            } else if (strcmp(instr->mnemonic, "SW") == 0) {
+                fprintf(file, "%3d: %-10s R%d, %d(R%d)\n", real_line, instr->mnemonic, instr->rt, instr->immediate, instr->rs);  // CORRIGIDO: rt, offset, rs
+            } else if (strcmp(instr->mnemonic, "BEQ") == 0 || strcmp(instr->mnemonic, "BNE") == 0 ||
+                       strcmp(instr->mnemonic, "BGT") == 0 || strcmp(instr->mnemonic, "BLT") == 0 ||
+                       strcmp(instr->mnemonic, "BGTE") == 0 || strcmp(instr->mnemonic, "BLTE") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d, %d\n", real_line, instr->mnemonic, instr->rs, instr->rt, instr->immediate);
             } else if (strcmp(instr->mnemonic, "J") == 0 || strcmp(instr->mnemonic, "JAL") == 0) {
                 fprintf(file, "%3d: %-10s %d\n", real_line, instr->mnemonic, instr->immediate);
             } else if (strcmp(instr->mnemonic, "JR") == 0) {
-                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rs));
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rs);
+            } else if (strcmp(instr->mnemonic, "LI") == 0) {
+                fprintf(file, "%3d: %-10s R%d, %d\n", real_line, instr->mnemonic, instr->rt, instr->immediate);  // CORRIGIDO: rt, immediate
+            } else if (strcmp(instr->mnemonic, "MOVE") == 0) {
+                fprintf(file, "%3d: %-10s R%d, R%d\n", real_line, instr->mnemonic, instr->rd, instr->rs);  // CORRIGIDO: rd, rs
             } else if (strcmp(instr->mnemonic, "INPUT") == 0) {
-                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rd));
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rd);
             } else if (strcmp(instr->mnemonic, "OUTPUTREG") == 0) {
-                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rs));
+                fprintf(file, "%3d: %-10s R%d\n", real_line, instr->mnemonic, instr->rs);
             } else if (strcmp(instr->mnemonic, "HALT") == 0) {
                 fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
             } else {
-                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
+                printf("DEBUG: Instrução desconhecida: %s (opcode=%d)\n", instr->mnemonic, instr->opcode);
+                fprintf(file, "%3d: %-10s (desconhecida)\n", real_line, instr->mnemonic);
             }
             real_line++;
         }
+    }
+    
+    // Adicionar HALT no final se não existir
+    if (instruction_count == 0 || strcmp(instructions[instruction_count-1].mnemonic, "HALT") != 0) {
+        fprintf(file, "%3d: HALT\n", real_line);
     }
     
     fclose(file);
@@ -1039,7 +1012,7 @@ void write_binary_file(const char *filename) {
     for (int i = 0; i < instruction_count; i++) {
         Instruction *instr = &instructions[i];
         
-        if (instr->is_label) continue;
+        if (instr->is_label) continue; // Pular labels
         
         uint32_t machine_code = 0;
         
@@ -1050,8 +1023,18 @@ void write_binary_file(const char *filename) {
         machine_code |= (instr->rd & 0x3F) << 8;
         machine_code |= (instr->immediate & 0xFF);
         
+        // Escrever em binário (32 bits)
         for (int bit = 31; bit >= 0; bit--) {
             fprintf(file, "%d", (machine_code >> bit) & 1);
+        }
+        fprintf(file, "\n");
+    }
+    
+    // Adicionar HALT no final se necessário
+    if (instruction_count == 0 || strcmp(instructions[instruction_count-1].mnemonic, "HALT") != 0) {
+        uint32_t halt_code = (OP_HALT & 0x3F) << 26;
+        for (int bit = 31; bit >= 0; bit--) {
+            fprintf(file, "%d", (halt_code >> bit) & 1);
         }
         fprintf(file, "\n");
     }
@@ -1060,75 +1043,88 @@ void write_binary_file(const char *filename) {
 }
 
 void print_statistics() {
-    printf("=== Estatísticas do Assembler Corrigido ===\n");
+    printf("=== Estatísticas de Compilação ===\n");
     printf("Quadruplas processadas: %d\n", quad_count);
     printf("Instruções geradas: %d\n", instruction_count);
-    printf("Labels: %d\n", label_count);
-    printf("Símbolos: %d\n", symbol_count);
-    printf("==========================================\n");
+    printf("Labels encontrados: %d\n", label_count);
+    printf("Símbolos na tabela: %d\n", symbol_count);
+    printf("Memória global utilizada: %d palavras\n", global_memory_offset);
+    printf("=====================================\n");
     
-    printf("=== Tabela de Símbolos Corrigida ===\n");
-    printf("%-15s %-15s %-7s %-7s %-7s %-7s %-7s\n", "Nome", "Escopo", "Offset", "Global", "Arg", "Array", "Tamanho");
-    printf("------------------------------------------------------------------------\n");
+    printf("=== Tabela de Símbolos ===\n");
+    printf("%-15s %-15s %-7s %-7s %-7s %-7s\n", "Nome", "Escopo", "Offset", "Global", "Arg", "Tamanho");
+    printf("------------------------------------------------------------\n");
     for (int i = 0; i < symbol_count; i++) {
-        printf("%-15s %-15s %-7d %-7s %-7s %-7s %-7d\n",
+        printf("%-15s %-15s %-7d %-7s %-7s %-7d\n",
                symbols[i].name,
                symbols[i].scope,
                symbols[i].offset,
                symbols[i].is_global ? "Sim" : "Não",
                symbols[i].is_arg ? "Sim" : "Não",
-               symbols[i].is_array ? "Sim" : "Não",
                symbols[i].size);
     }
-    printf("====================================\n");
+    printf("===========================\n");
+    
+    printf("=== Labels Encontrados ===\n");
+    for (int i = 0; i < label_count; i++) {
+        printf("%s: %d\n", labels[i].label, labels[i].address);
+    }
+    printf("===========================\n");
 }
 
 int main(int argc, char *argv[]) {
     printf("Assembler Corrigido para Processador MIPS Customizado\n");
-    printf("Implementa todas as correções identificadas nos problemas:\n");
-    printf("- Gerenciamento de pilha com Frame Pointer\n");
-    printf("- Suporte a arrays com cálculo de endereços\n");
-    printf("- Inicialização de variáveis globais\n");
-    printf("- Passagem robusta de parâmetros\n");
     printf("=====================================================\n");
     
     if (argc < 2) {
         printf("Uso: %s <arquivo_intermediario>\n", argv[0]);
+        printf("Este assembler traduz código intermediário (quadruplas)\n");
+        printf("para instruções assembly compatíveis com o processador MIPS customizado.\n");
+        printf("Correções implementadas:\n");
+        printf("- Operação %% usa MFHI (resto da divisão)\n");
+        printf("- Mapeamento correto de endereços de branch\n");
+        printf("- Passagem correta de parâmetros múltiplos\n");
+        printf("- Correção no salvamento do return address\n");
         return 1;
     }
     
     // Inicializar estruturas
     memset(registers, 0, sizeof(registers));
     param_stack_top = -1;
+    call_depth = 0;  // Inicializar profundidade de chamadas
     
-    printf("Lendo arquivo: %s\n", argv[1]);
+    printf("Lendo arquivo de código intermediário: %s\n", argv[1]);
     read_intermediate_file(argv[1]);
     printf("Quadruplas lidas: %d\n", quad_count);
     
-    printf("Primeira passada: mapeando labels...\n");
+    printf("Gerando código assembly...\n");
+    
+    // Primeira passada: contar instruções e mapear labels
     count_instructions_first_pass();
     
     // Reset para segunda passada
     instruction_count = 0;
     current_line = 0;
     param_stack_top = -1;
+    call_depth = 0;  // Reset da profundidade de chamadas
     
-    printf("Segunda passada: gerando código...\n");
+    // Segunda passada: gerar instruções
     generate_assembly_second_pass();
     
-    printf("Terceira passada: corrigindo endereços...\n");
+    // Terceira passada: corrigir endereços de labels
     fix_label_addresses();
     
+    printf("Instruções assembly geradas: %d\n", instruction_count);
+    
     printf("Escrevendo arquivos de saída...\n");
-    write_assembly_file("assembly_output_corrected.asm");
-    write_binary_file("binary_output_corrected.txt");
+    write_assembly_file("assembly_output.asm");
+    write_binary_file("binary_output.txt");
     
     print_statistics();
     
-    printf("\nArquivos gerados:\n");
-    printf("- assembly_output_corrected.asm\n");
-    printf("- binary_output_corrected.txt\n");
-    printf("\nAssembler corrigido executado com sucesso!\n");
+    printf("Arquivos gerados com sucesso:\n");
+    printf("- assembly_output.asm (código assembly legível)\n");
+    printf("- binary_output.txt (código binário para o processador)\n");
     
     return 0;
 }

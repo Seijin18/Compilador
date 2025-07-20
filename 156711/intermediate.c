@@ -41,6 +41,50 @@ static int endsWithReturn(AASNode* node) {
     return 0;
 }
 
+// Function to check if a node is a comparison operation
+static int isComparisonOp(AASNode* node) {
+    if (!node || node->node != KExp || node->exp != KOp) return 0;
+    
+    switch (node->token) {
+        case LT:     // <
+        case LE:     // <=
+        case GT:     // >
+        case GE:     // >=
+        case COMP:   // ==
+        case DIF:    // !=
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+// Function to get comparison operation string for direct branching
+static const char* getComparisonBranch(int token, int negate) {
+    if (negate) {
+        // For if_f (branch when false), we need the opposite condition
+        switch (token) {
+            case LT: return "bge";    // branch if >=
+            case LE: return "bgt";    // branch if >
+            case GT: return "ble";    // branch if <=
+            case GE: return "blt";    // branch if <
+            case COMP: return "bne";  // branch if !=
+            case DIF: return "beq";   // branch if ==
+            default: return NULL;
+        }
+    } else {
+        // For if_t (branch when true), direct condition
+        switch (token) {
+            case LT: return "blt";    // branch if <
+            case LE: return "ble";    // branch if <=
+            case GT: return "bgt";    // branch if >
+            case GE: return "bge";    // branch if >=
+            case COMP: return "beq";  // branch if ==
+            case DIF: return "bne";   // branch if !=
+            default: return NULL;
+        }
+    }
+}
+
 static FILE* quadOut = NULL;
 
 static QuadNode* quadListHead = NULL;
@@ -150,10 +194,29 @@ static char* genNode(AASNode* node, FILE* out) {
                     return lhs;
                 }
                 case KIf: {
-                    char* cond = genNode(node->children, out);
+                    AASNode* condNode = node->children;
                     char* labelElse = newLabel();
                     char* labelEnd = newLabel();
-                    emitQuad("if_f", cond, labelElse, " ");
+                    
+                    // Check if condition is a direct comparison
+                    if (isComparisonOp(condNode)) {
+                        // Generate direct branch instruction
+                        char* left = genNode(condNode->children, out);
+                        char* right = genNode(condNode->children->sibling, out);
+                        const char* branchOp = getComparisonBranch(condNode->token, 1); // negate=1 for if_f
+                        
+                        if (branchOp) {
+                            emitQuad(branchOp, left, right, labelElse);
+                        } else {
+                            // Fallback to original method
+                            char* cond = genNode(condNode, out);
+                            emitQuad("if_f", cond, labelElse, " ");
+                        }
+                    } else {
+                        // Original method for non-comparison conditions
+                        char* cond = genNode(condNode, out);
+                        emitQuad("if_f", cond, labelElse, " ");
+                    }
                     
                     // Generate the 'then' block
                     AASNode* thenBlock = node->children->sibling;
