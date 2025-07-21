@@ -675,7 +675,13 @@ void generate_assembly_second_pass() {
         
         if (strcmp(quad->op, "goto") == 0) {
             add_instruction_with_label_fix("J", OP_J, 0, 0, 0, quad->arg1);
-            
+
+        } else if (strcmp(quad->op, "call") == 0 && strcmp(quad->arg1, "input") == 0) {
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
+            // Adiciona OUTPUTREG imediatamente após INPUT, usando o mesmo registrador
+            add_instruction("OUTPUTREG", OP_OUTPUTREG, rd, 0, 0, 0, NULL);
+
         } else if (strcmp(quad->op, "fun") == 0) {
             add_label(quad->arg1, current_line);
             push_function(quad->arg1);
@@ -829,6 +835,7 @@ void generate_assembly_second_pass() {
         } else if (strcmp(quad->op, "input") == 0) {
             int rd = get_register_for_variable(quad->arg3, current_function);
             add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
+            add_instruction("OUTPUTREG", OP_OUTPUTREG, rd, 0, 0, 0, NULL);
             
         } else if (strcmp(quad->op, "output") == 0) {
             if (strlen(quad->arg1) > 0) {
@@ -871,15 +878,13 @@ void generate_assembly_second_pass() {
             int rs = load_variable_to_register(quad->arg1, current_function);
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
-            add_instruction("MULT", OP_MULT, rs, rt, 0, 0, NULL);
-            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL);
+            add_instruction("MULT", OP_MULT, rs, rt, rd, 0, NULL);
             
         } else if (strcmp(quad->op, "/") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
-            add_instruction("DIV", OP_DIV, rs, rt, 0, 0, NULL);
-            add_instruction("MFLO", OP_MFLO, 0, 0, rd, 0, NULL);  // Quociente em MFLO
+            add_instruction("DIV", OP_DIV, rs, rt, rd, 0, NULL);
             
         } else if (strcmp(quad->op, "%") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
@@ -1060,12 +1065,10 @@ void write_assembly_file(const char *filename) {
             fprintf(file, "%s:\n", instr->label);
         } else {
             if (strcmp(instr->mnemonic, "ADD") == 0 || strcmp(instr->mnemonic, "SUB") == 0 ||
-                strcmp(instr->mnemonic, "SLT") == 0) {
+                strcmp(instr->mnemonic, "SLT") == 0 || strcmp(instr->mnemonic, "DIV") == 0 ||
+                strcmp(instr->mnemonic, "MULT") == 0) {
                 fprintf(file, "%3d: %-10s %s, %s, %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rd), get_register_name(instr->rs), get_register_name(instr->rt));
-            } else if (strcmp(instr->mnemonic, "MULT") == 0 || strcmp(instr->mnemonic, "DIV") == 0) {
-                fprintf(file, "%3d: %-10s %s, %s\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rs), get_register_name(instr->rt));
             } else if (strcmp(instr->mnemonic, "MFHI") == 0 || strcmp(instr->mnemonic, "MFLO") == 0) {
                 fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rd));

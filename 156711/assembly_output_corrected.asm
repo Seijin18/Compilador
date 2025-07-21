@@ -7,7 +7,7 @@
 
   0: LI         GP, 128
   1: LI         SP, 255
-  2: J          51
+  2: J          49
 gcd:
   3: SUBI       R2, SP, 1
   4: SW         RA, 0(R2)
@@ -32,42 +32,42 @@ gcd:
 L0:
  23: LW         R3, 0(FP)
  24: LW         R2, 1(FP)
- 25: DIV        R3, R2
- 26: MFLO       R4
- 27: LW         R2, 1(FP)
- 28: MULT       R4, R2
- 29: MFLO       R5
- 30: LW         R3, 0(FP)
- 31: SUB        R6, R3, R5
- 32: LW         R2, 1(FP)
- 33: MOVE       R4, R2
- 34: MOVE       R5, R6
- 35: JAL        3
- 36: MOVE       R7, R1
- 37: MOVE       R1, R7
- 38: ADDI       SP, FP, 4
- 39: SUBI       R2, SP, 2
- 40: LW         FP, 0(R2)
- 41: SUBI       R2, SP, 1
- 42: LW         RA, 0(R2)
- 43: ADDI       SP, SP, 8
- 44: JR         RA
+ 25: DIV        R4, R3, R2
+ 26: LW         R2, 1(FP)
+ 27: MULT       R5, R4, R2
+ 28: LW         R3, 0(FP)
+ 29: SUB        R6, R3, R5
+ 30: LW         R2, 1(FP)
+ 31: MOVE       R4, R2
+ 32: MOVE       R5, R6
+ 33: JAL        3
+ 34: MOVE       R7, R1
+ 35: MOVE       R1, R7
+ 36: ADDI       SP, FP, 4
+ 37: SUBI       R2, SP, 2
+ 38: LW         FP, 0(R2)
+ 39: SUBI       R2, SP, 1
+ 40: LW         RA, 0(R2)
+ 41: ADDI       SP, SP, 8
+ 42: JR         RA
 L1:
- 45: ADDI       SP, FP, 4
- 46: SUBI       R2, SP, 2
- 47: LW         FP, 0(R2)
- 48: SUBI       R2, SP, 1
- 49: LW         RA, 0(R2)
- 50: ADDI       SP, SP, 8
+ 43: ADDI       SP, FP, 4
+ 44: SUBI       R2, SP, 2
+ 45: LW         FP, 0(R2)
+ 46: SUBI       R2, SP, 1
+ 47: LW         RA, 0(R2)
+ 48: ADDI       SP, SP, 8
 main:
- 51: SUBI       R2, SP, 2
- 52: SW         FP, 0(R2)
- 53: SUBI       SP, SP, 2
- 54: MOVE       FP, SP
- 55: INPUT      R8
- 56: MOVE       R9, R8
- 57: SW         R9, 0(FP)
- 58: INPUT      R10
+ 49: SUBI       R2, SP, 2
+ 50: SW         FP, 0(R2)
+ 51: SUBI       SP, SP, 2
+ 52: MOVE       FP, SP
+ 53: INPUT      R8
+ 54: OUTPUTREG  R8
+ 55: MOVE       R9, R8
+ 56: SW         R9, 0(FP)
+ 57: INPUT      R10
+ 58: OUTPUTREG  R10
  59: MOVE       R11, R10
  60: SW         R11, 1(FP)
  61: LW         R9, 0(FP)
