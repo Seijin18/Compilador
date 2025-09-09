@@ -680,7 +680,11 @@ void generate_assembly_second_pass() {
             // Verificar se é o fim da função main
             int is_main_function = (strcmp(current_function, "main") == 0);
             
-            if (!is_main_function) {
+            if (is_main_function) {
+                // Para main: adicionar HALT no final
+                add_instruction("HALT", OP_HALT, 0, 0, 0, 0, NULL);
+                main_halted = 1; // Marcar que main foi finalizada
+            } else {
                 // Para outras funções: epílogo normal
                 generate_function_epilogue();
             }
@@ -794,16 +798,8 @@ void generate_assembly_second_pass() {
             
         } else if (strcmp(quad->op, "output") == 0) {
             if (strlen(quad->arg1) > 0) {
-                if (strcmp(current_function, "main") == 0) {
-                    add_instruction("OUTPUTREG", OP_OUTPUTREG, 7, 0, 0, 0, NULL);
-                } else {
-                    int rs = load_variable_to_register(quad->arg1, current_function);
-                    add_instruction("OUTPUTREG", OP_OUTPUTREG, rs, 0, 0, 0, NULL);
-                }
-                if (strcmp(current_function, "main") == 0) {
-                    add_instruction("HALT", OP_HALT, 0, 0, 0, 0, NULL);
-                    main_halted = 1; // Marcar que main foi finalizada
-                }
+                int rs = load_variable_to_register(quad->arg1, current_function);
+                add_instruction("OUTPUTREG", OP_OUTPUTREG, rs, 0, 0, 0, NULL);
             }
             
         } else if (strcmp(quad->op, "load") == 0) {
