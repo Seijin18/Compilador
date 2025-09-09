@@ -84,6 +84,7 @@ var_declaracao: tipo_especificador id PTV {
                     $$->children->type = $1->type;
                     $$->children->name = copyString($2->name);
                     $$->children->escopo = copyString("global");
+                    $$->children->value = $4->value; // Definir o valor do array
                     addAASNode($$->children, $2); 
                     addAASNode($$->children, $4);
                 }
