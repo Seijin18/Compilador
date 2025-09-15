@@ -1,6 +1,6 @@
 int testarray[3];
 
-int sum_array(int arr[], int size)
+int sumarray(int arr[], int size)
 {
     int i;
     int sum;
@@ -21,7 +21,7 @@ void main(void)
     testarray[1] = 10;
     testarray[2] = 15;
 
-    result = sum_array(testarray, 3);
+    result = sumarray(testarray, 3);
 
     output(result);
 }

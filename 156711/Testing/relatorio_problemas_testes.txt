@@ -1,0 +1,373 @@
+===============================================================================
+RELATÓRIO DE PROBLEMAS IDENTIFICADOS NO COMPILADOR E ASSEMBLER
+===============================================================================
+Data: 15 de Setembro de 2025
+Análise dos testes da pasta CMinusCodes/tests
+
+===============================================================================
+TESTE 1: test_array_access.c
+===============================================================================
+
+CÓDIGO FONTE:
+```c
+int data[4];
+void main(void) {
+    int temp;
+    data[0] = 100; data[1] = 200; data[2] = 300; data[3] = 400;
+    temp = data[1];
+    data[1] = data[0] + data[2];
+    data[0] = temp;
+    output(data[0]); output(data[1]); output(data[2]); output(data[3]);
+}
+```
+
+RESULTADO ESPERADO: [200, 400, 300, 400]
+RESULTADO OBTIDO: [0, 4, 8, 12]
+
+PROBLEMAS IDENTIFICADOS:
+
+1. ASSEMBLER - Problema crítico na geração de endereços de array:
+   - As instruções ADDI estão usando R0 como destino ao invés de registradores adequados
+   - Exemplo: "ADDI R0, GP, 0" ao invés de "ADDI R4, GP, 0"
+   - Isso faz com que os endereços base dos arrays sejam perdidos
+   
+2. ASSEMBLER - Problema na implementação de process_array_access:
+   - A função não está usando os registradores corretos para calcular endereços
+   - Os valores estão sendo armazenados e carregados de endereços errados
+   - Array está sendo tratado como se tivesse endereços relativos ao invés de absolutos
+
+3. ASSEMBLER - Inconsistência na alocação de registradores:
+   - Alguns registradores estão sendo reutilizados incorretamente
+   - O endereço base do array GP + offset não está sendo calculado corretamente
+
+4. SIMULADOR - Endereços de memória inconsistentes:
+   - Arrays sendo armazenados em endereços como 100, 204, 308, 412
+   - Deveria ser em sequência: GP+0, GP+4, GP+8, GP+12 (148, 152, 156, 160)
+
+IMPACTO: CRÍTICO - Array access completamente quebrado
+
+===============================================================================
+TESTE 2: test_array_param.c
+===============================================================================
+
+CÓDIGO FONTE:
+```c
+int sumarray(int arr[], int n) {
+    int i; int sum;
+    sum = 0; i = 0;
+    while (i < n) { sum = sum + arr[i]; i = i + 1; }
+    return sum;
+}
+void main(void) {
+    int myarray[3]; int result;
+    myarray[0] = 10; myarray[1] = 20; myarray[2] = 30;
+    result = sumarray(myarray, 3);
+    output(result);
+}
+```
+
+RESULTADO ESPERADO: 60
+RESULTADO OBTIDO: 0
+
+PROBLEMAS IDENTIFICADOS:
+
+1. COMPILADOR - Arrays como parâmetros não são tratados corretamente:
+   - Array passado como parâmetro é declarado como local na função
+   - Não há passagem do endereço base do array original
+   - Função sumarray recebe array vazio ao invés do array preenchido
+
+2. ASSEMBLER - Mesmo problema ADDI R0 do teste anterior:
+   - Confirma que é bug sistemático no assembler
+   - Endereços de array não são calculados corretamente
+   - Valores 10, 20, 30 não são armazenados nas posições corretas
+
+3. COMPILADOR - Problema na geração de código para chamada de função:
+   - Parâmetros não são passados corretamente entre funções
+   - Contexto do array original se perde na chamada
+
+IMPACTO: CRÍTICO - Passagem de arrays como parâmetros quebrada
+
+===============================================================================
+TESTE 3: test_global_array.c
+===============================================================================
+
+CÓDIGO FONTE:
+```c
+int globalarray[5];
+void main(void) {
+    int i;
+    i = 0;
+    globalarray[0] = 10;
+    globalarray[1] = 20;
+    globalarray[2] = 30;
+    output(globalarray[0]);
+    output(globalarray[1]);
+    output(globalarray[2]);
+}
+```
+
+RESULTADO ESPERADO: [10, 20, 30]
+RESULTADO OBTIDO: [0, 4, 8]
+
+PROBLEMAS IDENTIFICADOS:
+
+1. ASSEMBLER - Mesmo bug ADDI R0 sistemático:
+   - Instruções "ADDI R0, GP, 0" aparecem em todas as operações de array
+   - R0 sempre é zero, então endereço base nunca é calculado corretamente
+   - Bug confirma problema fundamental no assembler
+
+2. ASSEMBLER - Arrays globais com endereçamento incorreto:
+   - Valores 10, 20, 30 são armazenados mas em endereços errados
+   - Sistema lê deslocamentos (0, 4, 8) em vez dos valores armazenados
+   - Problema tanto na escrita (SW) quanto na leitura (LW)
+
+3. SISTEMÁTICO - Padrão consistente de falha:
+   - Todos os tipos de array (local, global, parâmetro) apresentam mesmo problema
+   - Bug está no núcleo da geração de código MIPS para arrays
+   - Assembler corrigido ainda apresenta problemas fundamentais
+
+IMPACTO: CRÍTICO - Arrays globais completamente disfuncionais
+
+===============================================================================
+TESTE 4: test_loops_arrays.c
+===============================================================================
+
+CÓDIGO FONTE:
+```c
+int numbers[5];
+void main(void) {
+    int i; int sum;
+    i = 0;
+    while (i < 5) {
+        numbers[i] = (i + 1) * 10;  /* 10, 20, 30, 40, 50 */
+        i = i + 1;
+    }
+    i = 0; sum = 0;
+    while (i < 5) {
+        sum = sum + numbers[i];
+        i = i + 1;
+    }
+    output(sum);  /* Deve imprimir 150 (10+20+30+40+50) */
+    i = 0;
+    while (i < 3) {
+        output(numbers[i]);
+        i = i + 1;
+    }
+}
+```
+
+RESULTADO ESPERADO: [150, 10, 20, 30]
+RESULTADO OBTIDO: LOOP INFINITO (execução interrompida após 1000 ciclos)
+
+PROBLEMAS IDENTIFICADOS:
+
+1. ASSEMBLER - Bug crítico na condição de loop while:
+   - Condição while (i < 5) não está sendo avaliada corretamente
+   - Variável i começou em 0, mas chegou ao valor 49 no final da execução
+   - Controle de fluxo completamente quebrado
+
+2. ASSEMBLER - Mesmo problema ADDI R0 persistente:
+   - Bug sistemático "ADDI R0, GP, 0" presente em todas as operações de array
+   - Confirma problema fundamental não resolvido no assembler corrigido
+
+3. GRAVE - Condições de branch incorretas:
+   - BEQ R4, R0 sempre falha porque R0 = 156 (GP) e R4 = 0
+   - Condição de saída do loop nunca é satisfeita
+   - SLT e BEQ não estão trabalhando juntos corretamente
+
+4. CRÍTICO - Loop infinito em programas com while:
+   - Qualquer programa com loops while será executado indefinidamente
+   - Sistema não consegue processar condições de parada
+   - Timeout necessário para interromper execução
+
+IMPACTO: CRÍTICO - Loops while completamente quebrados, sistema inutilizável para programas iterativos
+
+===============================================================================
+TESTE 5: test_multiple_functions.c
+===============================================================================
+
+CÓDIGO FONTE:
+```c
+int add(int a, int b) { return a + b; }
+int multiply(int x, int y) { return x * y; }
+int calculate(int numa, int numb) {
+    int sumresult; int multresult;
+    sumresult = add(numa, numb);
+    multresult = multiply(sumresult, 2);
+    return multresult;
+}
+void main(void) {
+    int result;
+    result = calculate(3, 7);
+    output(result);
+}
+```
+
+RESULTADO ESPERADO: 20 (calculate(3,7) = multiply(add(3,7), 2) = multiply(10, 2) = 20)
+RESULTADO OBTIDO: LOOP INFINITO (execução interrompida após detecção de loop)
+
+PROBLEMAS IDENTIFICADOS:
+
+1. COMPILADOR - Rejeita identificadores com números:
+   - Erro léxico com 'num1', 'num2' no código original
+   - Problema: analisador léxico não aceita dígitos em identificadores
+   - Solução temporária: renomear para 'numa', 'numb'
+
+2. CRÍTICO - Passagem de parâmetros entre funções falha completamente:
+   - Parâmetros 3 e 7 não chegam nas funções add() e multiply()
+   - Todas as operações são feitas com valores 0
+   - Resultado: add(0,0)=0, multiply(0,2)=0, saída final=0
+
+3. GRAVE - Problema na inicialização de Frame Pointer:
+   - Parâmetros são carregados de endereços de memória vazios (0)
+   - LW R7, 0(FP) e LW R8, 1(FP) retornam 0 sempre
+   - Sistema de pilha não está passando argumentos corretamente
+
+4. CRÍTICO - Return address corrompido causa loop infinito:
+   - RA (Return Address) fica como 0 após chamadas de função
+   - JR RA salta para PC=0, reiniciando o programa
+   - Sistema detecta loop e interrompe execução
+
+5. ASSEMBLER - Gerenciamento de pilha incorreto:
+   - Frame Pointer não aponta para posições corretas dos parâmetros
+   - Stack Pointer manipulation está incorreta
+   - Contexto de função se perde entre chamadas
+
+IMPACTO: CRÍTICO - Chamadas de função completamente quebradas, sistema inutilizável para programas modulares
+
+===============================================================================
+TESTE 6: test_variable_scope.c
+===============================================================================
+
+CÓDIGO FONTE:
+```c
+int globalvar;
+int testscope(int param) {
+    int localvar;
+    localvar = param + 5;
+    globalvar = localvar * 2;
+    return localvar;
+}
+void main(void) {
+    int localmain;
+    globalvar = 100;
+    localmain = testscope(10);
+    output(localmain); output(globalvar);
+    globalvar = globalvar + localmain;
+    output(globalvar);
+}
+```
+
+RESULTADO ESPERADO: [15, 30, 45]
+  - testscope(10): localvar = 10+5 = 15, globalvar = 15*2 = 30, return 15
+  - localmain = 15, output(15)
+  - output(globalvar = 30)
+  - globalvar = 30+15 = 45, output(45)
+
+RESULTADO OBTIDO: [5, 10, 15]
+
+PROBLEMAS IDENTIFICADOS:
+
+1. ASSEMBLADOR - Passagem de parâmetros parcialmente quebrada:
+   - Parâmetro 10 não chega corretamente na função testscope
+   - LW R2, 0(FP) retorna 0 em vez de 10
+   - Cálculo: localvar = 0+5 = 5 (deveria ser 10+5 = 15)
+
+2. ASSEMBLADOR - Problema na configuração do Frame Pointer:
+   - FP não aponta para a posição correta dos parâmetros na pilha
+   - Parâmetro é passado via registrador R4, mas função lê de memória vazia
+   - Sistema de pilha não sincroniza registradores com memória
+
+3. PARCIALMENTE FUNCIONAL - Operações aritméticas e atribuições funcionam:
+   - Globalvar corretamente atualizada (inicializada como 100, alterada para 10, depois 15)
+   - Operações + e * executam corretamente
+   - Return value é passado corretamente (localvar=5 retornado para localmain)
+
+4. PARCIALMENTE FUNCIONAL - Variáveis globais funcionam:
+   - globalvar é acessada e modificada corretamente entre funções
+   - SW R7, 0(GP) e LW R7, 0(GP) funcionam apropriadamente
+   - Escopo global mantém estado entre chamadas
+
+5. BUG SUTIL - Valor inicial da globalvar é sobrescrito:
+   - globalvar inicializada como 100 em main
+   - testscope sobrescreve com localvar*2 = 5*2 = 10
+   - Valor correto seria 15*2 = 30
+
+IMPACTO: GRAVE - Passagem de parâmetros falha, mas estruturas básicas funcionam parcialmente
+
+===============================================================================
+RESUMO EXECUTIVO DOS PROBLEMAS IDENTIFICADOS
+===============================================================================
+
+PROBLEMAS CRÍTICOS (Sistema inutilizável):
+1. Arrays completamente quebrados - bug ADDI R0 sistemático
+2. Loops while infinitos - condições de parada não funcionam  
+3. Chamadas de função com múltiplos parâmetros falham completamente
+
+PROBLEMAS GRAVES (Funcionalidade limitada):
+4. Passagem de parâmetros simples parcialmente quebrada
+5. Compilador rejeita identificadores com números
+6. Sistema de pilha inconsistente
+
+FUNCIONALIDADES QUE FUNCIONAM:
+- Operações aritméticas básicas (+, -, *, /)
+- Variáveis globais e escopo
+- Atribuições simples
+- Comandos output
+- Estrutura básica de funções (sem parâmetros complexos)
+
+CONCLUSÃO: O compilador e assembler apresentam problemas fundamentais que tornam
+o sistema inadequado para programas reais. É necessária revisão completa dos
+mecanismos de arrays, controle de fluxo e passagem de parâmetros.
+===============================================================================
+
+CÓDIGO FONTE:
+```c
+int testarray[3];
+int sumarray(int arr[], int size) {
+    int i; int sum; sum = 0; i = 0;
+    while (i < size) {
+        sum = sum + arr[i];
+        i = i + 1;
+    }
+    return sum;
+}
+void main(void) {
+    int result;
+    testarray[0] = 5; testarray[1] = 10; testarray[2] = 15;
+    result = sumarray(testarray, 3);
+    output(result);
+}
+```
+
+RESULTADO ESPERADO: 30 (5+10+15)
+RESULTADO OBTIDO: 0
+
+PROBLEMAS IDENTIFICADOS:
+
+1. COMPILADOR - Tratamento incorreto de parâmetros array:
+   - Parâmetro 'arr[]' está sendo alocado como array local com tamanho 10: "(alloc,arr,10, )"
+   - Deveria ser tratado como ponteiro/referência, não como novo array
+   - Isso corrompe a estrutura de passagem de parâmetros
+
+2. ASSEMBLER - Endereços de arrays globais incorretos:
+   - Mesmo problema do teste anterior com ADDI usando R0
+   - Arrays sendo armazenados em endereços errados (5, 14, 23) 
+   - Deveria ser GP+0, GP+4, GP+8 (196, 200, 204)
+
+3. ASSEMBLER - Passagem de parâmetros com arrays:
+   - Array 'testarray' sendo passado como endereço R19=196 (correto)
+   - Mas função não consegue acessar corretamente devido ao problema do array local
+
+4. SIMULADOR - Loop while funcionando corretamente:
+   - Condição i < size sendo avaliada (mas size=0 devido ao problema de parâmetros)
+   - Comparação (1 < 0) = 0, saindo do loop imediatamente
+   - Retornando sum=0
+
+5. FUNÇÃO - Problema de passagem de parâmetro size:
+   - O valor 3 não está chegando corretamente na função
+   - LW R5, 10(FP) carrega 0 ao invés de 3
+
+IMPACTO: CRÍTICO - Arrays como parâmetros não funcionam
+
+===============================================================================

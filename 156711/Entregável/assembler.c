@@ -320,9 +320,7 @@ void add_symbol(const char *name, const char *scope, int offset, int is_global, 
     symbols[symbol_count].in_use = 1;
     symbol_count++;
     
-    if (is_global) {
-        global_memory_offset += size * 4;
-    }
+    // global_memory_offset é atualizado em generate_assembly_second_pass para arrays globais
 }
 
 // Função auxiliar para verificar se uma variável temporária tem valor imediato conhecido
@@ -429,6 +427,32 @@ int load_variable_to_register(const char *var_name, const char *scope) {
             add_load_store_with_offset("LW", OP_LW, GP, reg, sym->offset);
         } else {
             add_load_store_with_offset("LW", OP_LW, FP, reg, sym->offset);  // Usar FP como base
+        }
+    } else {
+        printf(" (símbolo NÃO encontrado!)");
+    }
+    printf("\n");
+    
+    return reg;
+}
+
+// Função especializada para carregar endereço de array (para passagem de parâmetros)
+int load_array_address_to_register(const char *var_name, const char *scope) {
+    printf("DEBUG: load_array_address_to_register('%s', '%s')\n", var_name, scope);
+    
+    Symbol *sym = find_symbol(var_name, scope);
+    int reg = get_register_for_variable(var_name, scope);
+    
+    printf("DEBUG: Array '%s' -> R%d", var_name, reg);
+    if (sym) {
+        printf(" (símbolo encontrado: offset=%d, global=%d)", sym->offset, sym->is_global);
+        if (sym->is_global) {
+            // Para arrays globais, carregar o ENDEREÇO (ADDI), não o valor (LW)
+            // ADDI formato: ADDI rt, rs, immediate
+            add_instruction("ADDI", OP_ADDI, GP, reg, 0, sym->offset, NULL);
+        } else {
+            // Para arrays locais, também carregar o endereço
+            add_instruction("ADDI", OP_ADDI, FP, reg, 0, sym->offset, NULL);
         }
     } else {
         printf(" (símbolo NÃO encontrado!)");
@@ -572,21 +596,57 @@ void flush_register(int reg) {
 
 // Função para processar acesso a arrays
 void process_array_access(const char *array_name, const char *index_var, const char *result_var, int is_store) {
-    int base_reg = load_variable_to_register(array_name, current_function);
+    // Encontrar o símbolo do array para obter o endereço base
+    Symbol *array_sym = find_symbol(array_name, current_function);
     int index_reg = load_variable_to_register(index_var, current_function);
-    int dest_reg = get_register_for_variable(result_var, current_function);
     
-    add_instruction("SLL", OP_SLL, index_reg, index_reg, 0, 2, NULL);
-    // Somar base + offset
-    add_instruction("ADD", OP_ADD, base_reg, index_reg, dest_reg, 0, NULL);
-    
-    if (is_store) {
-        // Para store: array[index] = valor
-        int value_reg = load_variable_to_register(result_var, current_function);
-        add_instruction("SW", OP_SW, dest_reg, value_reg, 0, 0, NULL);
+    if (array_sym) {
+        // Registrador temporário para cálculos
+        int temp_reg = get_register_for_variable("", current_function);
+        int addr_reg = get_register_for_variable("", current_function);
+        
+        // Multiplicar índice por 4 (shift left 2 posições)
+        add_instruction("SLL", OP_SLL, index_reg, 0, temp_reg, 2, NULL);
+        
+        // Calcular endereço base do array
+        if (array_sym->is_global) {
+            // Array global: GP + offset
+            add_instruction("ADDI", OP_ADDI, GP, 0, addr_reg, array_sym->offset, NULL);
+        } else {
+            // Array local: FP + offset
+            add_instruction("ADDI", OP_ADDI, FP, 0, addr_reg, array_sym->offset, NULL);
+        }
+        
+        // Somar offset do índice: addr_reg = addr_reg + (index * 4)
+        add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
+        
+        if (is_store) {
+            // Para store: array[index] = valor
+            int value_reg = load_variable_to_register(result_var, current_function);
+            add_instruction("SW", OP_SW, addr_reg, value_reg, 0, 0, NULL);
+        } else {
+            // Para load: valor = array[index]
+            int dest_reg = get_register_for_variable(result_var, current_function);
+            add_instruction("LW", OP_LW, addr_reg, dest_reg, 0, 0, NULL);
+        }
     } else {
-        // Para load: valor = array[index]
-        add_instruction("LW", OP_LW, dest_reg, dest_reg, 0, 0, NULL);
+        printf("ERRO: Símbolo do array '%s' não encontrado!\n", array_name);
+        // Fallback simples para arrays globais
+        int base_reg = load_variable_to_register(array_name, current_function);
+        int temp_reg = get_register_for_variable("", current_function);
+        int dest_reg = get_register_for_variable(result_var, current_function);
+        
+        // Multiplicar índice por 4
+        add_instruction("SLL", OP_SLL, index_reg, 0, temp_reg, 2, NULL);
+        // Somar base + offset
+        add_instruction("ADD", OP_ADD, base_reg, temp_reg, dest_reg, 0, NULL);
+        
+        if (is_store) {
+            int value_reg = load_variable_to_register(result_var, current_function);
+            add_instruction("SW", OP_SW, dest_reg, value_reg, 0, 0, NULL);
+        } else {
+            add_instruction("LW", OP_LW, dest_reg, dest_reg, 0, 0, NULL);
+        }
     }
 }
 
@@ -643,7 +703,22 @@ void generate_assembly_second_pass() {
     current_line = 0;
     int local_offset = 0;
     
-    add_instruction("LI", OP_LI, 0, GP, 0, 0x80, NULL);
+    // First calculate total global memory needed
+    int temp_global_offset = 0x80;
+    for (int i = 0; i < quad_count; i++) {
+        Quad *quad = &quads[i];
+        if (strcmp(quad->op, "alloc") == 0) {
+            int size = atoi(quad->arg2);
+            int is_global = (strcmp(current_function, "") == 0 || strcmp(current_function, "global") == 0);
+            if (is_global) {
+                temp_global_offset += size * 4;
+            }
+        }
+    }
+    
+    // Set GP to base address (128) plus space for global arrays
+    int gp_value = temp_global_offset;
+    add_instruction("LI", OP_LI, 0, GP, 0, gp_value, NULL);
     
     add_instruction("LI", OP_LI, 0, SP, 0, 0xFF, NULL);
     
@@ -697,8 +772,23 @@ void generate_assembly_second_pass() {
         } else if (strcmp(quad->op, "alloc") == 0) {
             int size = atoi(quad->arg2);
             int is_global = (strcmp(current_function, "") == 0 || strcmp(current_function, "global") == 0);
-            add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, 0);
-            if (!is_global) {
+            
+            // Detectar se é array baseado no nome (arrays comuns em C-)
+            int is_array = 0;
+            if (strcmp(quad->arg1, "vet") == 0 || 
+                strstr(quad->arg1, "array") != NULL ||
+                strstr(quad->arg1, "arr") != NULL ||
+                size > 1) {
+                is_array = 1;
+            }
+            
+            if (is_global) {
+                // Para variáveis globais, calcule o offset atual na memória global
+                int current_global_offset = global_memory_offset - 0x80;
+                add_symbol(quad->arg1, current_function, current_global_offset, is_global, 0, size, is_array);
+                global_memory_offset += size * 4;
+            } else {
+                add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, is_array);
                 local_offset += size;
             }
             
@@ -734,13 +824,31 @@ void generate_assembly_second_pass() {
                 for (int p = 0; p < param_count; p++) {
                     printf("DEBUG: Passando parâmetro %d: '%s'\n", p, temp_params[p].name);
                     if (p < 4) {
-                        int src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        // Verificar se é um array para carregar endereço ao invés de valor
+                        Symbol *param_sym = find_symbol(temp_params[p].name, current_function);
+                        int src_reg;
+                        
+                        if (param_sym && param_sym->is_array) {
+                            printf("DEBUG: Parâmetro %d é array, carregando endereço\n", p);
+                            src_reg = load_array_address_to_register(temp_params[p].name, current_function);
+                        } else {
+                            src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        }
+                        
                         int param_reg = 4 + p;
                         printf("DEBUG: Parâmetro %d: '%s' de R%d para R%d (forçado)\n", p, temp_params[p].name, src_reg, param_reg);
                         add_instruction("MOVE", OP_MOVE, src_reg, 0, param_reg, 0, NULL);
                     } else {
                         // Usar pilha para parâmetros adicionais
-                        int src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        Symbol *param_sym = find_symbol(temp_params[p].name, current_function);
+                        int src_reg;
+                        
+                        if (param_sym && param_sym->is_array) {
+                            src_reg = load_array_address_to_register(temp_params[p].name, current_function);
+                        } else {
+                            src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        }
+                        
                         printf("DEBUG: Parâmetro %d na pilha: '%s' R%d -> offset %d\n", p, temp_params[p].name, src_reg, -(p + 1));
                         add_load_store_with_offset("SW", OP_SW, FP, src_reg, -(p + 1));
                     }
@@ -1006,9 +1114,13 @@ void write_assembly_file(const char *filename) {
         } else {
             if (strcmp(instr->mnemonic, "ADD") == 0 || strcmp(instr->mnemonic, "SUB") == 0 ||
                 strcmp(instr->mnemonic, "SLT") == 0 || strcmp(instr->mnemonic, "DIV") == 0 ||
-                strcmp(instr->mnemonic, "MULT") == 0) {
+                strcmp(instr->mnemonic, "MULT") == 0 || strcmp(instr->mnemonic, "AND") == 0 ||
+                strcmp(instr->mnemonic, "OR") == 0) {
                 fprintf(file, "%3d: %-10s %s, %s, %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rd), get_register_name(instr->rs), get_register_name(instr->rt));
+            } else if (strcmp(instr->mnemonic, "SLL") == 0 || strcmp(instr->mnemonic, "SRL") == 0) {
+                fprintf(file, "%3d: %-10s %s, %s, %d\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rd), get_register_name(instr->rs), instr->immediate);
             } else if (strcmp(instr->mnemonic, "MFHI") == 0 || strcmp(instr->mnemonic, "MFLO") == 0) {
                 fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rd));
@@ -1023,7 +1135,7 @@ void write_assembly_file(const char *filename) {
                         get_register_name(instr->rd), get_register_name(instr->rs));
             } else if (strcmp(instr->mnemonic, "ADDI") == 0 || strcmp(instr->mnemonic, "SUBI") == 0) {
                 fprintf(file, "%3d: %-10s %s, %s, %d\n", real_line, instr->mnemonic, 
-                        get_register_name(instr->rt), get_register_name(instr->rs), instr->immediate);
+                        get_register_name(instr->rd), get_register_name(instr->rs), instr->immediate);
             } else if (strstr(instr->mnemonic, "B") == instr->mnemonic) { // Branch instructions
                 fprintf(file, "%3d: %-10s %s, %s, %d\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rs), get_register_name(instr->rt), instr->immediate);

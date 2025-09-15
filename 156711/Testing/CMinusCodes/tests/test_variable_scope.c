@@ -1,6 +1,6 @@
 int globalvar;
 
-int test_scope(int param)
+int testscope(int param)
 {
     int localvar;
     localvar = param + 5;
@@ -13,8 +13,8 @@ void main(void)
     int localmain;
     
     globalvar = 100;
-    
-    localmain = test_scope(10);
+
+    localmain = testscope(10);
 
     output(localmain);
 

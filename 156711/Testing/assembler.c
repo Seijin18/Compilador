@@ -214,6 +214,12 @@ void add_instruction(const char *mnemonic, int opcode, int rs, int rt, int rd, i
     
     if (instruction_count >= MAX_INSTRUCTIONS) return;
     
+    // Debug detalhado da instrução being added
+    printf("ADD_INSTRUCTION[%d]: %s (op=%d) rs=R%d rt=R%d rd=R%d imm=%d", 
+           instruction_count, mnemonic, opcode, rs, rt, rd, immediate);
+    if (label && strlen(label) > 0) printf(" label='%s'", label);
+    printf("\n");
+    
     Instruction *instr = &instructions[instruction_count];
     strcpy(instr->mnemonic, mnemonic);
     instr->opcode = opcode;
@@ -224,6 +230,17 @@ void add_instruction(const char *mnemonic, int opcode, int rs, int rt, int rd, i
     instr->line_number = current_line++;
     instr->is_label = 0;
     instr->needs_label_fix = 0;
+    
+    // Debug específico para instruções críticas
+    if (strcmp(mnemonic, "ADDI") == 0) {
+        printf("  ADDI PREVIEW: Will output 'ADDI R%d, R%d, %d'\n", rt, rs, immediate);
+    }
+    if (strcmp(mnemonic, "SW") == 0 || strcmp(mnemonic, "LW") == 0) {
+        printf("  MEM PREVIEW: Will output '%s R%d, %d(R%d)'\n", mnemonic, rt, immediate, rs);
+    }
+    if (strcmp(mnemonic, "ADD") == 0) {
+        printf("  ADD PREVIEW: Will output 'ADD R%d, R%d, R%d'\n", rd, rs, rt);
+    }
     
     if (strcmp(mnemonic, "MOVE") == 0) {
         printf("DEBUG: add_instruction MOVE[%d]: rs=%d, rt=%d, rd=%d (Armazenado: rs=%d, rd=%d)\n", 
@@ -320,9 +337,7 @@ void add_symbol(const char *name, const char *scope, int offset, int is_global, 
     symbols[symbol_count].in_use = 1;
     symbol_count++;
     
-    if (is_global) {
-        global_memory_offset += size * 4;
-    }
+    // global_memory_offset é atualizado em generate_assembly_second_pass para arrays globais
 }
 
 // Função auxiliar para verificar se uma variável temporária tem valor imediato conhecido
@@ -360,7 +375,7 @@ int get_register_for_variable(const char *var_name, const char *scope) {
     printf("DEBUG: get_register_for_variable('%s', '%s')\n", var_name, scope);
     
     // Verificar se a variável já está em um registrador
-    for (int i = 1; i < MAX_REGISTERS - 2; i++) {
+    for (int i = 1; i <= 27; i++) { // R1-R27, excluindo R0, R28(GP), R29(SP), R30(FP), R31(RA)
         if (registers[i].is_busy && strcmp(registers[i].variable, var_name) == 0) {
             registers[i].last_used = time_counter++;
             printf("DEBUG: Variável '%s' já em R%d (reutilizando)\n", var_name, i);
@@ -372,7 +387,7 @@ int get_register_for_variable(const char *var_name, const char *scope) {
     int best_reg = 1;
     int oldest_time = registers[1].last_used;
     
-    for (int i = 1; i < MAX_REGISTERS - 2; i++) {
+    for (int i = 1; i <= 27; i++) { // R1-R27, protegendo registradores especiais
         if (!registers[i].is_busy) {
             best_reg = i;
             printf("DEBUG: Registrador livre encontrado: R%d\n", i);
@@ -429,6 +444,32 @@ int load_variable_to_register(const char *var_name, const char *scope) {
             add_load_store_with_offset("LW", OP_LW, GP, reg, sym->offset);
         } else {
             add_load_store_with_offset("LW", OP_LW, FP, reg, sym->offset);  // Usar FP como base
+        }
+    } else {
+        printf(" (símbolo NÃO encontrado!)");
+    }
+    printf("\n");
+    
+    return reg;
+}
+
+// Função especializada para carregar endereço de array (para passagem de parâmetros)
+int load_array_address_to_register(const char *var_name, const char *scope) {
+    printf("DEBUG: load_array_address_to_register('%s', '%s')\n", var_name, scope);
+    
+    Symbol *sym = find_symbol(var_name, scope);
+    int reg = get_register_for_variable(var_name, scope);
+    
+    printf("DEBUG: Array '%s' -> R%d", var_name, reg);
+    if (sym) {
+        printf(" (símbolo encontrado: offset=%d, global=%d)", sym->offset, sym->is_global);
+        if (sym->is_global) {
+            // Para arrays globais, carregar o ENDEREÇO (ADDI), não o valor (LW)
+            // ADDI formato: ADDI rt, rs, immediate
+            add_instruction("ADDI", OP_ADDI, GP, reg, 0, sym->offset, NULL);
+        } else {
+            // Para arrays locais, também carregar o endereço
+            add_instruction("ADDI", OP_ADDI, FP, reg, 0, sym->offset, NULL);
         }
     } else {
         printf(" (símbolo NÃO encontrado!)");
@@ -572,42 +613,70 @@ void flush_register(int reg) {
 
 // Função para processar acesso a arrays
 void process_array_access(const char *array_name, const char *index_var, const char *result_var, int is_store) {
+    printf("\n=== DEBUG ARRAY ACCESS ===\n");
+    printf("Array: '%s', Index: '%s', Result: '%s', %s\n", 
+           array_name, index_var, result_var, is_store ? "STORE" : "LOAD");
+    
     // Encontrar o símbolo do array para obter o endereço base
     Symbol *array_sym = find_symbol(array_name, current_function);
+    if (!array_sym) {
+        printf("ERRO: Símbolo '%s' não encontrado!\n", array_name);
+        return;
+    }
+    
+    printf("Symbol found: name='%s', offset=%d, global=%s, is_array=%s, size=%d\n",
+           array_sym->name, array_sym->offset, array_sym->is_global ? "YES" : "NO",
+           array_sym->is_array ? "YES" : "NO", array_sym->size);
+    
     int index_reg = load_variable_to_register(index_var, current_function);
-    int dest_reg = get_register_for_variable(result_var, current_function);
+    printf("Index register: R%d (loaded from '%s')\n", index_reg, index_var);
     
     if (array_sym) {
         // Calcular endereço: base_addr + (index * 4)
         int temp_reg = get_register_for_variable("", current_function); // registrador temporário
+        int addr_reg = get_register_for_variable("addr_temp", current_function); // registrador para endereço
+        printf("Temp register: R%d, Address register: R%d\n", temp_reg, addr_reg);
         
         // Multiplicar índice por 4 (shift left 2 posições)
+        printf("Generating: SLL R%d, R%d, 2 (index * 4)\n", temp_reg, index_reg);
         add_instruction("SLL", OP_SLL, index_reg, 0, temp_reg, 2, NULL);
         
         // Calcular endereço final
         if (array_sym->is_global) {
             // Array global: GP + offset + (index * 4)
-            add_instruction("ADDI", OP_ADDI, GP, 0, dest_reg, array_sym->offset, NULL);
-            add_instruction("ADD", OP_ADD, dest_reg, temp_reg, dest_reg, 0, NULL);
+            printf("Global array: GP=%d, offset=%d\n", GP, array_sym->offset);
+            printf("Generating: ADDI R%d, GP, %d (base address)\n", addr_reg, array_sym->offset);
+            add_instruction("ADDI", OP_ADDI, GP, addr_reg, 0, array_sym->offset, NULL);
+            printf("Generating: ADD R%d, R%d, R%d (final address)\n", addr_reg, addr_reg, temp_reg);
+            add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
         } else {
             // Array local: FP + offset + (index * 4)
-            add_instruction("ADDI", OP_ADDI, FP, 0, dest_reg, array_sym->offset, NULL);
-            add_instruction("ADD", OP_ADD, dest_reg, temp_reg, dest_reg, 0, NULL);
+            printf("Local array: FP=%d, offset=%d\n", FP, array_sym->offset);
+            printf("Generating: ADDI R%d, FP, %d (base address)\n", addr_reg, array_sym->offset);
+            add_instruction("ADDI", OP_ADDI, FP, addr_reg, 0, array_sym->offset, NULL);
+            printf("Generating: ADD R%d, R%d, R%d (final address)\n", addr_reg, addr_reg, temp_reg);
+            add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
         }
         
         if (is_store) {
             // Para store: array[index] = valor
             int value_reg = load_variable_to_register(result_var, current_function);
-            add_instruction("SW", OP_SW, dest_reg, value_reg, 0, 0, NULL);
+            printf("STORE: Value register R%d (from '%s')\n", value_reg, result_var);
+            printf("Generating: SW R%d, 0(R%d) (store value at address)\n", value_reg, addr_reg);
+            add_instruction("SW", OP_SW, addr_reg, value_reg, 0, 0, NULL);
         } else {
             // Para load: valor = array[index]
-            add_instruction("LW", OP_LW, dest_reg, 0, dest_reg, 0, NULL);
+            int dest_reg = get_register_for_variable(result_var, current_function);
+            printf("LOAD: Dest register R%d (to '%s')\n", dest_reg, result_var);
+            printf("Generating: LW R%d, 0(R%d) (load value from address)\n", dest_reg, addr_reg);
+            add_instruction("LW", OP_LW, addr_reg, dest_reg, 0, 0, NULL);
         }
     } else {
         printf("ERRO: Símbolo do array '%s' não encontrado!\n", array_name);
         // Fallback simples para arrays globais
         int base_reg = load_variable_to_register(array_name, current_function);
         int temp_reg = get_register_for_variable("", current_function);
+        int dest_reg = get_register_for_variable(result_var, current_function);
         
         // Multiplicar índice por 4
         add_instruction("SLL", OP_SLL, index_reg, 0, temp_reg, 2, NULL);
@@ -676,7 +745,22 @@ void generate_assembly_second_pass() {
     current_line = 0;
     int local_offset = 0;
     
-    add_instruction("LI", OP_LI, 0, GP, 0, 0x80, NULL);
+    // First calculate total global memory needed
+    int temp_global_offset = 0x80;
+    for (int i = 0; i < quad_count; i++) {
+        Quad *quad = &quads[i];
+        if (strcmp(quad->op, "alloc") == 0) {
+            int size = atoi(quad->arg2);
+            int is_global = (strcmp(current_function, "") == 0 || strcmp(current_function, "global") == 0);
+            if (is_global) {
+                temp_global_offset += size * 4;
+            }
+        }
+    }
+    
+    // Set GP to base address (128) plus space for global arrays
+    int gp_value = temp_global_offset;
+    add_instruction("LI", OP_LI, 0, GP, 0, gp_value, NULL);
     
     add_instruction("LI", OP_LI, 0, SP, 0, 0xFF, NULL);
     
@@ -730,8 +814,23 @@ void generate_assembly_second_pass() {
         } else if (strcmp(quad->op, "alloc") == 0) {
             int size = atoi(quad->arg2);
             int is_global = (strcmp(current_function, "") == 0 || strcmp(current_function, "global") == 0);
-            add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, 0);
-            if (!is_global) {
+            
+            // Detectar se é array baseado no nome (arrays comuns em C-)
+            int is_array = 0;
+            if (strcmp(quad->arg1, "vet") == 0 || 
+                strstr(quad->arg1, "array") != NULL ||
+                strstr(quad->arg1, "arr") != NULL ||
+                size > 1) {
+                is_array = 1;
+            }
+            
+            if (is_global) {
+                // Para variáveis globais, calcule o offset atual na memória global
+                int current_global_offset = global_memory_offset - 0x80;
+                add_symbol(quad->arg1, current_function, current_global_offset, is_global, 0, size, is_array);
+                global_memory_offset += size * 4;
+            } else {
+                add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, is_array);
                 local_offset += size;
             }
             
@@ -767,13 +866,31 @@ void generate_assembly_second_pass() {
                 for (int p = 0; p < param_count; p++) {
                     printf("DEBUG: Passando parâmetro %d: '%s'\n", p, temp_params[p].name);
                     if (p < 4) {
-                        int src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        // Verificar se é um array para carregar endereço ao invés de valor
+                        Symbol *param_sym = find_symbol(temp_params[p].name, current_function);
+                        int src_reg;
+                        
+                        if (param_sym && param_sym->is_array) {
+                            printf("DEBUG: Parâmetro %d é array, carregando endereço\n", p);
+                            src_reg = load_array_address_to_register(temp_params[p].name, current_function);
+                        } else {
+                            src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        }
+                        
                         int param_reg = 4 + p;
                         printf("DEBUG: Parâmetro %d: '%s' de R%d para R%d (forçado)\n", p, temp_params[p].name, src_reg, param_reg);
                         add_instruction("MOVE", OP_MOVE, src_reg, 0, param_reg, 0, NULL);
                     } else {
                         // Usar pilha para parâmetros adicionais
-                        int src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        Symbol *param_sym = find_symbol(temp_params[p].name, current_function);
+                        int src_reg;
+                        
+                        if (param_sym && param_sym->is_array) {
+                            src_reg = load_array_address_to_register(temp_params[p].name, current_function);
+                        } else {
+                            src_reg = load_variable_to_register(temp_params[p].name, current_function);
+                        }
+                        
                         printf("DEBUG: Parâmetro %d na pilha: '%s' R%d -> offset %d\n", p, temp_params[p].name, src_reg, -(p + 1));
                         add_load_store_with_offset("SW", OP_SW, FP, src_reg, -(p + 1));
                     }
@@ -836,9 +953,11 @@ void generate_assembly_second_pass() {
             }
             
         } else if (strcmp(quad->op, "load") == 0) {
+            printf("\n>>> PROCESSING QUAD: LOAD %s[%s] -> %s\n", quad->arg1, quad->arg2, quad->arg3);
             process_array_access(quad->arg1, quad->arg2, quad->arg3, 0);
             
         } else if (strcmp(quad->op, "store") == 0) {
+            printf("\n>>> PROCESSING QUAD: STORE %s -> %s[%s]\n", quad->arg3, quad->arg1, quad->arg2);
             process_array_access(quad->arg1, quad->arg2, quad->arg3, 1);
             
         } else if (strcmp(quad->op, "+") == 0) {

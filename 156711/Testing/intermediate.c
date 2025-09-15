@@ -250,7 +250,14 @@ static char* genNode(AASNode* node, FILE* out) {
                     emitQuad("label", labelStart, " ", " ");
                     char* cond = genNode(node->children, out);
                     emitQuad("if_f", cond, labelEnd, " ");
-                    genNode(node->children->sibling, out);
+                    
+                    // Process all statements in the body
+                    AASNode* bodyNode = node->children->sibling;
+                    while (bodyNode) {
+                        genNode(bodyNode, out);
+                        bodyNode = bodyNode->sibling;
+                    }
+                    
                     emitQuad("goto", labelStart, " ", " ");
                     emitQuad("label", labelEnd, " ", " ");
                     return NULL;
