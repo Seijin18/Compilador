@@ -1,0 +1,34 @@
+Stmt: Prog
+----Exp: Type: int
+--------Stmt: Vet
+------------Exp: Id: globalarray
+------------Exp: Const: 5
+----Exp: Type: void
+--------Stmt: Func: main
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: globalarray
+--------------------Exp: Const: 0
+----------------Exp: Const: 10
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: globalarray
+--------------------Exp: Const: 1
+----------------Exp: Const: 20
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: globalarray
+--------------------Exp: Const: 2
+----------------Exp: Const: 30
+------------Stmt: Output
+----------------Exp: VetId
+--------------------Exp: Id: globalarray
+--------------------Exp: Const: 0
+------------Stmt: Output
+----------------Exp: VetId
+--------------------Exp: Id: globalarray
+--------------------Exp: Const: 1
+------------Stmt: Output
+----------------Exp: VetId
+--------------------Exp: Id: globalarray
+--------------------Exp: Const: 2

@@ -1,0 +1,13 @@
+Formato da Tabela de Simbolos:
+Nome;	Escopo;	Tipo;	Tipo de Identificador;	Linha
+globalarray;	global;	int;	Variable;		1
+main;	global;	void;	Function;		3
+globalarray;	main;	int;	Function;		5
+globalarray;	main;	int;	Variable;		5
+globalarray;	main;	int;	Function;		6
+globalarray;	main;	int;	Variable;		6
+globalarray;	main;	int;	Function;		7
+globalarray;	main;	int;	Variable;		7
+globalarray;	main;	int;	Variable;		9
+globalarray;	main;	int;	Variable;		10
+globalarray;	main;	int;	Variable;		11
