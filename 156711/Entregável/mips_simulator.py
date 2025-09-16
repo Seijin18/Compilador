@@ -14,7 +14,7 @@ class MIPSSimulator:
         # Banco de registradores (32 registradores)
         self.registers = [0] * 32
 
-        # Memória RAM (256 words de 32 bits cada)
+        # Memória RAM (256 bytes)
         self.memory = [0] * 256
 
         # Program Counter
@@ -55,10 +55,10 @@ class MIPSSimulator:
         self.debug_log = []
         self.debug_file = None
 
-        print(f"🔧 Simulador MIPS inicializado")
-        print(f"📊 Memória: {len(self.memory)} bytes")
-        print(f"📋 Registradores: {len(self.registers)} de {architecture_bits} bits")
-        print(f"🔢 Entradas programadas: {self.input_values}")
+        print(f"Simulador MIPS inicializado")
+        print(f"Memória: {len(self.memory)} bytes")
+        print(f"Registradores: {len(self.registers)} de {architecture_bits} bits")
+        print(f"Entradas programadas: {self.input_values}")
 
     def start_debug_log(self, filename="execution_debug.txt"):
         """Inicia o arquivo de log de debug"""
@@ -68,7 +68,7 @@ class MIPSSimulator:
         self.debug_file.write(f"Arquitetura: {self.architecture_bits} bits\n")
         self.debug_file.write(f"Entradas programadas: {self.input_values}\n")
         self.debug_file.write("=" * 60 + "\n\n")
-        print(f"📝 Log de debug iniciado: {filename}")
+        print(f"Log de debug iniciado: {filename}")
 
     def log_debug(self, message):
         """Adiciona uma mensagem ao log de debug"""
@@ -116,11 +116,11 @@ class MIPSSimulator:
             self.debug_file.write(f"Resultado final: {self.output_value}\n")
             self.debug_file.close()
             self.debug_file = None
-            print(f"📝 Log de debug salvo com {self.cycle_count} ciclos registrados")
+            print(f"Log de debug salvo com {self.cycle_count} ciclos registrados")
 
     def load_assembly(self, filename):
         """Carrega o arquivo assembly e converte para instruções"""
-        print(f"\n📂 Carregando assembly: {filename}")
+        print(f"\nCarregando assembly: {filename}")
 
         with open(filename, "r", encoding="utf-8") as file:
             lines = file.readlines()
@@ -136,9 +136,7 @@ class MIPSSimulator:
             if line.endswith(":"):
                 label = line[:-1]
                 self.labels[label] = len(self.instructions)
-                print(
-                    f"🏷️  Label encontrado: {label} -> posição {len(self.instructions)}"
-                )
+                print(f"Label encontrado: {label} -> posição {len(self.instructions)}")
                 continue
 
             # Processar instruções numeradas
@@ -151,10 +149,10 @@ class MIPSSimulator:
                 instruction = self.parse_instruction(instruction_text)
                 if instruction:
                     self.instructions.append(instruction)
-                    print(f"📋 [{addr:2d}] {instruction}")
+                    print(f"[{addr:2d}] {instruction}")
 
-        print(f"✅ Carregadas {len(self.instructions)} instruções")
-        print(f"🏷️  Labels: {self.labels}")
+        print(f"Carregadas {len(self.instructions)} instruções")
+        print(f"Labels: {self.labels}")
 
     def parse_instruction(self, text):
         """Converte texto da instrução para dicionário"""
@@ -194,7 +192,7 @@ class MIPSSimulator:
             try:
                 return int(reg_str)
             except ValueError:
-                print(f"❌ Registrador inválido: {reg_str}")
+                print(f"Registrador inválido: {reg_str}")
                 return 0
 
     def get_immediate_value(self, value_str):
@@ -216,7 +214,7 @@ class MIPSSimulator:
 
         # Formatar instrução para display e log
         instr_str = f"{opcode} {', '.join(args)}"
-        print(f"🔄 PC={self.pc:2d}: {instr_str}")
+        print(f"PC={self.pc:2d}: {instr_str}")
 
         # LOG: Registrar início da execução da instrução
         self.log_instruction(self.pc, instr_str, "INICIANDO")
@@ -286,8 +284,8 @@ class MIPSSimulator:
                 address = self.get_immediate_value(offset_str) & 0xFF
 
             self.memory[address] = (
-                self.registers[rt] & self.max_value
-            )  # Valor completo de 32 bits
+                self.registers[rt] & 0xFF
+            )  # Garantir que cabe na memória
             result_msg = f"MEM[{address}] = R{rt} = {self.registers[rt]}"
             print(f"   MEM[{address}] = R{rt} = {self.registers[rt]}")
             self.log_instruction(self.pc, instr_str, result_msg)
@@ -386,20 +384,33 @@ class MIPSSimulator:
                 self.lo_register = 0
 
         elif opcode == "MULT":
-            # Multiply: MULT rs, rt
-            rs = self.get_register_number(args[0])
-            rt = self.get_register_number(args[1])
-
-            result = self.registers[rs] * self.registers[rt]
-            # Para arquitetura flexível
-            low_bits = self.architecture_bits // 2 if self.architecture_bits > 8 else 8
-            self.lo_register = result & ((1 << low_bits) - 1)  # Bits baixos
-            self.hi_register = (result >> low_bits) & (
-                (1 << low_bits) - 1
-            )  # Bits altos
-            result_msg = f"{self.registers[rs]} * {self.registers[rt]} = {result} (HI:{self.hi_register}, LO:{self.lo_register})"
-            print(f"   {result_msg}")
-            self.log_instruction(self.pc, instr_str, result_msg)
+            # Multiply: MULT rd, rs, rt (3 operandos) ou MULT rs, rt (2 operandos)
+            if len(args) == 3:
+                # Formato de 3 operandos: MULT rd, rs, rt
+                rd = self.get_register_number(args[0])
+                rs = self.get_register_number(args[1])
+                rt = self.get_register_number(args[2])
+                result = self.registers[rs] * self.registers[rt]
+                self.registers[rd] = result & self.max_value
+                result_msg = f"R{rd} = R{rs}({self.registers[rs]}) * R{rt}({self.registers[rt]}) = {self.registers[rd]}"
+                print(f"   {result_msg}")
+                self.log_instruction(self.pc, instr_str, result_msg)
+            else:
+                # Formato de 2 operandos: MULT rs, rt (resultado em HI:LO)
+                rs = self.get_register_number(args[0])
+                rt = self.get_register_number(args[1])
+                result = self.registers[rs] * self.registers[rt]
+                # Para arquitetura flexível
+                low_bits = (
+                    self.architecture_bits // 2 if self.architecture_bits > 8 else 8
+                )
+                self.lo_register = result & ((1 << low_bits) - 1)  # Bits baixos
+                self.hi_register = (result >> low_bits) & (
+                    (1 << low_bits) - 1
+                )  # Bits altos
+                result_msg = f"{self.registers[rs]} * {self.registers[rt]} = {result} (HI:{self.hi_register}, LO:{self.lo_register})"
+                print(f"   {result_msg}")
+                self.log_instruction(self.pc, instr_str, result_msg)
 
         elif opcode == "MFLO":
             # Move From LO: MFLO rd
@@ -540,14 +551,14 @@ class MIPSSimulator:
                     self.input_values[self.input_index] & self.max_value
                 )
                 result_msg = f"INPUT[{self.input_index}]: R{rd} = {self.registers[rd]} (era {old_value})"
-                print(f"   📥 INPUT: R{rd} = {self.registers[rd]}")
+                print(f"   INPUT: R{rd} = {self.registers[rd]}")
                 self.log_instruction(self.pc, instr_str, result_msg)
                 self.input_index += 1
             else:
                 old_value = self.registers[rd]
                 self.registers[rd] = 0
                 result_msg = f"INPUT[SEM MAIS VALORES]: R{rd} = 0 (era {old_value})"
-                print(f"   📥 INPUT: Sem mais valores, R{rd} = 0")
+                print(f"   INPUT: Sem mais valores, R{rd} = 0")
                 self.log_instruction(self.pc, instr_str, result_msg)
 
         elif opcode == "OUTPUTREG":
@@ -557,19 +568,19 @@ class MIPSSimulator:
             self.output_values.append(output_val)  # Adicionar ao histórico
             self.output_value = output_val  # Manter última saída
             result_msg = f"OUTPUT: {output_val} (de R{rs})"
-            print(f"   📤 OUTPUT: {output_val}")
+            print(f"   OUTPUT: {output_val}")
             self.log_instruction(self.pc, instr_str, result_msg)
 
         elif opcode == "HALT":
             # Halt
             self.halted = True
             result_msg = f"PROGRAMA FINALIZADO - Saídas: {self.output_values}"
-            print(f"   🛑 HALT - Programa finalizado")
+            print(f"   HALT - Programa finalizado")
             self.log_instruction(self.pc, instr_str, result_msg)
             return
 
         else:
-            print(f"   ⚠️  Instrução não implementada: {opcode}")
+            print(f"   Instrução não implementada: {opcode}")
 
         # Incrementar PC para próxima instrução
         self.pc += 1
@@ -579,15 +590,15 @@ class MIPSSimulator:
         # INICIALIZAR LOG DE DEBUG
         self.start_debug_log("execution_debug.txt")
 
-        print(f"\n🚀 Iniciando execução...")
-        print(f"📍 PC inicial: {self.pc}")
-        print(f"🔧 Limite de ciclos: {max_cycles}")
+        print(f"\nIniciando execução...")
+        print(f"PC inicial: {self.pc}")
+        print(f"Limite de ciclos: {max_cycles}")
 
         cycle = 0
 
         while not self.halted and cycle < max_cycles:
             if self.pc >= len(self.instructions):
-                print(f"❌ PC fora dos limites: {self.pc} >= {len(self.instructions)}")
+                print(f"PC fora dos limites: {self.pc} >= {len(self.instructions)}")
                 self.log_debug(
                     f"ERRO: PC fora dos limites: {self.pc} >= {len(self.instructions)}"
                 )
@@ -600,7 +611,7 @@ class MIPSSimulator:
                     print(
                         f"🔄 Possível loop infinito: voltou ao PC=0 {self.pc_zero_count} vezes"
                     )
-                    print(f"🛑 Interrompendo execução para evitar loop infinito")
+                    print(f"Interrompendo execução para evitar loop infinito")
                     self.log_debug(
                         f"LOOP INFINITO DETECTADO: PC=0 visitado {self.pc_zero_count} vezes"
                     )
@@ -611,7 +622,7 @@ class MIPSSimulator:
 
             # Se HALT foi executado, parar imediatamente
             if self.halted:
-                print(f"🛑 HALT detectado - programa finalizado!")
+                print(f"HALT detectado - programa finalizado!")
                 break
 
             cycle += 1
@@ -621,14 +632,14 @@ class MIPSSimulator:
                 self.print_register_state()
 
         if cycle >= max_cycles:
-            print(f"⚠️  Execução interrompida após {max_cycles} ciclos")
+            print(f"Execução interrompida após {max_cycles} ciclos")
             self.log_debug(f"AVISO: Execução interrompida após {max_cycles} ciclos")
             if self.output_values:
-                print(f"📤 Saídas obtidas até agora: {self.output_values}")
+                print(f"Saídas obtidas até agora: {self.output_values}")
 
-        print(f"\n✅ Execução finalizada após {cycle} ciclos")
-        print(f"📤 Saídas geradas: {self.output_values}")
-        print(f"🎯 Última saída: {self.output_value}")
+        print(f"\nExecução finalizada após {cycle} ciclos")
+        print(f"Saídas geradas: {self.output_values}")
+        print(f"Última saída: {self.output_value}")
 
         # FECHAR LOG DE DEBUG
         self.close_debug_log()
@@ -638,17 +649,17 @@ class MIPSSimulator:
     def print_register_state(self):
         """Imprime estado dos registradores importantes"""
         print(
-            f"   📊 Registradores: R1={self.registers[1]}, SP={self.registers[self.SP]}, "
+            f"   Registradores: R1={self.registers[1]}, SP={self.registers[self.SP]}, "
             + f"FP={self.registers[self.FP]}, RA={self.registers[self.RA]}"
         )
 
     def print_final_state(self):
         """Imprime estado final do simulador"""
-        print(f"\n📊 Estado Final:")
-        print(f"📤 Saídas geradas: {self.output_values}")
-        print(f"🎯 Última saída: {self.output_value}")
-        print(f"📍 PC final: {self.pc}")
-        print(f"🔢 Entradas processadas: {self.input_index}/{len(self.input_values)}")
+        print(f"\nEstado Final:")
+        print(f"Saídas geradas: {self.output_values}")
+        print(f"Última saída: {self.output_value}")
+        print(f"PC final: {self.pc}")
+        print(f"Entradas processadas: {self.input_index}/{len(self.input_values)}")
 
         # Mostrar registradores não-zero
         non_zero_regs = []
@@ -658,15 +669,15 @@ class MIPSSimulator:
                 non_zero_regs.append(f"{name}={val}")
 
         if non_zero_regs:
-            print(f"📋 Registradores não-zero: {', '.join(non_zero_regs)}")
+            print(f"Registradores não-zero: {', '.join(non_zero_regs)}")
         else:
-            print(f"📋 Todos os registradores estão zerados")
+            print(f"Todos os registradores estão zerados")
 
     def set_input_values(self, values):
         """Define os valores de entrada para o programa"""
         self.input_values = values if values is not None else []
         self.input_index = 0
-        print(f"🔢 Valores de entrada definidos: {self.input_values}")
+        print(f"Valores de entrada definidos: {self.input_values}")
 
     def get_output_values(self):
         """Retorna todas as saídas geradas"""
@@ -697,7 +708,7 @@ def main():
     import sys
     import os
 
-    print("🖥️  Simulador MIPS Customizado - Versão Genérica")
+    print("Simulador MIPS Customizado - Versão Genérica")
     print("=" * 60)
 
     # Permitir argumentos da linha de comando
@@ -716,7 +727,7 @@ def main():
 
     # Se não há argumentos, usar interface interativa
     if len(sys.argv) == 1:
-        print("📋 Modo interativo:")
+        print("Modo interativo:")
         assembly_file = input(
             "Digite o nome do arquivo assembly (ou Enter para 'assembly_output.asm'): "
         ).strip()
@@ -730,7 +741,7 @@ def main():
             try:
                 input_values = [int(x.strip()) for x in input_str.split(",")]
             except ValueError:
-                print("⚠️  Valores inválidos, usando entrada vazia")
+                print("Valores inválidos, usando entrada vazia")
                 input_values = []
 
         expected_str = input(
@@ -740,12 +751,12 @@ def main():
             try:
                 expected_output = int(expected_str)
             except ValueError:
-                print("⚠️  Resultado esperado inválido, pulando verificação")
+                print("Resultado esperado inválido, pulando verificação")
 
-    print(f"\n🔧 Configuração:")
-    print(f"📂 Arquivo: {assembly_file}")
-    print(f"📥 Entradas: {input_values}")
-    print(f"🎯 Resultado esperado: {expected_output}")
+    print(f"\nConfiguração:")
+    print(f"Arquivo: {assembly_file}")
+    print(f"Entradas: {input_values}")
+    print(f"Resultado esperado: {expected_output}")
 
     # Criar simulador
     simulator = MIPSSimulator(input_values=input_values)
@@ -753,16 +764,16 @@ def main():
     # Carregar assembly
     try:
         if not os.path.exists(assembly_file):
-            print(f"❌ Arquivo não encontrado: {assembly_file}")
-            print("💡 Certifique-se de que o arquivo existe no diretório atual")
+            print(f"Arquivo não encontrado: {assembly_file}")
+            print("Certifique-se de que o arquivo existe no diretório atual")
             return
 
         simulator.load_assembly(assembly_file)
     except FileNotFoundError:
-        print(f"❌ Arquivo não encontrado: {assembly_file}")
+        print(f"Arquivo não encontrado: {assembly_file}")
         return
     except Exception as e:
-        print(f"❌ Erro ao carregar arquivo: {e}")
+        print(f"Erro ao carregar arquivo: {e}")
         return
 
     # Executar programa
@@ -776,21 +787,21 @@ def main():
     # Verificar resultado se especificado
     if expected_output is not None:
         if result == expected_output:
-            print(f"\n✅ Teste PASSOU! Resultado correto: {result}")
+            print(f"\nTeste PASSOU! Resultado correto: {result}")
         else:
-            print(f"\n❌ Teste FALHOU! Esperado: {expected_output}, Obtido: {result}")
+            print(f"\nTeste FALHOU! Esperado: {expected_output}, Obtido: {result}")
     else:
-        print(f"\n🏁 Execução concluída. Resultado final: {result}")
+        print(f"\nExecução concluída. Resultado final: {result}")
 
     # Mostrar todas as saídas se houver múltiplas
     all_outputs = simulator.get_output_values()
     if len(all_outputs) > 1:
-        print(f"📤 Todas as saídas: {all_outputs}")
+        print(f"Todas as saídas: {all_outputs}")
 
 
 def test_algorithms():
     """Testa algoritmos específicos"""
-    print("🧪 Testando algoritmos conhecidos...")
+    print("Testando algoritmos conhecidos...")
 
     test_cases = [
         {
@@ -822,16 +833,16 @@ def test_algorithms():
             result = simulator.run()
 
             if result == test["expected"]:
-                print(f"✅ {test['name']}: PASSOU")
+                print(f"{test['name']}: PASSOU")
             else:
                 print(
-                    f"❌ {test['name']}: FALHOU (esperado {test['expected']}, obtido {result})"
+                    f"{test['name']}: FALHOU (esperado {test['expected']}, obtido {result})"
                 )
 
         except FileNotFoundError:
-            print(f"⏭️  {test['name']}: Arquivo não encontrado, pulando")
+            print(f"{test['name']}: Arquivo não encontrado, pulando")
         except Exception as e:
-            print(f"❌ {test['name']}: Erro - {e}")
+            print(f"{test['name']}: Erro - {e}")
 
 
 if __name__ == "__main__":

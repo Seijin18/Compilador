@@ -8,12 +8,12 @@ int multiply(int x, int y)
     return x * y;
 }
 
-int calculate(int num1, int num2)
+int calculate(int numa, int numb)
 {
     int sumresult;
     int multresult;
     
-    sumresult = add(num1, num2);
+    sumresult = add(numa, numb);
     multresult = multiply(sumresult, 2);
 
     return multresult;

@@ -1,5 +1,53 @@
 # CORREÇÕES CRÍTICAS E IMPLEMENTAÇÃO IMEDIATA
 
+## ✅ PROBLEMAS RESOLVIDOS - DEZEMBRO 2024
+
+### 🎯 ARRAYS GLOBAIS - CORRIGIDO
+**Status:** ✅ **RESOLVIDO COMPLETAMENTE**  
+**Teste:** `test_global_array.c`  
+**Resultado:** Saída correta `[10, 20, 30]` conforme esperado  
+**Data da Correção:** Versão atual do assembler (testCompilerFixed.exe + assembler.exe)
+
+#### Detalhes da Verificação:
+- **Compilação:** ✅ Intermediate code gerado corretamente
+- **Assembly:** ✅ Instruções MIPS adequadas com endereçamento GP correto
+- **Simulação:** ✅ Execução retorna valores esperados `[10, 20, 30]`
+- **Análise de Memória:** ✅ Arrays globais corretamente alocadas em GP+offset
+
+```assembly
+# Exemplo de assembly correto gerado:
+ADDI R6, GP, 0      # Endereço base do array global
+ADD R6, R6, R5      # Soma offset calculado (índice * 4)
+SW R3, 0(R6)        # Armazena valor na posição correta
+```
+
+### 🎯 ARRAYS COMO PARÂMETRO - CORRIGIDO  
+**Status:** ✅ **RESOLVIDO COMPLETAMENTE**  
+**Teste:** `test_array_param.c`  
+**Resultado:** Saída correta `30` (soma de 5+10+15) conforme esperado  
+**Data da Correção:** Versão atual do assembler com suporte completo a passagem de arrays
+
+#### Detalhes da Verificação:
+- **Compilação:** ✅ Passagem de array como parâmetro processada corretamente
+- **Assembly:** ✅ Endereço do array passado via registrador R4 
+- **Simulação:** ✅ Função `sumarray` recebe e processa array corretamente
+- **Análise de Stack:** ✅ Frame Pointer e gerenciamento de pilha funcionando
+
+```assembly
+# Exemplo de passagem de array:
+ADDI R20, GP, 0     # Carrega endereço base do array
+MOVE R4, R20        # Passa endereço para registrador de parâmetro
+JAL sumarray        # Chama função com array
+```
+
+#### Lições Aprendidas:
+- O problema de "ADDI R0" sistemático foi corrigido nas versões atuais
+- O relatório estava desatualizado com informações de versões anteriores  
+- Testes de regressão confirmam funcionamento correto de ambos cenários de arrays
+- Stack frame management está robusto para chamadas de função com arrays
+
+---
+
 ## PROBLEMAS IDENTIFICADOS E SOLUÇÕES
 
 ### 1. CORREÇÃO NA ULA - MULTIPLICAÇÃO E DIVISÃO

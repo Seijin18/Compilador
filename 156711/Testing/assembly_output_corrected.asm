@@ -5,86 +5,89 @@
 # - Variáveis globais com $gp
 # - Passagem robusta de parâmetros
 
-  0: LI         GP, 196
+  0: LI         GP, 148
   1: LI         SP, 255
-  2: J          45
-sumarray:
-  3: SUBI       R2, SP, 1
-  4: SW         RA, 0(R2)
-  5: SUBI       R2, SP, 2
-  6: SW         FP, 0(R2)
-  7: SUBI       SP, SP, 8
-  8: MOVE       FP, SP
-  9: SW         R4, 0(FP)
- 10: SW         R5, 1(FP)
- 11: LI         R1, 0
- 12: MOVE       R2, R1
- 13: SW         R2, 3(FP)
- 14: LI         R3, 0
- 15: MOVE       R4, R3
- 16: SW         R4, 2(FP)
-L0:
- 17: LW         R4, 2(FP)
- 18: LW         R5, 1(FP)
- 19: SLT        R6, R4, R5
- 20: BEQ        R6, R0, 36
- 21: LW         R4, 2(FP)
- 22: SLL        R7, R4, 2
- 23: LW         R8, 0(FP)
- 24: ADD        R8, R8, R7
- 25: LW         R9, 0(R8)
- 26: LW         R2, 3(FP)
- 27: ADD        R10, R2, R9
- 28: MOVE       R2, R10
- 29: SW         R2, 3(FP)
- 30: LI         R11, 1
- 31: LW         R4, 2(FP)
- 32: ADD        R12, R4, R11
- 33: MOVE       R4, R12
- 34: SW         R4, 2(FP)
- 35: J          17
-L1:
- 36: LW         R2, 3(FP)
- 37: MOVE       R1, R2
- 38: ADDI       SP, FP, 8
- 39: SUBI       R2, SP, 2
- 40: LW         FP, 0(R2)
- 41: SUBI       R2, SP, 1
- 42: LW         RA, 0(R2)
- 43: ADDI       SP, SP, 8
- 44: JR         RA
+  2: J          3
 main:
- 45: SUBI       R2, SP, 2
- 46: SW         FP, 0(R2)
- 47: SUBI       SP, SP, 2
- 48: MOVE       FP, SP
- 49: LI         R13, 5
- 50: LI         R14, 0
- 51: SLL        R7, R14, 2
- 52: ADDI       R8, GP, 0
- 53: ADD        R8, R8, R7
- 54: SW         R13, 0(R8)
- 55: LI         R15, 10
- 56: LI         R16, 1
- 57: SLL        R7, R16, 2
- 58: ADDI       R8, GP, 0
- 59: ADD        R8, R8, R7
- 60: SW         R15, 0(R8)
- 61: LI         R17, 15
- 62: LI         R18, 2
- 63: SLL        R7, R18, 2
- 64: ADDI       R8, GP, 0
- 65: ADD        R8, R8, R7
- 66: SW         R17, 0(R8)
- 67: LI         R19, 3
- 68: ADDI       R20, GP, 0
- 69: MOVE       R4, R20
- 70: MOVE       R5, R19
- 71: JAL        3
- 72: MOVE       R21, R1
- 73: MOVE       R7, R1
- 74: MOVE       R22, R21
- 75: SW         R22, 0(FP)
- 76: LW         R22, 0(FP)
- 77: OUTPUTREG  R22
- 78: HALT      
+  3: SUBI       R2, SP, 2
+  4: SW         FP, 0(R2)
+  5: SUBI       SP, SP, 2
+  6: MOVE       FP, SP
+  7: LI         R1, 100
+  8: LI         R2, 0
+  9: SLL        R3, R2, 2
+ 10: ADDI       R4, GP, 0
+ 11: ADD        R4, R4, R3
+ 12: SW         R1, 0(R4)
+ 13: LI         R5, 200
+ 14: LI         R6, 1
+ 15: SLL        R3, R6, 2
+ 16: ADDI       R4, GP, 0
+ 17: ADD        R4, R4, R3
+ 18: SW         R5, 0(R4)
+ 19: LI         R7, 300
+ 20: LI         R8, 2
+ 21: SLL        R3, R8, 2
+ 22: ADDI       R4, GP, 0
+ 23: ADD        R4, R4, R3
+ 24: SW         R7, 0(R4)
+ 25: LI         R9, 400
+ 26: LI         R10, 3
+ 27: SLL        R3, R10, 2
+ 28: ADDI       R4, GP, 0
+ 29: ADD        R4, R4, R3
+ 30: SW         R9, 0(R4)
+ 31: LI         R11, 1
+ 32: SLL        R3, R11, 2
+ 33: ADDI       R4, GP, 0
+ 34: ADD        R4, R4, R3
+ 35: LW         R12, 0(R4)
+ 36: MOVE       R13, R12
+ 37: SW         R13, 0(FP)
+ 38: LI         R14, 0
+ 39: SLL        R3, R14, 2
+ 40: ADDI       R4, GP, 0
+ 41: ADD        R4, R4, R3
+ 42: LW         R15, 0(R4)
+ 43: LI         R16, 2
+ 44: SLL        R3, R16, 2
+ 45: ADDI       R4, GP, 0
+ 46: ADD        R4, R4, R3
+ 47: LW         R17, 0(R4)
+ 48: ADD        R18, R15, R17
+ 49: LI         R19, 1
+ 50: SLL        R3, R19, 2
+ 51: ADDI       R4, GP, 0
+ 52: ADD        R4, R4, R3
+ 53: SW         R18, 0(R4)
+ 54: LI         R20, 0
+ 55: SLL        R3, R20, 2
+ 56: ADDI       R4, GP, 0
+ 57: ADD        R4, R4, R3
+ 58: LW         R13, 0(FP)
+ 59: SW         R13, 0(R4)
+ 60: LI         R21, 0
+ 61: SLL        R3, R21, 2
+ 62: ADDI       R4, GP, 0
+ 63: ADD        R4, R4, R3
+ 64: LW         R22, 0(R4)
+ 65: OUTPUTREG  R22
+ 66: LI         R23, 1
+ 67: SLL        R3, R23, 2
+ 68: ADDI       R4, GP, 0
+ 69: ADD        R4, R4, R3
+ 70: LW         R24, 0(R4)
+ 71: OUTPUTREG  R24
+ 72: LI         R25, 2
+ 73: SLL        R3, R25, 2
+ 74: ADDI       R4, GP, 0
+ 75: ADD        R4, R4, R3
+ 76: LW         R26, 0(R4)
+ 77: OUTPUTREG  R26
+ 78: LI         R27, 3
+ 79: SLL        R3, R27, 2
+ 80: ADDI       R4, GP, 0
+ 81: ADD        R4, R4, R3
+ 82: LW         R2, 0(R4)
+ 83: OUTPUTREG  R2
+ 84: HALT      

@@ -665,8 +665,8 @@ void process_array_access(const char *array_name, const char *index_var, const c
             add_instruction("ADDI", OP_ADDI, GP, addr_reg, 0, array_sym->offset, NULL);
             printf("Generating: ADD R%d, R%d, R%d (final address)\n", addr_reg, addr_reg, temp_reg);
             add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
-        } else if (array_sym->is_arg && array_sym->is_array) {
-            // Array parâmetro: carregar endereço base do parâmetro e somar índice
+        } else if (array_sym->is_arg && array_sym->is_array && !array_sym->is_global) {
+            // Array parâmetro (local): carregar endereço base do parâmetro e somar índice
             printf("Array parameter: FP=%d, offset=%d (contains base address)\n", FP, array_sym->offset);
             printf("Generating: LW R%d, %d(FP) (load base address from parameter)\n", addr_reg, array_sym->offset);
             add_instruction("LW", OP_LW, FP, addr_reg, 0, array_sym->offset, NULL);

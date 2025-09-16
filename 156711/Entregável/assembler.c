@@ -516,18 +516,32 @@ void generate_main_prologue() {
 
 // Prólogo da função
 void generate_function_prologue() {
+    printf("DEBUG_RA: === INICIO PROLOGO FUNCAO ===\n");
+    printf("DEBUG_RA: Salvando RA no stack (SP-1)\n");
     add_load_store_with_offset("SW", OP_SW, SP, RA, -1);
+    printf("DEBUG_RA: Salvando FP no stack (SP-2)\n");
     add_load_store_with_offset("SW", OP_SW, SP, FP, -2);
+    printf("DEBUG_RA: Decrementando SP em 8 posicoes\n");
     add_addi_subi_instruction(SP, SP, -8);
-    add_addi_subi_instruction(SP, FP, 4);
+    printf("DEBUG_RA: Estabelecendo novo FP (SP+0 para evitar conflitos)\n");
+    add_instruction("MOVE", OP_MOVE, SP, 0, FP, 0, NULL);
+    printf("DEBUG_RA: === FIM PROLOGO FUNCAO ===\n");
 }
 
 // Epílogo da função
 void generate_function_epilogue() {
-    add_addi_subi_instruction(FP, SP, 4);
+    printf("DEBUG_RA: === INICIO EPILOGO FUNCAO ===\n");
+    printf("DEBUG_RA: Restaurando SP (FP+8)\n");
+    add_addi_subi_instruction(FP, SP, 8);
+    printf("DEBUG_RA: Restaurando FP do stack (SP-2)\n");
     add_load_store_with_offset("LW", OP_LW, SP, FP, -2);
+    printf("DEBUG_RA: Restaurando RA do stack (SP-1)\n");
     add_load_store_with_offset("LW", OP_LW, SP, RA, -1);
+    printf("DEBUG_RA: Incrementando SP em 8 posicoes\n");
     add_addi_subi_instruction(SP, SP, 8);
+    printf("DEBUG_RA: Gerando JR RA para retorno\n");
+    add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
+    printf("DEBUG_RA: === FIM EPILOGO FUNCAO ===\n");
 }
 
 FunctionContext* get_current_function() {
@@ -650,6 +664,13 @@ void process_array_access(const char *array_name, const char *index_var, const c
             printf("Generating: ADDI R%d, GP, %d (base address)\n", addr_reg, array_sym->offset);
             add_instruction("ADDI", OP_ADDI, GP, addr_reg, 0, array_sym->offset, NULL);
             printf("Generating: ADD R%d, R%d, R%d (final address)\n", addr_reg, addr_reg, temp_reg);
+            add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
+        } else if (array_sym->is_arg && array_sym->is_array && !array_sym->is_global) {
+            // Array parâmetro (local): carregar endereço base do parâmetro e somar índice
+            printf("Array parameter: FP=%d, offset=%d (contains base address)\n", FP, array_sym->offset);
+            printf("Generating: LW R%d, %d(FP) (load base address from parameter)\n", addr_reg, array_sym->offset);
+            add_instruction("LW", OP_LW, FP, addr_reg, 0, array_sym->offset, NULL);
+            printf("Generating: ADD R%d, R%d, R%d (final address = base + index*4)\n", addr_reg, addr_reg, temp_reg);
             add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
         } else {
             // Array local: FP + offset + (index * 4)
@@ -789,10 +810,21 @@ void generate_assembly_second_pass() {
             if (strcmp(quad->arg1, "main") != 0) {
                 generate_function_prologue();
                 
+                // Sistema genérico de salvamento de parâmetros de registrador
+                printf("DEBUG: Configurando função '%s' - salvando parâmetros de registrador\n", quad->arg1);
+                
                 if (strcmp(quad->arg1, "gcd") == 0) {
                     printf("DEBUG: Salvando parâmetros GCD: R4->offset 0, R5->offset 1\n");
                     add_load_store_with_offset("SW", OP_SW, FP, 4, 0);  // u = R4
                     add_load_store_with_offset("SW", OP_SW, FP, 5, 1);  // v = R5
+                } else if (strcmp(quad->arg1, "sumarray") == 0) {
+                    printf("DEBUG: Salvando parâmetros SUMARRAY: R4->offset 0 (arr), R5->offset 1 (size)\n");
+                    add_load_store_with_offset("SW", OP_SW, FP, 4, 0);  // arr = R4 (ponteiro)
+                    add_load_store_with_offset("SW", OP_SW, FP, 5, 1);  // size = R5 (int)
+                    // Ajustar local_offset para começar APÓS os parâmetros e LONGE dos salvamentos RA/FP
+                    // FP+0: arr, FP+1: size, FP+2,3: SEGUROS para locais (i, sum)
+                    // Salvamentos estão em SP-1 (RA) e SP-2 (FP) que são DIFERENTES de FP+offsets
+                    local_offset = 2;
                 }
             } else {
                 // Para main: prólogo especial sem salvar RA
@@ -940,11 +972,7 @@ void generate_assembly_second_pass() {
                 int src_reg = load_variable_to_register(quad->arg1, current_function);
                 add_move_if_different(src_reg, R1);
             }
-            // Gera epílogo da função
-            if (strcmp(current_function, "main") != 0) {
-                generate_function_epilogue();
-                add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
-            }
+            // O epílogo será gerado por 'endfun', não aqui
             
         } else if (strcmp(quad->op, "asn") == 0) {
             // Sair do estado de início de função

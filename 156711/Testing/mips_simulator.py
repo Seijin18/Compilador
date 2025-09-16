@@ -697,7 +697,7 @@ def main():
     import sys
     import os
 
-    print("Simulador MIPS Customizado - Versao Generica")
+    print("Simulador MIPS Customizado - Versão Genérica")
     print("=" * 60)
 
     # Permitir argumentos da linha de comando
@@ -742,10 +742,10 @@ def main():
             except ValueError:
                 print("⚠️  Resultado esperado inválido, pulando verificação")
 
-    print(f"\n🔧 Configuração:")
-    print(f"📂 Arquivo: {assembly_file}")
-    print(f"📥 Entradas: {input_values}")
-    print(f"🎯 Resultado esperado: {expected_output}")
+    print(f"\nConfiguração:")
+    print(f"Arquivo: {assembly_file}")
+    print(f"Entradas: {input_values}")
+    print(f"Resultado esperado: {expected_output}")
 
     # Criar simulador
     simulator = MIPSSimulator(input_values=input_values)
