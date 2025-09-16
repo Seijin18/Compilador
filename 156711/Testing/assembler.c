@@ -649,9 +649,16 @@ void process_array_access(const char *array_name, const char *index_var, const c
     
     if (array_sym) {
         // Calcular endereço: base_addr + (index * 4)
-        int temp_reg = get_register_for_variable("", current_function); // registrador temporário
-        int addr_reg = get_register_for_variable("addr_temp", current_function); // registrador para endereço
-        printf("Temp register: R%d, Address register: R%d\n", temp_reg, addr_reg);
+        // Usar registradores únicos para evitar conflitos - gerar nomes únicos baseados em contador
+        static int temp_counter = 0;
+        char temp_name[32], addr_name[32];
+        snprintf(temp_name, sizeof(temp_name), "temp_reg_%d", temp_counter);
+        snprintf(addr_name, sizeof(addr_name), "addr_reg_%d", temp_counter);
+        temp_counter++;
+        
+        int temp_reg = get_register_for_variable(temp_name, current_function); // registrador temporário único
+        int addr_reg = get_register_for_variable(addr_name, current_function); // registrador para endereço único
+        printf("Temp register: R%d (%s), Address register: R%d (%s)\n", temp_reg, temp_name, addr_reg, addr_name);
         
         // Multiplicar índice por 4 (shift left 2 posições)
         printf("Generating: SLL R%d, R%d, 2 (index * 4)\n", temp_reg, index_reg);

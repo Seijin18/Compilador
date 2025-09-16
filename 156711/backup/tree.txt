@@ -1,29 +1,34 @@
 Stmt: Prog
 ----Exp: Type: int
---------Stmt: Func: fat
-------------Exp: Type: int
-----------------Stmt: Var
-------------Stmt: If
-----------------Exp: Op: COMP
---------------------Exp: Id: x
---------------------Exp: Const: 0
-----------------Stmt: Return: int
---------------------Exp: Const: 1
-----------------Stmt: Return: int
---------------------Exp: Op: MULT
-------------------------Exp: Id: x
-------------------------Stmt: Call
-----------------------------Exp: Op: SUB
---------------------------------Exp: Id: x
---------------------------------Exp: Const: 1
-----Exp: Type: void
+--------Stmt: Vet
+------------Exp: Id: vet
+------------Exp: Const: 3
+----Exp: Type: int
 --------Stmt: Func: main
-------------Exp: Type: int
-----------------Stmt: Var
 ------------Stmt: Assign
-----------------Exp: Id: x
-----------------Stmt: Input
+----------------Exp: VetId
+--------------------Exp: Id: vet
+--------------------Exp: Const: 0
+----------------Exp: Const: 10
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: vet
+--------------------Exp: Const: 1
+----------------Exp: Const: 20
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: vet
+--------------------Exp: Const: 2
+----------------Exp: Const: 30
 ------------Stmt: Output
-----------------Stmt: Call
---------------------Exp: Id: x
-----------------Exp: Const: 0
+----------------Exp: VetId
+--------------------Exp: Id: vet
+--------------------Exp: Const: 0
+------------Stmt: Output
+----------------Exp: VetId
+--------------------Exp: Id: vet
+--------------------Exp: Const: 1
+------------Stmt: Output
+----------------Exp: VetId
+--------------------Exp: Id: vet
+--------------------Exp: Const: 2

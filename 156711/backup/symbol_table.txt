@@ -1,11 +1,13 @@
 Formato da Tabela de Simbolos:
 Nome;	Escopo;	Tipo;	Tipo de Identificador;	Linha
-fat;	global;	int;	Function;		1
-x;	fat;	int;	Variable;		1
-int;	fat;	int;	Function;		3
-int;	fat;	int;	Function;		1
-fat;	fat;	int;	Function;		5
-main;	global;	void;	Function;		10
-x;	main;	int;	Variable;		11
-x;	main;	int;	Function;		12
-fat;	main;	int;	Function;		13
+vet;	global;	int;	Variable;		1
+main;	global;	int;	Function;		3
+vet;	main;	int;	Function;		4
+vet;	main;	int;	Variable;		4
+vet;	main;	int;	Function;		5
+vet;	main;	int;	Variable;		5
+vet;	main;	int;	Function;		6
+vet;	main;	int;	Variable;		6
+vet;	main;	int;	Variable;		7
+vet;	main;	int;	Variable;		8
+vet;	main;	int;	Variable;		9

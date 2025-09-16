@@ -4,11 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define AC -9
-#define ER -10
-
-char simbolos[] = {'+', '-', '*', '/', '<', '>', '=', '!', ';', ',', '(', ')', '[', ']', '{', '}', '.'}; // Simbolos
-
 // Flag
 int read_next = 1;
 
@@ -90,8 +85,8 @@ char *get_token_name(int token) // Retorna o nome do token
 // White space: 2
 // Simbolos: 3 - 18
 
-// DFA
-int dfa[27][20] = {
+// DFA definido em dfa.c - removendo duplicacao
+/*int dfa[27][20] = {
     { 2,  1,  0,  3,  4,  5,  6, 12, 11,  7,  9, 15, 16, 17, 18, 19, 20, 21, 22, ER},          // 0
     {ER,  1, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER},  // 1
     { 2, ER, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER},  // 2
@@ -119,7 +114,7 @@ int dfa[27][20] = {
     {23, 23, 23, 23, 23, ER, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 24
     {23, 23, 23, 23, 23, 23, 26, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23}, // 25
     {AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, ER}  // 26
-};
+};*/
 
 Bloco *allocate_buffer(int size) // Aloca o buffer
 {

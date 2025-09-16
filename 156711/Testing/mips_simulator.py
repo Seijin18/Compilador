@@ -386,20 +386,33 @@ class MIPSSimulator:
                 self.lo_register = 0
 
         elif opcode == "MULT":
-            # Multiply: MULT rs, rt
-            rs = self.get_register_number(args[0])
-            rt = self.get_register_number(args[1])
+            # Multiply: MULT rd, rs, rt (3 operandos) ou MULT rs, rt (2 operandos)
+            if len(args) == 3:
+                # Formato: MULT rd, rs, rt
+                rd = self.get_register_number(args[0])
+                rs = self.get_register_number(args[1])
+                rt = self.get_register_number(args[2])
+                
+                result = self.registers[rs] * self.registers[rt]
+                self.registers[rd] = result & self.max_value
+                result_msg = f"R{rd} = R{rs} * R{rt} = {self.registers[rs]} * {self.registers[rt]} = {self.registers[rd]}"
+                print(f"   {result_msg}")
+                self.log_instruction(self.pc, instr_str, result_msg)
+            else:
+                # Formato tradicional: MULT rs, rt
+                rs = self.get_register_number(args[0])
+                rt = self.get_register_number(args[1])
 
-            result = self.registers[rs] * self.registers[rt]
-            # Para arquitetura flexível
-            low_bits = self.architecture_bits // 2 if self.architecture_bits > 8 else 8
-            self.lo_register = result & ((1 << low_bits) - 1)  # Bits baixos
-            self.hi_register = (result >> low_bits) & (
-                (1 << low_bits) - 1
-            )  # Bits altos
-            result_msg = f"{self.registers[rs]} * {self.registers[rt]} = {result} (HI:{self.hi_register}, LO:{self.lo_register})"
-            print(f"   {result_msg}")
-            self.log_instruction(self.pc, instr_str, result_msg)
+                result = self.registers[rs] * self.registers[rt]
+                # Para arquitetura flexível
+                low_bits = self.architecture_bits // 2 if self.architecture_bits > 8 else 8
+                self.lo_register = result & ((1 << low_bits) - 1)  # Bits baixos
+                self.hi_register = (result >> low_bits) & (
+                    (1 << low_bits) - 1
+                )  # Bits altos
+                result_msg = f"{self.registers[rs]} * {self.registers[rt]} = {result} (HI:{self.hi_register}, LO:{self.lo_register})"
+                print(f"   {result_msg}")
+                self.log_instruction(self.pc, instr_str, result_msg)
 
         elif opcode == "MFLO":
             # Move From LO: MFLO rd

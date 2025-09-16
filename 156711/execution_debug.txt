@@ -1,0 +1,95 @@
+=== LOG DE EXECUÇÃO DETALHADO - MIPS SIMULATOR ===
+Arquivo gerado automaticamente para debug
+Arquitetura: 32 bits
+Entradas programadas: []
+============================================================
+
+CICLO   1: PC= 0 | LI GP, 132           | INICIANDO
+CICLO   2: PC= 0 | LI GP, 132           | R28 = 132
+CICLO   3: PC= 1 | LI SP, 255           | INICIANDO
+CICLO   4: PC= 1 | LI SP, 255           | R29 = 255
+CICLO   5: PC= 2 | J 3                  | INICIANDO
+CICLO   6: PC= 3 | J 3                  | Jump to 3
+CICLO   7: PC= 3 | SUBI R2, SP, 2       | INICIANDO
+CICLO   8: PC= 3 | SUBI R2, SP, 2       | R2 = R29(255) - 2 = 253 (era 0)
+CICLO   9: PC= 4 | SW FP, 0(R2)         | INICIANDO
+CICLO  10: PC= 4 | SW FP, 0(R2)         | MEM[253] = R30 = 0
+    ESTADO: R2=253, GP=132, SP=255
+
+CICLO  11: PC= 5 | SUBI SP, SP, 2       | INICIANDO
+CICLO  12: PC= 5 | SUBI SP, SP, 2       | R29 = R29(253) - 2 = 253 (era 255)
+CICLO  13: PC= 6 | MOVE FP, SP          | INICIANDO
+CICLO  14: PC= 6 | MOVE FP, SP          | R30 = R29 = 253 (era 0)
+CICLO  15: PC= 7 | LI R1, 10            | INICIANDO
+CICLO  16: PC= 7 | LI R1, 10            | R1 = 10
+CICLO  17: PC= 8 | MOVE R2, R1          | INICIANDO
+CICLO  18: PC= 8 | MOVE R2, R1          | R2 = R1 = 10 (era 253)
+CICLO  19: PC= 9 | SW R2, 0(GP)         | INICIANDO
+CICLO  20: PC= 9 | SW R2, 0(GP)         | MEM[132] = R2 = 10
+    ESTADO: R1=10, R2=10, GP=132, SP=253, FP=253
+
+CICLO  21: PC=10 | LI R3, 20            | INICIANDO
+CICLO  22: PC=10 | LI R3, 20            | R3 = 20
+CICLO  23: PC=11 | MOVE R2, R3          | INICIANDO
+CICLO  24: PC=11 | MOVE R2, R3          | R2 = R3 = 20 (era 10)
+CICLO  25: PC=12 | SW R2, 0(GP)         | INICIANDO
+CICLO  26: PC=12 | SW R2, 0(GP)         | MEM[132] = R2 = 20
+CICLO  27: PC=13 | LI R4, 30            | INICIANDO
+CICLO  28: PC=13 | LI R4, 30            | R4 = 30
+CICLO  29: PC=14 | MOVE R2, R4          | INICIANDO
+CICLO  30: PC=14 | MOVE R2, R4          | R2 = R4 = 30 (era 20)
+    ESTADO: R1=10, R2=30, R3=20, R4=30, GP=132, SP=253, FP=253
+
+CICLO  31: PC=15 | SW R2, 0(GP)         | INICIANDO
+CICLO  32: PC=15 | SW R2, 0(GP)         | MEM[132] = R2 = 30
+CICLO  33: PC=16 | LI R5, 0             | INICIANDO
+CICLO  34: PC=16 | LI R5, 0             | R5 = 0
+CICLO  35: PC=17 | SLL R6, R6, 2        | INICIANDO
+CICLO  36: PC=17 | SLL R6, R6, 2        | R6 = R6 << 2 = 0 << 2 = 0
+CICLO  37: PC=18 | ADDI R6, GP, 0       | INICIANDO
+CICLO  38: PC=18 | ADDI R6, GP, 0       | R6 = R28(132) + 0 = 132 (era 0)
+CICLO  39: PC=19 | ADD R6, R6, R6       | INICIANDO
+CICLO  40: PC=19 | ADD R6, R6, R6       | R6 = R6 + R6 = 264 + 264 = 264
+    ESTADO: R1=10, R2=30, R3=20, R4=30, R6=264, GP=132, SP=253, FP=253
+
+CICLO  41: PC=20 | LW R7, 0(R6)         | INICIANDO
+CICLO  42: PC=20 | LW R7, 0(R6)         | R7 = MEM[8] = 0
+CICLO  43: PC=21 | OUTPUTREG R7         | INICIANDO
+CICLO  44: PC=21 | OUTPUTREG R7         | OUTPUT: 0 (de R7)
+CICLO  45: PC=22 | LI R8, 1             | INICIANDO
+CICLO  46: PC=22 | LI R8, 1             | R8 = 1
+CICLO  47: PC=23 | SLL R6, R6, 2        | INICIANDO
+CICLO  48: PC=23 | SLL R6, R6, 2        | R6 = R6 << 2 = 1056 << 2 = 1056
+CICLO  49: PC=24 | ADDI R6, GP, 0       | INICIANDO
+CICLO  50: PC=24 | ADDI R6, GP, 0       | R6 = R28(132) + 0 = 132 (era 1056)
+    ESTADO: R1=10, R2=30, R3=20, R4=30, R6=132, R8=1, GP=132, SP=253, FP=253
+
+CICLO  51: PC=25 | ADD R6, R6, R6       | INICIANDO
+CICLO  52: PC=25 | ADD R6, R6, R6       | R6 = R6 + R6 = 264 + 264 = 264
+CICLO  53: PC=26 | LW R9, 0(R6)         | INICIANDO
+CICLO  54: PC=26 | LW R9, 0(R6)         | R9 = MEM[8] = 0
+CICLO  55: PC=27 | OUTPUTREG R9         | INICIANDO
+CICLO  56: PC=27 | OUTPUTREG R9         | OUTPUT: 0 (de R9)
+CICLO  57: PC=28 | LI R10, 2            | INICIANDO
+CICLO  58: PC=28 | LI R10, 2            | R10 = 2
+CICLO  59: PC=29 | SLL R6, R6, 2        | INICIANDO
+CICLO  60: PC=29 | SLL R6, R6, 2        | R6 = R6 << 2 = 1056 << 2 = 1056
+    ESTADO: R1=10, R2=30, R3=20, R4=30, R6=1056, R8=1, R10=2, GP=132, SP=253, FP=253
+
+CICLO  61: PC=30 | ADDI R6, GP, 0       | INICIANDO
+CICLO  62: PC=30 | ADDI R6, GP, 0       | R6 = R28(132) + 0 = 132 (era 1056)
+CICLO  63: PC=31 | ADD R6, R6, R6       | INICIANDO
+CICLO  64: PC=31 | ADD R6, R6, R6       | R6 = R6 + R6 = 264 + 264 = 264
+CICLO  65: PC=32 | LW R11, 0(R6)        | INICIANDO
+CICLO  66: PC=32 | LW R11, 0(R6)        | R11 = MEM[8] = 0
+CICLO  67: PC=33 | OUTPUTREG R11        | INICIANDO
+CICLO  68: PC=33 | OUTPUTREG R11        | OUTPUT: 0 (de R11)
+CICLO  69: PC=34 | HALT                 | INICIANDO
+CICLO  70: PC=34 | HALT                 | PROGRAMA FINALIZADO - Saídas: [0, 0, 0]
+    ESTADO: R1=10, R2=30, R3=20, R4=30, R6=264, R8=1, R10=2, GP=132, SP=253, FP=253
+
+
+=== FIM DA EXECUÇÃO ===
+Total de ciclos: 70
+Saídas geradas: [0, 0, 0]
+Resultado final: 0

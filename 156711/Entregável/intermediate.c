@@ -16,6 +16,10 @@ typedef struct QuadNode {
 static int tempCount = 0;
 static int labelCount = 0;
 
+// Lista para rastrear parâmetros da função atual
+static char paramNames[10][32];  // Máximo 10 parâmetros
+static int paramCount = 0;
+
 static char* newTemp() {
     char* temp = (char*)malloc(16);
     sprintf(temp, "t%d", tempCount++);
@@ -26,6 +30,27 @@ static char* newLabel() {
     char* label = (char*)malloc(16);
     sprintf(label, "L%d", labelCount++);
     return label;
+}
+
+static void clearParams() {
+    paramCount = 0;
+}
+
+static void addParam(const char* name) {
+    if (paramCount < 10) {
+        strcpy(paramNames[paramCount], name);
+        paramCount++;
+        printf("DEBUG: Added parameter: %s (count: %d)\n", name, paramCount);
+    }
+}
+
+static int isParam(const char* name) {
+    for (int i = 0; i < paramCount; i++) {
+        if (strcmp(paramNames[i], name) == 0) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 // Forward declaration
@@ -157,12 +182,20 @@ static char* genNode(AASNode* node, FILE* out) {
                 case KFunc: {
                     // Function declaration: (fun, name, , )
                     emitQuad("fun", node->name, " ", " ");
+                    
+                    // Clear previous function's parameters
+                    clearParams();
+                    
                     // Emit all parameter (arg,...) quads before allocs/body
                     AASNode* child = node->children;
                     AASNode* bodyStart = NULL;
+                    printf("DEBUG: Processing function %s children:\n", node->name);
                     while (child) {
+                        printf("DEBUG: Child - node=%d, stmt=%d, exp=%d, name=%s\n", 
+                               child->node, child->stmt, child->exp, child->name ? child->name : "NULL");
                         if (child->node == KStmt && (child->stmt == KVar || child->stmt == KVet)) {
                             emitQuad("arg", child->name, " ", " ");
+                            addParam(child->name);  // Register as parameter
                         } else {
                             // First non-param child is the start of the body
                             if (!bodyStart) bodyStart = child;
@@ -296,20 +329,30 @@ static char* genNode(AASNode* node, FILE* out) {
                 }
                 case KVar: {
                     // Variable declaration: (alloc, name, 1, )
-                    emitQuad("alloc", node->name, "1", " ");
+                    // Skip allocation for function parameters
+                    if (!isParam(node->name)) {
+                        emitQuad("alloc", node->name, "1", " ");
+                    } else {
+                        printf("DEBUG: Skipping alloc for parameter: %s\n", node->name);
+                    }
                     return NULL;
                 }
                 case KVet: {
                     // Array declaration: (alloc, name, size, )
-                    char size[16];
-                    if (node->children && node->children->sibling) {
-                        // Array with explicit size: int arr[5]
-                        sprintf(size, "%d", node->children->sibling->value);
+                    // Skip allocation for function parameters (array parameters are passed by reference)
+                    if (!isParam(node->name)) {
+                        char size[16];
+                        if (node->children && node->children->sibling) {
+                            // Array with explicit size: int arr[5]
+                            sprintf(size, "%d", node->children->sibling->value);
+                        } else {
+                            // Default size for arrays without explicit size
+                            sprintf(size, "10");
+                        }
+                        emitQuad("alloc", node->name, size, " ");
                     } else {
-                        // Default size for arrays without explicit size
-                        sprintf(size, "10");
+                        printf("DEBUG: Skipping alloc for array parameter: %s\n", node->name);
                     }
-                    emitQuad("alloc", node->name, size, " ");
                     return NULL;
                 }
                 default: {
