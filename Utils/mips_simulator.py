@@ -365,25 +365,44 @@ class MIPSSimulator:
             return  # Não incrementar PC
 
         elif opcode == "DIV":
-            # Divide: DIV rs, rt
-            rs = self.get_register_number(args[0])
-            rt = self.get_register_number(args[1])
-
-            if self.registers[rt] != 0:
-                quotient = self.registers[rs] // self.registers[rt]
-                remainder = self.registers[rs] % self.registers[rt]
-                # Conforme especificação: HI = quociente, LO = resto
-                self.hi_register = quotient & self.max_value
-                self.lo_register = remainder & self.max_value
-                result_msg = f"{self.registers[rs]} / {self.registers[rt]} = Q:{quotient}, R:{remainder}"
-                print(f"   {result_msg}")
-                self.log_instruction(self.pc, instr_str, result_msg)
+            # Divide: DIV rd, rs, rt (3 operandos) ou DIV rs, rt (2 operandos)
+            if len(args) == 3:
+                # Formato: DIV rd, rs, rt
+                rd = self.get_register_number(args[0])
+                rs = self.get_register_number(args[1])
+                rt = self.get_register_number(args[2])
+                
+                if self.registers[rt] != 0:
+                    result = self.registers[rs] // self.registers[rt]
+                    self.registers[rd] = result & self.max_value
+                    result_msg = f"R{rd} = R{rs} / R{rt} = {self.registers[rs]} / {self.registers[rt]} = {self.registers[rd]}"
+                    print(f"   {result_msg}")
+                    self.log_instruction(self.pc, instr_str, result_msg)
+                else:
+                    result_msg = "Divisão por zero!"
+                    print(f"   {result_msg}")
+                    self.log_instruction(self.pc, instr_str, result_msg)
+                    self.registers[rd] = 0
             else:
-                result_msg = "Divisão por zero!"
-                print(f"   {result_msg}")
-                self.log_instruction(self.pc, instr_str, result_msg)
-                self.hi_register = 0
-                self.lo_register = 0
+                # Formato tradicional: DIV rs, rt
+                rs = self.get_register_number(args[0])
+                rt = self.get_register_number(args[1])
+
+                if self.registers[rt] != 0:
+                    quotient = self.registers[rs] // self.registers[rt]
+                    remainder = self.registers[rs] % self.registers[rt]
+                    # Conforme especificação: HI = quociente, LO = resto
+                    self.hi_register = quotient & self.max_value
+                    self.lo_register = remainder & self.max_value
+                    result_msg = f"{self.registers[rs]} / {self.registers[rt]} = Q:{quotient}, R:{remainder}"
+                    print(f"   {result_msg}")
+                    self.log_instruction(self.pc, instr_str, result_msg)
+                else:
+                    result_msg = "Divisão por zero!"
+                    print(f"   {result_msg}")
+                    self.log_instruction(self.pc, instr_str, result_msg)
+                    self.hi_register = 0
+                    self.lo_register = 0
 
         elif opcode == "MULT":
             # Multiply: MULT rd, rs, rt (3 operandos) ou MULT rs, rt (2 operandos)

@@ -140,6 +140,7 @@ void add_instruction(const char *mnemonic, int opcode, int rs, int rt, int rd, i
 void add_instruction_with_label_fix(const char *mnemonic, int opcode, int rs, int rt, int rd, const char *target_label);
 int find_label_address(const char *label);
 void add_label(const char *label, int address);
+void generic_save_function_parameters(int param_count);
 void add_symbol(const char *name, const char *scope, int offset, int is_global, int is_arg, int size, int is_array);
 Symbol* find_symbol(const char *name, const char *scope);
 int get_register_for_variable(const char *var_name, const char *scope);
@@ -314,6 +315,18 @@ void add_label(const char *label, int address) {
         instr->is_label = 1;
         instr->needs_label_fix = 0;
         instruction_count++;
+    }
+}
+
+// Função genérica para salvar parâmetros de função
+void generic_save_function_parameters(int param_count) {
+    printf("DEBUG: Salvando %d parâmetros de forma genérica\n", param_count);
+    
+    // Salvar os registradores R4, R5, R6, R7 conforme necessário
+    for (int i = 0; i < param_count && i < 4; i++) {
+        int reg = 4 + i; // R4, R5, R6, R7
+        printf("DEBUG: Salvando R%d->offset %d\n", reg, i);
+        add_load_store_with_offset("SW", OP_SW, FP, reg, i);
     }
 }
 
@@ -517,13 +530,19 @@ void generate_main_prologue() {
 // Prólogo da função
 void generate_function_prologue() {
     printf("DEBUG_RA: === INICIO PROLOGO FUNCAO ===\n");
-    printf("DEBUG_RA: Salvando RA no stack (SP-1)\n");
-    add_load_store_with_offset("SW", OP_SW, SP, RA, -1);
-    printf("DEBUG_RA: Salvando FP no stack (SP-2)\n");
-    add_load_store_with_offset("SW", OP_SW, SP, FP, -2);
+    
+    // CORRECAO CRITICA: Ajustar SP e salvar RA/FP em posições relativas
+    // ao novo FP para evitar conflitos entre funções aninhadas
+    
     printf("DEBUG_RA: Decrementando SP em 8 posicoes\n");
     add_addi_subi_instruction(SP, SP, -8);
-    printf("DEBUG_RA: Estabelecendo novo FP (SP+0 para evitar conflitos)\n");
+    
+    printf("DEBUG_RA: Salvando RA no stack em posição relativa (SP+7)\n");
+    add_load_store_with_offset("SW", OP_SW, SP, RA, 7);
+    printf("DEBUG_RA: Salvando FP no stack em posição relativa (SP+6)\n");
+    add_load_store_with_offset("SW", OP_SW, SP, FP, 6);
+    
+    printf("DEBUG_RA: Estabelecendo novo FP (SP+0)\n");
     add_instruction("MOVE", OP_MOVE, SP, 0, FP, 0, NULL);
     printf("DEBUG_RA: === FIM PROLOGO FUNCAO ===\n");
 }
@@ -531,14 +550,19 @@ void generate_function_prologue() {
 // Epílogo da função
 void generate_function_epilogue() {
     printf("DEBUG_RA: === INICIO EPILOGO FUNCAO ===\n");
-    printf("DEBUG_RA: Restaurando SP (FP+8)\n");
-    add_addi_subi_instruction(FP, SP, 8);
-    printf("DEBUG_RA: Restaurando FP do stack (SP-2)\n");
-    add_load_store_with_offset("LW", OP_LW, SP, FP, -2);
-    printf("DEBUG_RA: Restaurando RA do stack (SP-1)\n");
-    add_load_store_with_offset("LW", OP_LW, SP, RA, -1);
-    printf("DEBUG_RA: Incrementando SP em 8 posicoes\n");
+    
+    // CORRECAO CRITICA: Usar FP original para restaurar, não SP atual
+    // Isso evita corrupção de RA quando múltiplas funções aninhadas
+    // usam a mesma área de stack
+    
+    printf("DEBUG_RA: Restaurando RA do stack usando SP original\n");
+    add_load_store_with_offset("LW", OP_LW, SP, RA, 7);  // RA salvo em SP+7
+    printf("DEBUG_RA: Restaurando FP do stack usando SP original\n");
+    add_load_store_with_offset("LW", OP_LW, SP, FP, 6);  // FP salvo em SP+6
+    
+    printf("DEBUG_RA: Restaurando SP para posição anterior (SP+8)\n");
     add_addi_subi_instruction(SP, SP, 8);
+    
     printf("DEBUG_RA: Gerando JR RA para retorno\n");
     add_instruction("JR", OP_JR, RA, 0, 0, 0, NULL);
     printf("DEBUG_RA: === FIM EPILOGO FUNCAO ===\n");
@@ -807,32 +831,44 @@ void generate_assembly_second_pass() {
 
         } else if (strcmp(quad->op, "fun") == 0) {
             add_label(quad->arg1, current_line);
+            strcpy(current_function, quad->arg1);
+            
+            // PRÉ-PROCESSAMENTO: Contar parâmetros desta função
+            int param_count_for_function = 0;
+            for (int j = i + 1; j < quad_count; j++) {
+                if (strcmp(quads[j].op, "alloc") == 0) {
+                    param_count_for_function++;
+                } else if (strcmp(quads[j].op, "endfun") == 0) {
+                    break; // Fim da função
+                } else if (strcmp(quads[j].op, "fun") == 0) {
+                    break; // Início de outra função
+                }
+            }
+            
             push_function(quad->arg1);
             local_offset = 0;
             
-            // Marcar início de função e resetar contador de parâmetros
+            // Marcar início de função e configurar contador de parâmetros
             in_function_start = 1;
-            function_param_count = 0;
+            function_param_count = param_count_for_function;
+            
+            printf("DEBUG: Função '%s' detectada com %d parâmetros totais\n", 
+                   quad->arg1, param_count_for_function);
             
             if (strcmp(quad->arg1, "main") != 0) {
                 generate_function_prologue();
                 
                 // Sistema genérico de salvamento de parâmetros de registrador
-                printf("DEBUG: Configurando função '%s' - salvando parâmetros de registrador\n", quad->arg1);
+                printf("DEBUG: Configurando função '%s' - salvando %d parâmetros de registrador\n", 
+                       quad->arg1, function_param_count);
                 
-                if (strcmp(quad->arg1, "gcd") == 0) {
-                    printf("DEBUG: Salvando parâmetros GCD: R4->offset 0, R5->offset 1\n");
-                    add_load_store_with_offset("SW", OP_SW, FP, 4, 0);  // u = R4
-                    add_load_store_with_offset("SW", OP_SW, FP, 5, 1);  // v = R5
-                } else if (strcmp(quad->arg1, "sumarray") == 0) {
-                    printf("DEBUG: Salvando parâmetros SUMARRAY: R4->offset 0 (arr), R5->offset 1 (size)\n");
-                    add_load_store_with_offset("SW", OP_SW, FP, 4, 0);  // arr = R4 (ponteiro)
-                    add_load_store_with_offset("SW", OP_SW, FP, 5, 1);  // size = R5 (int)
-                    // Ajustar local_offset para começar APÓS os parâmetros e LONGE dos salvamentos RA/FP
-                    // FP+0: arr, FP+1: size, FP+2,3: SEGUROS para locais (i, sum)
-                    // Salvamentos estão em SP-1 (RA) e SP-2 (FP) que são DIFERENTES de FP+offsets
-                    local_offset = 2;
-                }
+                // Salvar parâmetros genericamente
+                generic_save_function_parameters(function_param_count);
+                
+                // Calcular local_offset automaticamente baseado no número de parâmetros
+                local_offset = function_param_count;
+                printf("DEBUG: Local offset configurado para %d (baseado em %d parâmetros)\n", 
+                       local_offset, function_param_count);
             } else {
                 // Para main: prólogo especial sem salvar RA
                 generate_main_prologue();
@@ -863,10 +899,35 @@ void generate_assembly_second_pass() {
             // Detectar se é um parâmetro da função
             int is_param = 0;
             if (in_function_start && !is_global) {
-                function_param_count++;
+                // Criar um índice único para esta função usando o nome da função como hash
+                static char last_function[100] = "";
+                static int current_param_index = 0;
+                
+                // Se mudou de função, resetar o índice
+                if (strcmp(last_function, current_function) != 0) {
+                    strcpy(last_function, current_function);
+                    current_param_index = 0;
+                }
+                
+                current_param_index++;
                 is_param = 1;
-                printf("DEBUG: Detectado parâmetro %s na função %s (param #%d)\n", 
-                       quad->arg1, current_function, function_param_count);
+                printf("DEBUG: Detectado parâmetro %s na função %s (param #%d de %d)\n", 
+                       quad->arg1, current_function, current_param_index, function_param_count);
+                
+                // Registrar símbolo com offset correto
+                int is_array_param = (strcmp(quad->arg1, "vet") == 0 || 
+                                    strstr(quad->arg1, "array") != NULL ||
+                                    strstr(quad->arg1, "arr") != NULL ||
+                                    atoi(quad->arg2) > 1);
+                int param_size = is_array_param ? 1 : atoi(quad->arg2);
+                add_symbol(quad->arg1, current_function, current_param_index - 1, 0, 1, param_size, is_array_param);
+                printf("DEBUG: Parâmetro %s registrado com offset %d na função %s\n", 
+                       quad->arg1, current_param_index - 1, current_function);
+                
+                // Quando processamos o último parâmetro, resetamos flag para próxima função
+                if (current_param_index >= function_param_count) {
+                    in_function_start = 0;
+                }
             }
             
             // Detectar se é array baseado no nome (arrays comuns em C-)
@@ -883,14 +944,7 @@ void generate_assembly_second_pass() {
                 int current_global_offset = global_memory_offset - 0x80;
                 add_symbol(quad->arg1, current_function, current_global_offset, is_global, 0, size, is_array);
                 global_memory_offset += size * 4;
-            } else if (is_param) {
-                // Para parâmetros: usar offset positivo no Frame Pointer
-                // Arrays como parâmetros são passados por referência, então ocupam 1 word
-                int param_size = is_array ? 1 : size;
-                add_symbol(quad->arg1, current_function, function_param_count - 1, 0, 1, param_size, is_array);
-                printf("DEBUG: Parâmetro %s registrado com offset %d na função %s\n", 
-                       quad->arg1, function_param_count - 1, current_function);
-            } else {
+            } else if (!is_param) {
                 add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, is_array);
                 local_offset += size;
             }

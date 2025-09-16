@@ -150,6 +150,23 @@ test_variable_scope: $(COMPILER) $(ASSEMBLER)
 	$(call run_test,test_variable_scope)
 
 # ============================================================================
+# TESTES ESPECIAIS
+# ============================================================================
+
+# Teste de área do triângulo (requer inputs)
+test_triangle_area: $(COMPILER) $(ASSEMBLER)
+	@echo "$(YELLOW)🔍 Testando: test_triangle_area.c (com inputs)$(NC)"
+	@echo "  Compilando C-Minus → Código Intermediário..."
+	@.\$(COMPILER) $(TESTDIR)\test_triangle_area.c && echo "Código intermediário gerado com sucesso"
+	@echo "  Gerando Assembly MIPS..."
+	@.\$(ASSEMBLER) intermediate.txt && echo "Assembly gerado com sucesso"
+	@echo "  Executando no simulador MIPS com inputs 6 e 8..."
+	@python $(SIMULATOR) assembly_output_corrected.asm "6,8"
+	@echo "$(GREEN)✓ test_triangle_area.c executado com sucesso!$(NC)"
+	@echo "$(YELLOW)📊 Resultado esperado: (6 * 8) / 2 = 24$(NC)"
+	@echo ""
+
+# ============================================================================
 # TESTES COMPLETOS
 # ============================================================================
 
@@ -169,7 +186,8 @@ validate-build: $(COMPILER) $(ASSEMBLER)
 # Testar um arquivo específico fornecido pelo usuário
 test-file:
 	@if "$(FILE)"=="" ( \
-		echo "$(RED)❌ Uso: make test-file FILE=nome_do_arquivo.c$(NC)" & \
+		echo "$(RED)❌ Uso: make test-file FILE=nome_do_arquivo.c [INPUTS=valor1,valor2,...]$(NC)" & \
+		echo "$(YELLOW)Exemplo: make test-file FILE=test_triangle_area.c INPUTS=6,8$(NC)" & \
 		exit 1 \
 	)
 	@if not exist "$(FILE)" ( \
@@ -177,12 +195,17 @@ test-file:
 		exit 1 \
 	)
 	@echo "$(YELLOW)🔍 Testando arquivo personalizado: $(FILE)$(NC)"
+	@if not "$(INPUTS)"=="" echo "$(YELLOW)📝 Entradas: $(INPUTS)$(NC)"
 	@echo "  Compilando C-Minus → Código Intermediário..."
-	@.\$(COMPILER) $(FILE) > intermediate.txt || ( echo "$(RED)❌ Erro na compilação$(NC)" & exit 1 )
+	@.\$(COMPILER) $(FILE) && echo "Código intermediário gerado com sucesso"
 	@echo "  Gerando Assembly MIPS..."
-	@.\$(ASSEMBLER) intermediate.txt > assembly_output_corrected.asm || ( echo "$(RED)❌ Erro no assembler$(NC)" & exit 1 )
+	@.\$(ASSEMBLER) intermediate.txt && echo "Assembly gerado com sucesso"
 	@echo "  Executando no simulador MIPS..."
-	@python $(SIMULATOR) assembly_output_corrected.asm || ( echo "$(RED)❌ Erro na simulação$(NC)" & exit 1 )
+	@if "$(INPUTS)"=="" ( \
+		python $(SIMULATOR) assembly_output_corrected.asm \
+	) else ( \
+		python $(SIMULATOR) assembly_output_corrected.asm "$(INPUTS)" \
+	)
 	@echo "$(GREEN)✓ $(FILE) executado com sucesso!$(NC)"
 
 # ============================================================================
@@ -236,6 +259,7 @@ help:
 	@echo "  test_loops_arrays   - Teste de loops com arrays"
 	@echo "  test_multiple_functions - Teste de funções múltiplas (com problemas)"
 	@echo "  test_variable_scope - Teste de escopo de variáveis (com problemas)"
+	@echo "  test_triangle_area  - Teste de área do triângulo (com inputs)"
 	@echo ""
 	@echo "$(YELLOW)Informações:$(NC)"
 	@echo "  info                - Mostra informações do projeto"
@@ -246,7 +270,9 @@ help:
 	@echo "  make                           # Compila tudo"
 	@echo "  make test-functional           # Executa testes funcionais"
 	@echo "  make test_array_access         # Testa apenas arrays"
+	@echo "  make test_triangle_area        # Testa área do triângulo"
 	@echo "  make test-file FILE=meu_teste.c # Testa arquivo específico"
+	@echo "  make test-file FILE=teste.c INPUTS=10,20 # Com inputs"
 	@echo "  make clean rebuild             # Recompila do zero"
 
 # Target padrão se nenhum for especificado

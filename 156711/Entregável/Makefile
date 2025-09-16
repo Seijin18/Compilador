@@ -15,7 +15,7 @@ UTILSDIR = ../../Utils
 # Executáveis principais (seguindo padrão do Readme.txt)
 COMPILER = testCompiler.exe
 ASSEMBLER = testAssembler.exe
-SIMULATOR = ./mips_simulator.py
+SIMULATOR = $(UTILSDIR)/mips_simulator.py
 
 # Arquivos objeto necessários para o compilador (corrigido com dfa.c)
 COMPILER_OBJS = bison.tab.o funcs.o intermediate.o dfa.o
