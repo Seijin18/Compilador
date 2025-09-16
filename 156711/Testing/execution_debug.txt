@@ -1,7 +1,7 @@
 === LOG DE EXECUÇÃO DETALHADO - MIPS SIMULATOR ===
 Arquivo gerado automaticamente para debug
 Arquitetura: 32 bits
-Entradas programadas: [100]
+Entradas programadas: []
 ============================================================
 
 CICLO   1: PC= 0 | LI GP, 148           | INICIANDO

@@ -129,6 +129,8 @@ int param_stack_top = -1;
 int current_line = 0;
 int global_memory_offset = 0x80; // Base para variáveis globais (compatível com RAM 8-bit)
 int time_counter = 0;
+int function_param_count = 0;  // Contador de parâmetros da função atual
+int in_function_start = 0;     // Flag para rastrear se estamos no início de uma função
 
 char current_function[32] = "";
 
@@ -780,6 +782,10 @@ void generate_assembly_second_pass() {
             push_function(quad->arg1);
             local_offset = 0;
             
+            // Marcar início de função e resetar contador de parâmetros
+            in_function_start = 1;
+            function_param_count = 0;
+            
             if (strcmp(quad->arg1, "main") != 0) {
                 generate_function_prologue();
                 
@@ -815,6 +821,15 @@ void generate_assembly_second_pass() {
             int size = atoi(quad->arg2);
             int is_global = (strcmp(current_function, "") == 0 || strcmp(current_function, "global") == 0);
             
+            // Detectar se é um parâmetro da função
+            int is_param = 0;
+            if (in_function_start && !is_global) {
+                function_param_count++;
+                is_param = 1;
+                printf("DEBUG: Detectado parâmetro %s na função %s (param #%d)\n", 
+                       quad->arg1, current_function, function_param_count);
+            }
+            
             // Detectar se é array baseado no nome (arrays comuns em C-)
             int is_array = 0;
             if (strcmp(quad->arg1, "vet") == 0 || 
@@ -829,6 +844,13 @@ void generate_assembly_second_pass() {
                 int current_global_offset = global_memory_offset - 0x80;
                 add_symbol(quad->arg1, current_function, current_global_offset, is_global, 0, size, is_array);
                 global_memory_offset += size * 4;
+            } else if (is_param) {
+                // Para parâmetros: usar offset positivo no Frame Pointer
+                // Arrays como parâmetros são passados por referência, então ocupam 1 word
+                int param_size = is_array ? 1 : size;
+                add_symbol(quad->arg1, current_function, function_param_count - 1, 0, 1, param_size, is_array);
+                printf("DEBUG: Parâmetro %s registrado com offset %d na função %s\n", 
+                       quad->arg1, function_param_count - 1, current_function);
             } else {
                 add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, is_array);
                 local_offset += size;
@@ -849,6 +871,9 @@ void generate_assembly_second_pass() {
             push_parameter(quad->arg1, is_temp);
             
         } else if (strcmp(quad->op, "call") == 0) {
+            // Sair do estado de início de função
+            in_function_start = 0;
+            
             if (strcmp(quad->arg1, "input") == 0) {
                 int rd = get_register_for_variable(quad->arg3, current_function);
                 add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
@@ -922,6 +947,9 @@ void generate_assembly_second_pass() {
             }
             
         } else if (strcmp(quad->op, "asn") == 0) {
+            // Sair do estado de início de função
+            in_function_start = 0;
+            
             int src_reg = load_variable_to_register(quad->arg1, current_function);
             int dst_reg = get_register_for_variable(quad->arg3, current_function);
             
@@ -937,6 +965,9 @@ void generate_assembly_second_pass() {
             }
             
         } else if (strcmp(quad->op, "immed") == 0) {
+            // Sair do estado de início de função
+            in_function_start = 0;
+            
             int value = atoi(quad->arg1);
             int rd = get_register_for_variable(quad->arg3, current_function);
             add_instruction("LI", OP_LI, 0, rd, 0, value, NULL);
