@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Declaracoes externas do DFA (definido em dfa.c)
+#define AC -9
+#define ER -10
+extern char simbolos[];
+extern int dfa[27][20];
+
 struct QuadNode;
 typedef struct QuadNode QuadNode;
 

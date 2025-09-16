@@ -1,0 +1,65 @@
+Stmt: Prog
+----Exp: Type: int
+--------Stmt: Vet
+------------Exp: Id: testarray
+------------Exp: Const: 3
+----Exp: Type: int
+--------Stmt: Func: sumarray
+------------Exp: Type: int
+----------------Stmt: Vet
+------------Exp: Type: int
+----------------Stmt: Var
+------------Exp: Type: int
+----------------Stmt: Var
+------------Exp: Type: int
+----------------Stmt: Var
+------------Stmt: Assign
+----------------Exp: Id: sum
+----------------Exp: Const: 0
+------------Stmt: Assign
+----------------Exp: Id: i
+----------------Exp: Const: 0
+------------Stmt: While
+----------------Exp: Op: LT
+--------------------Exp: Id: i
+--------------------Exp: Id: size
+----------------Stmt: Assign
+--------------------Exp: Id: sum
+--------------------Exp: Op: SOMA
+------------------------Exp: Id: sum
+------------------------Exp: VetId
+----------------------------Exp: Id: arr
+----------------------------Exp: Id: i
+----------------Stmt: Assign
+--------------------Exp: Id: i
+--------------------Exp: Op: SOMA
+------------------------Exp: Id: i
+------------------------Exp: Const: 1
+------------Stmt: Return: int
+----------------Exp: Id: sum
+----Exp: Type: void
+--------Stmt: Func: main
+------------Exp: Type: int
+----------------Stmt: Var
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: testarray
+--------------------Exp: Const: 0
+----------------Exp: Const: 5
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: testarray
+--------------------Exp: Const: 1
+----------------Exp: Const: 10
+------------Stmt: Assign
+----------------Exp: VetId
+--------------------Exp: Id: testarray
+--------------------Exp: Const: 2
+----------------Exp: Const: 15
+------------Stmt: Assign
+----------------Exp: Id: result
+----------------Stmt: Call
+--------------------Exp: Id: testarray
+--------------------Exp: Const: 3
+------------Stmt: Output
+----------------Exp: Id: result

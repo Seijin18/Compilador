@@ -1,0 +1,301 @@
+=== LOG DE EXECUÇÃO DETALHADO - MIPS SIMULATOR ===
+Arquivo gerado automaticamente para debug
+Arquitetura: 32 bits
+Entradas programadas: []
+============================================================
+
+CICLO   1: PC= 0 | LI GP, 196           | INICIANDO
+CICLO   2: PC= 0 | LI GP, 196           | R28 = 196
+CICLO   3: PC= 1 | LI SP, 255           | INICIANDO
+CICLO   4: PC= 1 | LI SP, 255           | R29 = 255
+CICLO   5: PC= 2 | J 45                 | INICIANDO
+CICLO   6: PC=45 | J 45                 | Jump to 45
+CICLO   7: PC=45 | SUBI R2, SP, 2       | INICIANDO
+CICLO   8: PC=45 | SUBI R2, SP, 2       | R2 = R29(255) - 2 = 253 (era 0)
+CICLO   9: PC=46 | SW FP, 0(R2)         | INICIANDO
+CICLO  10: PC=46 | SW FP, 0(R2)         | MEM[253] = R30 = 0
+    ESTADO: R2=253, GP=196, SP=255
+
+CICLO  11: PC=47 | SUBI SP, SP, 2       | INICIANDO
+CICLO  12: PC=47 | SUBI SP, SP, 2       | R29 = R29(253) - 2 = 253 (era 255)
+CICLO  13: PC=48 | MOVE FP, SP          | INICIANDO
+CICLO  14: PC=48 | MOVE FP, SP          | R30 = R29 = 253 (era 0)
+CICLO  15: PC=49 | LI R13, 5            | INICIANDO
+CICLO  16: PC=49 | LI R13, 5            | R13 = 5
+CICLO  17: PC=50 | LI R14, 0            | INICIANDO
+CICLO  18: PC=50 | LI R14, 0            | R14 = 0
+CICLO  19: PC=51 | SLL R7, R14, 2       | INICIANDO
+CICLO  20: PC=51 | SLL R7, R14, 2       | R7 = R14 << 2 = 0 << 2 = 0
+    ESTADO: R2=253, R13=5, GP=196, SP=253, FP=253
+
+CICLO  21: PC=52 | ADDI R8, GP, 0       | INICIANDO
+CICLO  22: PC=52 | ADDI R8, GP, 0       | R8 = R28(196) + 0 = 196 (era 0)
+CICLO  23: PC=53 | ADD R8, R8, R7       | INICIANDO
+CICLO  24: PC=53 | ADD R8, R8, R7       | R8 = R8 + R7 = 196 + 0 = 196
+CICLO  25: PC=54 | SW R13, 0(R8)        | INICIANDO
+CICLO  26: PC=54 | SW R13, 0(R8)        | MEM[196] = R13 = 5
+CICLO  27: PC=55 | LI R15, 10           | INICIANDO
+CICLO  28: PC=55 | LI R15, 10           | R15 = 10
+CICLO  29: PC=56 | LI R16, 1            | INICIANDO
+CICLO  30: PC=56 | LI R16, 1            | R16 = 1
+    ESTADO: R2=253, R8=196, R13=5, R15=10, R16=1, GP=196, SP=253, FP=253
+
+CICLO  31: PC=57 | SLL R7, R16, 2       | INICIANDO
+CICLO  32: PC=57 | SLL R7, R16, 2       | R7 = R16 << 2 = 1 << 2 = 4
+CICLO  33: PC=58 | ADDI R8, GP, 0       | INICIANDO
+CICLO  34: PC=58 | ADDI R8, GP, 0       | R8 = R28(196) + 0 = 196 (era 196)
+CICLO  35: PC=59 | ADD R8, R8, R7       | INICIANDO
+CICLO  36: PC=59 | ADD R8, R8, R7       | R8 = R8 + R7 = 200 + 4 = 200
+CICLO  37: PC=60 | SW R15, 0(R8)        | INICIANDO
+CICLO  38: PC=60 | SW R15, 0(R8)        | MEM[200] = R15 = 10
+CICLO  39: PC=61 | LI R17, 15           | INICIANDO
+CICLO  40: PC=61 | LI R17, 15           | R17 = 15
+    ESTADO: R2=253, R7=4, R8=200, R13=5, R15=10, R16=1, R17=15, GP=196, SP=253, FP=253
+
+CICLO  41: PC=62 | LI R18, 2            | INICIANDO
+CICLO  42: PC=62 | LI R18, 2            | R18 = 2
+CICLO  43: PC=63 | SLL R7, R18, 2       | INICIANDO
+CICLO  44: PC=63 | SLL R7, R18, 2       | R7 = R18 << 2 = 2 << 2 = 8
+CICLO  45: PC=64 | ADDI R8, GP, 0       | INICIANDO
+CICLO  46: PC=64 | ADDI R8, GP, 0       | R8 = R28(196) + 0 = 196 (era 200)
+CICLO  47: PC=65 | ADD R8, R8, R7       | INICIANDO
+CICLO  48: PC=65 | ADD R8, R8, R7       | R8 = R8 + R7 = 204 + 8 = 204
+CICLO  49: PC=66 | SW R17, 0(R8)        | INICIANDO
+CICLO  50: PC=66 | SW R17, 0(R8)        | MEM[204] = R17 = 15
+    ESTADO: R2=253, R7=8, R8=204, R13=5, R15=10, R16=1, R17=15, R18=2, GP=196, SP=253, FP=253
+
+CICLO  51: PC=67 | LI R19, 3            | INICIANDO
+CICLO  52: PC=67 | LI R19, 3            | R19 = 3
+CICLO  53: PC=68 | ADDI R20, GP, 0      | INICIANDO
+CICLO  54: PC=68 | ADDI R20, GP, 0      | R20 = R28(196) + 0 = 196 (era 0)
+CICLO  55: PC=69 | MOVE R4, R20         | INICIANDO
+CICLO  56: PC=69 | MOVE R4, R20         | R4 = R20 = 196 (era 0)
+CICLO  57: PC=70 | MOVE R5, R19         | INICIANDO
+CICLO  58: PC=70 | MOVE R5, R19         | R5 = R19 = 3 (era 0)
+CICLO  59: PC=71 | JAL 3                | INICIANDO
+CICLO  60: PC= 3 | JAL 3                | RA = 72, Jump to 3
+    ESTADO: R2=253, R4=196, R5=3, R7=8, R8=204, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=253, FP=253, RA=72
+
+CICLO  61: PC= 3 | SUBI R2, SP, 1       | INICIANDO
+CICLO  62: PC= 3 | SUBI R2, SP, 1       | R2 = R29(253) - 1 = 252 (era 253)
+CICLO  63: PC= 4 | SW RA, 0(R2)         | INICIANDO
+CICLO  64: PC= 4 | SW RA, 0(R2)         | MEM[252] = R31 = 72
+CICLO  65: PC= 5 | SUBI R2, SP, 2       | INICIANDO
+CICLO  66: PC= 5 | SUBI R2, SP, 2       | R2 = R29(253) - 2 = 251 (era 252)
+CICLO  67: PC= 6 | SW FP, 0(R2)         | INICIANDO
+CICLO  68: PC= 6 | SW FP, 0(R2)         | MEM[251] = R30 = 253
+CICLO  69: PC= 7 | SUBI SP, SP, 8       | INICIANDO
+CICLO  70: PC= 7 | SUBI SP, SP, 8       | R29 = R29(245) - 8 = 245 (era 253)
+    ESTADO: R2=251, R4=196, R5=3, R7=8, R8=204, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=253, RA=72
+
+CICLO  71: PC= 8 | MOVE FP, SP          | INICIANDO
+CICLO  72: PC= 8 | MOVE FP, SP          | R30 = R29 = 245 (era 253)
+CICLO  73: PC= 9 | SW R4, 0(FP)         | INICIANDO
+CICLO  74: PC= 9 | SW R4, 0(FP)         | MEM[245] = R4 = 196
+CICLO  75: PC=10 | SW R5, 1(FP)         | INICIANDO
+CICLO  76: PC=10 | SW R5, 1(FP)         | MEM[246] = R5 = 3
+CICLO  77: PC=11 | LI R1, 0             | INICIANDO
+CICLO  78: PC=11 | LI R1, 0             | R1 = 0
+CICLO  79: PC=12 | MOVE R2, R1          | INICIANDO
+CICLO  80: PC=12 | MOVE R2, R1          | R2 = R1 = 0 (era 251)
+    ESTADO: R4=196, R5=3, R7=8, R8=204, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO  81: PC=13 | SW R2, 3(FP)         | INICIANDO
+CICLO  82: PC=13 | SW R2, 3(FP)         | MEM[248] = R2 = 0
+CICLO  83: PC=14 | LI R3, 0             | INICIANDO
+CICLO  84: PC=14 | LI R3, 0             | R3 = 0
+CICLO  85: PC=15 | MOVE R4, R3          | INICIANDO
+CICLO  86: PC=15 | MOVE R4, R3          | R4 = R3 = 0 (era 196)
+CICLO  87: PC=16 | SW R4, 2(FP)         | INICIANDO
+CICLO  88: PC=16 | SW R4, 2(FP)         | MEM[247] = R4 = 0
+CICLO  89: PC=17 | LW R4, 2(FP)         | INICIANDO
+CICLO  90: PC=17 | LW R4, 2(FP)         | R4 = MEM[247] = 0
+    ESTADO: R5=3, R7=8, R8=204, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO  91: PC=18 | LW R5, 1(FP)         | INICIANDO
+CICLO  92: PC=18 | LW R5, 1(FP)         | R5 = MEM[246] = 3
+CICLO  93: PC=19 | SLT R6, R4, R5       | INICIANDO
+CICLO  94: PC=19 | SLT R6, R4, R5       | R6 = (R4 < R5) = (0 < 3) = 1
+CICLO  95: PC=20 | BEQ R6, R0, 36       | INICIANDO
+CICLO  96: PC=20 | BEQ R6, R0, 36       | R6(1) == R0(0) -> Continue
+CICLO  97: PC=21 | LW R4, 2(FP)         | INICIANDO
+CICLO  98: PC=21 | LW R4, 2(FP)         | R4 = MEM[247] = 0
+CICLO  99: PC=22 | SLL R7, R4, 2        | INICIANDO
+CICLO 100: PC=22 | SLL R7, R4, 2        | R7 = R4 << 2 = 0 << 2 = 0
+    ESTADO: R5=3, R6=1, R8=204, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 101: PC=23 | LW R8, 0(FP)         | INICIANDO
+CICLO 102: PC=23 | LW R8, 0(FP)         | R8 = MEM[245] = 196
+CICLO 103: PC=24 | ADD R8, R8, R7       | INICIANDO
+CICLO 104: PC=24 | ADD R8, R8, R7       | R8 = R8 + R7 = 196 + 0 = 196
+CICLO 105: PC=25 | LW R9, 0(R8)         | INICIANDO
+CICLO 106: PC=25 | LW R9, 0(R8)         | R9 = MEM[196] = 5
+CICLO 107: PC=26 | LW R2, 3(FP)         | INICIANDO
+CICLO 108: PC=26 | LW R2, 3(FP)         | R2 = MEM[248] = 0
+CICLO 109: PC=27 | ADD R10, R2, R9      | INICIANDO
+CICLO 110: PC=27 | ADD R10, R2, R9      | R10 = R2 + R9 = 0 + 5 = 5
+    ESTADO: R5=3, R6=1, R8=196, R9=5, R10=5, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 111: PC=28 | MOVE R2, R10         | INICIANDO
+CICLO 112: PC=28 | MOVE R2, R10         | R2 = R10 = 5 (era 0)
+CICLO 113: PC=29 | SW R2, 3(FP)         | INICIANDO
+CICLO 114: PC=29 | SW R2, 3(FP)         | MEM[248] = R2 = 5
+CICLO 115: PC=30 | LI R11, 1            | INICIANDO
+CICLO 116: PC=30 | LI R11, 1            | R11 = 1
+CICLO 117: PC=31 | LW R4, 2(FP)         | INICIANDO
+CICLO 118: PC=31 | LW R4, 2(FP)         | R4 = MEM[247] = 0
+CICLO 119: PC=32 | ADD R12, R4, R11     | INICIANDO
+CICLO 120: PC=32 | ADD R12, R4, R11     | R12 = R4 + R11 = 0 + 1 = 1
+    ESTADO: R2=5, R5=3, R6=1, R8=196, R9=5, R10=5, R11=1, R12=1, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 121: PC=33 | MOVE R4, R12         | INICIANDO
+CICLO 122: PC=33 | MOVE R4, R12         | R4 = R12 = 1 (era 0)
+CICLO 123: PC=34 | SW R4, 2(FP)         | INICIANDO
+CICLO 124: PC=34 | SW R4, 2(FP)         | MEM[247] = R4 = 1
+CICLO 125: PC=35 | J 17                 | INICIANDO
+CICLO 126: PC=17 | J 17                 | Jump to 17
+CICLO 127: PC=17 | LW R4, 2(FP)         | INICIANDO
+CICLO 128: PC=17 | LW R4, 2(FP)         | R4 = MEM[247] = 1
+CICLO 129: PC=18 | LW R5, 1(FP)         | INICIANDO
+CICLO 130: PC=18 | LW R5, 1(FP)         | R5 = MEM[246] = 3
+    ESTADO: R2=5, R4=1, R5=3, R6=1, R8=196, R9=5, R10=5, R11=1, R12=1, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 131: PC=19 | SLT R6, R4, R5       | INICIANDO
+CICLO 132: PC=19 | SLT R6, R4, R5       | R6 = (R4 < R5) = (1 < 3) = 1
+CICLO 133: PC=20 | BEQ R6, R0, 36       | INICIANDO
+CICLO 134: PC=20 | BEQ R6, R0, 36       | R6(1) == R0(0) -> Continue
+CICLO 135: PC=21 | LW R4, 2(FP)         | INICIANDO
+CICLO 136: PC=21 | LW R4, 2(FP)         | R4 = MEM[247] = 1
+CICLO 137: PC=22 | SLL R7, R4, 2        | INICIANDO
+CICLO 138: PC=22 | SLL R7, R4, 2        | R7 = R4 << 2 = 1 << 2 = 4
+CICLO 139: PC=23 | LW R8, 0(FP)         | INICIANDO
+CICLO 140: PC=23 | LW R8, 0(FP)         | R8 = MEM[245] = 196
+    ESTADO: R2=5, R4=1, R5=3, R6=1, R7=4, R8=196, R9=5, R10=5, R11=1, R12=1, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 141: PC=24 | ADD R8, R8, R7       | INICIANDO
+CICLO 142: PC=24 | ADD R8, R8, R7       | R8 = R8 + R7 = 200 + 4 = 200
+CICLO 143: PC=25 | LW R9, 0(R8)         | INICIANDO
+CICLO 144: PC=25 | LW R9, 0(R8)         | R9 = MEM[200] = 10
+CICLO 145: PC=26 | LW R2, 3(FP)         | INICIANDO
+CICLO 146: PC=26 | LW R2, 3(FP)         | R2 = MEM[248] = 5
+CICLO 147: PC=27 | ADD R10, R2, R9      | INICIANDO
+CICLO 148: PC=27 | ADD R10, R2, R9      | R10 = R2 + R9 = 5 + 10 = 15
+CICLO 149: PC=28 | MOVE R2, R10         | INICIANDO
+CICLO 150: PC=28 | MOVE R2, R10         | R2 = R10 = 15 (era 5)
+    ESTADO: R2=15, R4=1, R5=3, R6=1, R7=4, R8=200, R9=10, R10=15, R11=1, R12=1, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 151: PC=29 | SW R2, 3(FP)         | INICIANDO
+CICLO 152: PC=29 | SW R2, 3(FP)         | MEM[248] = R2 = 15
+CICLO 153: PC=30 | LI R11, 1            | INICIANDO
+CICLO 154: PC=30 | LI R11, 1            | R11 = 1
+CICLO 155: PC=31 | LW R4, 2(FP)         | INICIANDO
+CICLO 156: PC=31 | LW R4, 2(FP)         | R4 = MEM[247] = 1
+CICLO 157: PC=32 | ADD R12, R4, R11     | INICIANDO
+CICLO 158: PC=32 | ADD R12, R4, R11     | R12 = R4 + R11 = 1 + 1 = 2
+CICLO 159: PC=33 | MOVE R4, R12         | INICIANDO
+CICLO 160: PC=33 | MOVE R4, R12         | R4 = R12 = 2 (era 1)
+    ESTADO: R2=15, R4=2, R5=3, R6=1, R7=4, R8=200, R9=10, R10=15, R11=1, R12=2, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 161: PC=34 | SW R4, 2(FP)         | INICIANDO
+CICLO 162: PC=34 | SW R4, 2(FP)         | MEM[247] = R4 = 2
+CICLO 163: PC=35 | J 17                 | INICIANDO
+CICLO 164: PC=17 | J 17                 | Jump to 17
+CICLO 165: PC=17 | LW R4, 2(FP)         | INICIANDO
+CICLO 166: PC=17 | LW R4, 2(FP)         | R4 = MEM[247] = 2
+CICLO 167: PC=18 | LW R5, 1(FP)         | INICIANDO
+CICLO 168: PC=18 | LW R5, 1(FP)         | R5 = MEM[246] = 3
+CICLO 169: PC=19 | SLT R6, R4, R5       | INICIANDO
+CICLO 170: PC=19 | SLT R6, R4, R5       | R6 = (R4 < R5) = (2 < 3) = 1
+    ESTADO: R2=15, R4=2, R5=3, R6=1, R7=4, R8=200, R9=10, R10=15, R11=1, R12=2, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 171: PC=20 | BEQ R6, R0, 36       | INICIANDO
+CICLO 172: PC=20 | BEQ R6, R0, 36       | R6(1) == R0(0) -> Continue
+CICLO 173: PC=21 | LW R4, 2(FP)         | INICIANDO
+CICLO 174: PC=21 | LW R4, 2(FP)         | R4 = MEM[247] = 2
+CICLO 175: PC=22 | SLL R7, R4, 2        | INICIANDO
+CICLO 176: PC=22 | SLL R7, R4, 2        | R7 = R4 << 2 = 2 << 2 = 8
+CICLO 177: PC=23 | LW R8, 0(FP)         | INICIANDO
+CICLO 178: PC=23 | LW R8, 0(FP)         | R8 = MEM[245] = 196
+CICLO 179: PC=24 | ADD R8, R8, R7       | INICIANDO
+CICLO 180: PC=24 | ADD R8, R8, R7       | R8 = R8 + R7 = 204 + 8 = 204
+    ESTADO: R2=15, R4=2, R5=3, R6=1, R7=8, R8=204, R9=10, R10=15, R11=1, R12=2, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 181: PC=25 | LW R9, 0(R8)         | INICIANDO
+CICLO 182: PC=25 | LW R9, 0(R8)         | R9 = MEM[204] = 15
+CICLO 183: PC=26 | LW R2, 3(FP)         | INICIANDO
+CICLO 184: PC=26 | LW R2, 3(FP)         | R2 = MEM[248] = 15
+CICLO 185: PC=27 | ADD R10, R2, R9      | INICIANDO
+CICLO 186: PC=27 | ADD R10, R2, R9      | R10 = R2 + R9 = 15 + 15 = 30
+CICLO 187: PC=28 | MOVE R2, R10         | INICIANDO
+CICLO 188: PC=28 | MOVE R2, R10         | R2 = R10 = 30 (era 15)
+CICLO 189: PC=29 | SW R2, 3(FP)         | INICIANDO
+CICLO 190: PC=29 | SW R2, 3(FP)         | MEM[248] = R2 = 30
+    ESTADO: R2=30, R4=2, R5=3, R6=1, R7=8, R8=204, R9=15, R10=30, R11=1, R12=2, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 191: PC=30 | LI R11, 1            | INICIANDO
+CICLO 192: PC=30 | LI R11, 1            | R11 = 1
+CICLO 193: PC=31 | LW R4, 2(FP)         | INICIANDO
+CICLO 194: PC=31 | LW R4, 2(FP)         | R4 = MEM[247] = 2
+CICLO 195: PC=32 | ADD R12, R4, R11     | INICIANDO
+CICLO 196: PC=32 | ADD R12, R4, R11     | R12 = R4 + R11 = 2 + 1 = 3
+CICLO 197: PC=33 | MOVE R4, R12         | INICIANDO
+CICLO 198: PC=33 | MOVE R4, R12         | R4 = R12 = 3 (era 2)
+CICLO 199: PC=34 | SW R4, 2(FP)         | INICIANDO
+CICLO 200: PC=34 | SW R4, 2(FP)         | MEM[247] = R4 = 3
+    ESTADO: R2=30, R4=3, R5=3, R6=1, R7=8, R8=204, R9=15, R10=30, R11=1, R12=3, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 201: PC=35 | J 17                 | INICIANDO
+CICLO 202: PC=17 | J 17                 | Jump to 17
+CICLO 203: PC=17 | LW R4, 2(FP)         | INICIANDO
+CICLO 204: PC=17 | LW R4, 2(FP)         | R4 = MEM[247] = 3
+CICLO 205: PC=18 | LW R5, 1(FP)         | INICIANDO
+CICLO 206: PC=18 | LW R5, 1(FP)         | R5 = MEM[246] = 3
+CICLO 207: PC=19 | SLT R6, R4, R5       | INICIANDO
+CICLO 208: PC=19 | SLT R6, R4, R5       | R6 = (R4 < R5) = (3 < 3) = 0
+CICLO 209: PC=20 | BEQ R6, R0, 36       | INICIANDO
+CICLO 210: PC=36 | BEQ R6, R0, 36       | R6(0) == R0(0) -> Jump to 36
+    ESTADO: R2=30, R4=3, R5=3, R7=8, R8=204, R9=15, R10=30, R11=1, R12=3, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=245, FP=245, RA=72
+
+CICLO 211: PC=36 | LW R2, 3(FP)         | INICIANDO
+CICLO 212: PC=36 | LW R2, 3(FP)         | R2 = MEM[248] = 30
+CICLO 213: PC=37 | MOVE R1, R2          | INICIANDO
+CICLO 214: PC=37 | MOVE R1, R2          | R1 = R2 = 30 (era 0)
+CICLO 215: PC=38 | ADDI SP, FP, 8       | INICIANDO
+CICLO 216: PC=38 | ADDI SP, FP, 8       | R29 = R30(245) + 8 = 253 (era 245)
+CICLO 217: PC=39 | SUBI R2, SP, 2       | INICIANDO
+CICLO 218: PC=39 | SUBI R2, SP, 2       | R2 = R29(253) - 2 = 251 (era 30)
+CICLO 219: PC=40 | LW FP, 0(R2)         | INICIANDO
+CICLO 220: PC=40 | LW FP, 0(R2)         | R30 = MEM[251] = 253
+    ESTADO: R1=30, R2=251, R4=3, R5=3, R7=8, R8=204, R9=15, R10=30, R11=1, R12=3, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, GP=196, SP=253, FP=253, RA=72
+
+CICLO 221: PC=41 | SUBI R2, SP, 1       | INICIANDO
+CICLO 222: PC=41 | SUBI R2, SP, 1       | R2 = R29(253) - 1 = 252 (era 251)
+CICLO 223: PC=42 | LW RA, 0(R2)         | INICIANDO
+CICLO 224: PC=42 | LW RA, 0(R2)         | R31 = MEM[252] = 72
+CICLO 225: PC=43 | ADDI SP, SP, 8       | INICIANDO
+CICLO 226: PC=43 | ADDI SP, SP, 8       | R29 = R29(261) + 8 = 261 (era 253)
+CICLO 227: PC=44 | JR RA                | INICIANDO
+CICLO 228: PC=72 | JR RA                | Jump to R31 = 72
+CICLO 229: PC=72 | MOVE R21, R1         | INICIANDO
+CICLO 230: PC=72 | MOVE R21, R1         | R21 = R1 = 30 (era 0)
+    ESTADO: R1=30, R2=252, R4=3, R5=3, R7=8, R8=204, R9=15, R10=30, R11=1, R12=3, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, R21=30, GP=196, SP=261, FP=253, RA=72
+
+CICLO 231: PC=73 | MOVE R7, R1          | INICIANDO
+CICLO 232: PC=73 | MOVE R7, R1          | R7 = R1 = 30 (era 8)
+CICLO 233: PC=74 | MOVE R22, R21        | INICIANDO
+CICLO 234: PC=74 | MOVE R22, R21        | R22 = R21 = 30 (era 0)
+CICLO 235: PC=75 | SW R22, 0(FP)        | INICIANDO
+CICLO 236: PC=75 | SW R22, 0(FP)        | MEM[253] = R22 = 30
+CICLO 237: PC=76 | LW R22, 0(FP)        | INICIANDO
+CICLO 238: PC=76 | LW R22, 0(FP)        | R22 = MEM[253] = 30
+CICLO 239: PC=77 | OUTPUTREG R22        | INICIANDO
+CICLO 240: PC=77 | OUTPUTREG R22        | OUTPUT: 30 (de R22)
+    ESTADO: R1=30, R2=252, R4=3, R5=3, R7=30, R8=204, R9=15, R10=30, R11=1, R12=3, R13=5, R15=10, R16=1, R17=15, R18=2, R19=3, R20=196, R21=30, R22=30, GP=196, SP=261, FP=253, RA=72
+
+CICLO 241: PC=78 | HALT                 | INICIANDO
+CICLO 242: PC=78 | HALT                 | PROGRAMA FINALIZADO - Saídas: [30]
+
+=== FIM DA EXECUÇÃO ===
+Total de ciclos: 242
+Saídas geradas: [30]
+Resultado final: 30

@@ -14,7 +14,7 @@ class MIPSSimulator:
         # Banco de registradores (32 registradores)
         self.registers = [0] * 32
 
-        # Memória RAM (256 words de 32 bits cada)
+        # Memória RAM (256 bytes)
         self.memory = [0] * 256
 
         # Program Counter
@@ -153,7 +153,7 @@ class MIPSSimulator:
                     self.instructions.append(instruction)
                     print(f"📋 [{addr:2d}] {instruction}")
 
-        print(f"✅ Carregadas {len(self.instructions)} instruções")
+        print(f"OK Carregadas {len(self.instructions)} instrucoes")
         print(f"🏷️  Labels: {self.labels}")
 
     def parse_instruction(self, text):
@@ -216,7 +216,7 @@ class MIPSSimulator:
 
         # Formatar instrução para display e log
         instr_str = f"{opcode} {', '.join(args)}"
-        print(f"🔄 PC={self.pc:2d}: {instr_str}")
+        print(f"PC={self.pc:2d}: {instr_str}")
 
         # LOG: Registrar início da execução da instrução
         self.log_instruction(self.pc, instr_str, "INICIANDO")
@@ -286,8 +286,8 @@ class MIPSSimulator:
                 address = self.get_immediate_value(offset_str) & 0xFF
 
             self.memory[address] = (
-                self.registers[rt] & self.max_value
-            )  # Valor completo de 32 bits
+                self.registers[rt] & 0xFF
+            )  # Garantir que cabe na memória
             result_msg = f"MEM[{address}] = R{rt} = {self.registers[rt]}"
             print(f"   MEM[{address}] = R{rt} = {self.registers[rt]}")
             self.log_instruction(self.pc, instr_str, result_msg)
@@ -557,14 +557,14 @@ class MIPSSimulator:
             self.output_values.append(output_val)  # Adicionar ao histórico
             self.output_value = output_val  # Manter última saída
             result_msg = f"OUTPUT: {output_val} (de R{rs})"
-            print(f"   📤 OUTPUT: {output_val}")
+            print(f"   OUTPUT: {output_val}")
             self.log_instruction(self.pc, instr_str, result_msg)
 
         elif opcode == "HALT":
             # Halt
             self.halted = True
             result_msg = f"PROGRAMA FINALIZADO - Saídas: {self.output_values}"
-            print(f"   🛑 HALT - Programa finalizado")
+            print(f"   HALT - Programa finalizado")
             self.log_instruction(self.pc, instr_str, result_msg)
             return
 
@@ -579,9 +579,9 @@ class MIPSSimulator:
         # INICIALIZAR LOG DE DEBUG
         self.start_debug_log("execution_debug.txt")
 
-        print(f"\n🚀 Iniciando execução...")
-        print(f"📍 PC inicial: {self.pc}")
-        print(f"🔧 Limite de ciclos: {max_cycles}")
+        print(f"\nIniciando execucao...")
+        print(f"PC inicial: {self.pc}")
+        print(f"Limite de ciclos: {max_cycles}")
 
         cycle = 0
 
@@ -644,11 +644,11 @@ class MIPSSimulator:
 
     def print_final_state(self):
         """Imprime estado final do simulador"""
-        print(f"\n📊 Estado Final:")
-        print(f"📤 Saídas geradas: {self.output_values}")
-        print(f"🎯 Última saída: {self.output_value}")
-        print(f"📍 PC final: {self.pc}")
-        print(f"🔢 Entradas processadas: {self.input_index}/{len(self.input_values)}")
+        print(f"\nEstado Final:")
+        print(f"Saidas geradas: {self.output_values}")
+        print(f"Ultima saida: {self.output_value}")
+        print(f"PC final: {self.pc}")
+        print(f"Entradas processadas: {self.input_index}/{len(self.input_values)}")
 
         # Mostrar registradores não-zero
         non_zero_regs = []

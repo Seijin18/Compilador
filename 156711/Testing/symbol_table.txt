@@ -1,0 +1,24 @@
+Formato da Tabela de Simbolos:
+Nome;	Escopo;	Tipo;	Tipo de Identificador;	Linha
+testarray;	global;	int;	Variable;		1
+sumarray;	global;	int;	Function;		3
+arr;	sumarray;	int;	Variable;		3
+size;	sumarray;	int;	Variable;		3
+i;	sumarray;	int;	Variable;		5
+sum;	sumarray;	int;	Variable;		6
+sum;	sumarray;	int;	Function;		7
+i;	sumarray;	int;	Function;		8
+sum;	sumarray;	int;	Function;		10
+arr;	sumarray;	int;	Variable;		10
+i;	sumarray;	int;	Function;		11
+int;	sumarray;	int;	Function;		13
+main;	global;	void;	Function;		16
+result;	main;	int;	Variable;		18
+testarray;	main;	int;	Function;		20
+testarray;	main;	int;	Variable;		20
+testarray;	main;	int;	Function;		21
+testarray;	main;	int;	Variable;		21
+testarray;	main;	int;	Function;		22
+testarray;	main;	int;	Variable;		22
+result;	main;	int;	Function;		24
+sumarray;	main;	int;	Function;		24
