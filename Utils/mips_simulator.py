@@ -371,7 +371,7 @@ class MIPSSimulator:
                 rd = self.get_register_number(args[0])
                 rs = self.get_register_number(args[1])
                 rt = self.get_register_number(args[2])
-                
+
                 if self.registers[rt] != 0:
                     result = self.registers[rs] // self.registers[rt]
                     self.registers[rd] = result & self.max_value
@@ -411,7 +411,7 @@ class MIPSSimulator:
                 rd = self.get_register_number(args[0])
                 rs = self.get_register_number(args[1])
                 rt = self.get_register_number(args[2])
-                
+
                 result = self.registers[rs] * self.registers[rt]
                 self.registers[rd] = result & self.max_value
                 result_msg = f"R{rd} = R{rs} * R{rt} = {self.registers[rs]} * {self.registers[rt]} = {self.registers[rd]}"
@@ -424,7 +424,9 @@ class MIPSSimulator:
 
                 result = self.registers[rs] * self.registers[rt]
                 # Para arquitetura flexível
-                low_bits = self.architecture_bits // 2 if self.architecture_bits > 8 else 8
+                low_bits = (
+                    self.architecture_bits // 2 if self.architecture_bits > 8 else 8
+                )
                 self.lo_register = result & ((1 << low_bits) - 1)  # Bits baixos
                 self.hi_register = (result >> low_bits) & (
                     (1 << low_bits) - 1
@@ -606,7 +608,7 @@ class MIPSSimulator:
         # Incrementar PC para próxima instrução
         self.pc += 1
 
-    def run(self, max_cycles=1000):
+    def run(self, max_cycles=5000):
         """Executa o programa carregado"""
         # INICIALIZAR LOG DE DEBUG
         self.start_debug_log("execution_debug.txt")

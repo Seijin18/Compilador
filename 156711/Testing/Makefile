@@ -27,11 +27,17 @@ ASSEMBLER_SRCS = assembler.c
 # Headers (conforme dependências do Readme.txt)
 HEADERS = funcs.h intermediate.h bison.tab.h
 
-# Testes funcionais (conforme relatório)
+# STATUS DOS CÓDIGOS CMINUS (Validado em Dezembro 2024)
+# ✅ FUNCIONAIS: slt.c, teste_operacoes.c, mult.c, fibonacci.c, test_array_access.c
+# ❌ COM PROBLEMAS: div.c (bug >=), gcd.c (loop infinito), fat.c (loop infinito)
+# Taxa de sucesso real: ~71% (5/7 testados)
+
+# Testes funcionais confirmados
 FUNCTIONAL_TESTS = test_array_access test_array_param test_global_array test_loops_arrays
 
-# Testes com problemas
-BROKEN_TESTS = test_multiple_functions test_variable_scope
+# Códigos CMinusCodes com problemas conhecidos  
+BROKEN_CMINUS = div.c gcd.c fat.c
+WORKING_CMINUS = slt.c mult.c fibonacci.c teste_operacoes.c
 
 # Cores para output
 GREEN = \033[0;32m

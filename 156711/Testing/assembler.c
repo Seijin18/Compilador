@@ -477,11 +477,15 @@ int load_array_address_to_register(const char *var_name, const char *scope) {
     
     printf("DEBUG: Array '%s' -> R%d", var_name, reg);
     if (sym) {
-        printf(" (símbolo encontrado: offset=%d, global=%d)", sym->offset, sym->is_global);
+        printf(" (símbolo encontrado: offset=%d, global=%d, is_arg=%d, is_array=%d)", sym->offset, sym->is_global, sym->is_arg, sym->is_array);
         if (sym->is_global) {
             // Para arrays globais, carregar o ENDEREÇO (ADDI), não o valor (LW)
             // ADDI formato: ADDI rt, rs, immediate
             add_instruction("ADDI", OP_ADDI, GP, reg, 0, sym->offset, NULL);
+        } else if (sym->is_arg && sym->is_array && !sym->is_global) {
+            // Para arrays que são parâmetros, carregar o endereço que foi passado como parâmetro
+            printf("DEBUG: Array parameter - using LW to load address from parameter\n");
+            add_instruction("LW", OP_LW, FP, reg, 0, sym->offset, NULL);
         } else {
             // Para arrays locais, também carregar o endereço
             add_instruction("ADDI", OP_ADDI, FP, reg, 0, sym->offset, NULL);
@@ -878,6 +882,13 @@ void generate_assembly_second_pass() {
             // Verificar se é o fim da função main
             int is_main_function = (strcmp(current_function, "main") == 0);
             
+            // Adicionar label do epilogue para funcões não-main
+            if (!is_main_function) {
+                char epilogue_label[256];
+                snprintf(epilogue_label, sizeof(epilogue_label), "%s_epilogue", current_function);
+                add_label(epilogue_label, current_line);
+            }
+            
             if (is_main_function) {
                 // Para main: adicionar HALT no final
                 add_instruction("HALT", OP_HALT, 0, 0, 0, 0, NULL);
@@ -1033,7 +1044,10 @@ void generate_assembly_second_pass() {
                 int src_reg = load_variable_to_register(quad->arg1, current_function);
                 add_move_if_different(src_reg, R1);
             }
-            // O epílogo será gerado por 'endfun', não aqui
+            // Salto direto para o epílogo da função
+            char epilogue_label[256];
+            snprintf(epilogue_label, sizeof(epilogue_label), "%s_epilogue", current_function);
+            add_instruction_with_label_fix("J", OP_J, 0, 0, 0, epilogue_label);
             
         } else if (strcmp(quad->op, "asn") == 0) {
             // Sair do estado de início de função
@@ -1140,6 +1154,25 @@ void generate_assembly_second_pass() {
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
             add_instruction("SLT", OP_SLT, rs, rt, rd, 0, NULL);
+            
+        } else if (strcmp(quad->op, ">=") == 0) {
+            printf("DEBUG: Processando comparação '>=' entre '%s' e '%s' -> '%s'\n", quad->arg1, quad->arg2, quad->arg3);
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            
+            printf("DEBUG: Registradores: '%s'->R%d, '%s'->R%d, resultado->R%d\n", 
+                   quad->arg1, rs, quad->arg2, rt, rd);
+            
+            // Implementar >= como NOT(<): rs >= rt equivale a NOT(rs < rt)
+            // 1. Primeiro fazemos rs < rt
+            add_instruction("SLT", OP_SLT, rs, rt, rd, 0, NULL);
+            printf("DEBUG: SLT R%d, R%d, R%d (rs < rt)\n", rd, rs, rt);
+            
+            // 2. Depois invertemos o resultado (NOT): 1 se rs >= rt, 0 se rs < rt
+            add_instruction("LI", OP_LI, 0, R1, 0, 1, NULL);  // R1 = 1
+            add_instruction("SUB", OP_SUB, R1, rd, rd, 0, NULL);  // rd = 1 - rd
+            printf("DEBUG: Resultado >= invertido: R%d = 1 - R%d\n", rd, rd);
             
         } else if (strcmp(quad->op, "if_f") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
