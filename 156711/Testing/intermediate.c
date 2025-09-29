@@ -272,8 +272,11 @@ static char* genNode(AASNode* node, FILE* out) {
                     }
                     
                     emitQuad("label", labelElse, " ", " ");
-                    if (node->children->sibling->sibling)
-                        genNode(node->children->sibling->sibling, out); // else
+                    // Generate the 'else' block (should be exactly the third child)
+                    AASNode* elseBlock = node->children->sibling->sibling;
+                    if (elseBlock) {
+                        genNode(elseBlock, out);
+                    }
                     emitQuad("label", labelEnd, " ", " ");
                     return NULL;
                 }
@@ -352,6 +355,15 @@ static char* genNode(AASNode* node, FILE* out) {
                         emitQuad("alloc", node->name, size, " ");
                     } else {
                         printf("DEBUG: Skipping alloc for array parameter: %s\n", node->name);
+                    }
+                    return NULL;
+                }
+                case KCompound: {
+                    // Process all statements in the compound block
+                    AASNode* child = node->children;
+                    while (child) {
+                        genNode(child, out);
+                        child = child->sibling;
                     }
                     return NULL;
                 }

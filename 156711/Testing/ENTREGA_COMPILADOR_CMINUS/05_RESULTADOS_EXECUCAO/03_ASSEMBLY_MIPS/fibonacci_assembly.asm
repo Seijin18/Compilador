@@ -7,7 +7,7 @@
 
   0: LI         GP, 136
   1: LI         SP, 255
-  2: J          31
+  2: J          33
 fibonacci:
   3: SUBI       SP, SP, 8
   4: SW         RA, 7(SP)
@@ -16,7 +16,7 @@ fibonacci:
   7: SW         R4, 0(FP)
   8: LI         R1, 1
   9: LW         R2, 0(FP)
- 10: BLTE       R2, R1, 25
+ 10: BLTE       R2, R1, 26
  11: LI         R3, 1
  12: LW         R2, 0(FP)
  13: SUB        R4, R2, R3
@@ -31,27 +31,30 @@ fibonacci:
  22: MOVE       R8, R1
  23: ADD        R9, R5, R8
  24: MOVE       R1, R9
+ 25: J          29
 L0:
- 25: LW         R2, 0(FP)
- 26: MOVE       R1, R2
+ 26: LW         R2, 0(FP)
+ 27: MOVE       R1, R2
+ 28: J          29
 L1:
- 27: LW         RA, 7(SP)
- 28: LW         FP, 6(SP)
- 29: ADDI       SP, SP, 8
- 30: JR         RA
+fibonacci_epilogue:
+ 29: LW         RA, 7(SP)
+ 30: LW         FP, 6(SP)
+ 31: ADDI       SP, SP, 8
+ 32: JR         RA
 main:
- 31: SUBI       R2, SP, 2
- 32: SW         FP, 0(R2)
- 33: SUBI       SP, SP, 2
- 34: MOVE       FP, SP
- 35: INPUT      R10
- 36: OUTPUTREG  R10
- 37: MOVE       R2, R10
- 38: SW         R2, 0(FP)
- 39: LW         R2, 0(FP)
- 40: MOVE       R4, R2
- 41: JAL        3
- 42: MOVE       R11, R1
- 43: MOVE       R7, R1
- 44: OUTPUTREG  R11
- 45: HALT      
+ 33: SUBI       R2, SP, 2
+ 34: SW         FP, 0(R2)
+ 35: SUBI       SP, SP, 2
+ 36: MOVE       FP, SP
+ 37: INPUT      R10
+ 38: OUTPUTREG  R10
+ 39: MOVE       R2, R10
+ 40: SW         R2, 0(FP)
+ 41: LW         R2, 0(FP)
+ 42: MOVE       R4, R2
+ 43: JAL        3
+ 44: MOVE       R11, R1
+ 45: MOVE       R7, R1
+ 46: OUTPUTREG  R11
+ 47: HALT      

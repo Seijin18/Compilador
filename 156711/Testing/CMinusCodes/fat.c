@@ -1,8 +1,10 @@
 int fat(int x){
 	if(x == 0){
+		output(10,0);
 		return 1;
 	}else{
-		return x*fat(x-1);
+		output(x,0);
+		return (x*fat(x-1));
 	}
 }
 

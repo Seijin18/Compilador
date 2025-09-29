@@ -1,11 +1,11 @@
 # Relatório Final de Compilação
-## Data: 2025-09-16 20:28:09
+## Data: 2025-09-23 12:21:39
 
 ### 📊 Estatísticas Gerais
-- **Total de arquivos**: 23
-- **Sucessos na compilação**: 23
-- **Sucessos no assembly**: 23 
-- **Sucessos na execução**: 23
+- **Total de arquivos**: 20
+- **Sucessos na compilação**: 20
+- **Sucessos no assembly**: 20 
+- **Sucessos na execução**: 20
 - **Falhas**: 0
 - **Taxa de sucesso**: 100.0%
 

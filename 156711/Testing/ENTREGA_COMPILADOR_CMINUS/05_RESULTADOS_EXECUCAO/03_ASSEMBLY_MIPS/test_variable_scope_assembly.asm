@@ -7,7 +7,7 @@
 
   0: LI         GP, 144
   1: LI         SP, 255
-  2: J          25
+  2: J          26
 testscope:
   3: SUBI       SP, SP, 8
   4: SW         RA, 7(SP)
@@ -27,34 +27,36 @@ testscope:
  18: SW         R7, 0(GP)
  19: LW         R4, 1(FP)
  20: MOVE       R1, R4
- 21: LW         RA, 7(SP)
- 22: LW         FP, 6(SP)
- 23: ADDI       SP, SP, 8
- 24: JR         RA
+ 21: J          22
+testscope_epilogue:
+ 22: LW         RA, 7(SP)
+ 23: LW         FP, 6(SP)
+ 24: ADDI       SP, SP, 8
+ 25: JR         RA
 main:
- 25: SUBI       R2, SP, 2
- 26: SW         FP, 0(R2)
- 27: SUBI       SP, SP, 2
- 28: MOVE       FP, SP
- 29: LI         R8, 100
- 30: MOVE       R7, R8
- 31: SW         R7, 0(GP)
- 32: LI         R9, 10
- 33: MOVE       R4, R9
- 34: JAL        3
- 35: MOVE       R10, R1
- 36: MOVE       R7, R1
- 37: MOVE       R11, R10
- 38: SW         R11, 0(FP)
- 39: LW         R11, 0(FP)
- 40: OUTPUTREG  R11
- 41: LW         R7, 0(GP)
- 42: OUTPUTREG  R7
- 43: LW         R7, 0(GP)
- 44: LW         R11, 0(FP)
- 45: ADD        R12, R7, R11
- 46: MOVE       R7, R12
- 47: SW         R7, 0(GP)
- 48: LW         R7, 0(GP)
- 49: OUTPUTREG  R7
- 50: HALT      
+ 26: SUBI       R2, SP, 2
+ 27: SW         FP, 0(R2)
+ 28: SUBI       SP, SP, 2
+ 29: MOVE       FP, SP
+ 30: LI         R8, 100
+ 31: MOVE       R7, R8
+ 32: SW         R7, 0(GP)
+ 33: LI         R9, 10
+ 34: MOVE       R4, R9
+ 35: JAL        3
+ 36: MOVE       R10, R1
+ 37: MOVE       R7, R1
+ 38: MOVE       R11, R10
+ 39: SW         R11, 0(FP)
+ 40: LW         R11, 0(FP)
+ 41: OUTPUTREG  R11
+ 42: LW         R7, 0(GP)
+ 43: OUTPUTREG  R7
+ 44: LW         R7, 0(GP)
+ 45: LW         R11, 0(FP)
+ 46: ADD        R12, R7, R11
+ 47: MOVE       R7, R12
+ 48: SW         R7, 0(GP)
+ 49: LW         R7, 0(GP)
+ 50: OUTPUTREG  R7
+ 51: HALT      

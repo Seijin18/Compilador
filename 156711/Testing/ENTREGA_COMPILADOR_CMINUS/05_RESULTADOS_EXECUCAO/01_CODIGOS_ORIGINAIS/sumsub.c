@@ -1,4 +1,4 @@
-main(void){
+void main(void){
     int a;
     int b;
     int c;

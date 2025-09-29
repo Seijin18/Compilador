@@ -14,7 +14,9 @@ void main(void) {
     
     resultado = a * b;
     output(resultado, 0);
-    
+
+    resultado = a / b;
+    output(resultado, 0);    
     
     if (a < b) {
         output(1, 0);

@@ -1,17 +1,39 @@
 # Relatório de Compilação - slt.c
-## Data: 2025-09-16 20:28:07
+## Data: 2025-09-23 12:21:37
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
 Localização: CMinusCodes\slt.c
-Tamanho: 161 bytes
+Tamanho: 166 bytes
 
 ### 🔧 Compilação C-Minus
 ```
-syntax error 'main' INVALIDO [linha: 1]
-Could not write tree.
-Could not write symbol table.
-Could not write intermediate code.
+Tree written to tree.txt
+Symbol table written to symbol_table.txt
+DEBUG: Processing function main children:
+DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
+DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
+DEBUG: Child - node=0, stmt=2, exp=-1, name=a
+DEBUG: Child - node=0, stmt=2, exp=-1, name=b
+DEBUG: Child - node=0, stmt=0, exp=-1, name=NULL
+(goto,main, , )
+(fun,main, , )
+(alloc,a,1, )
+(alloc,b,1, )
+(input, , ,t0)
+(asn,t0, ,a)
+(input, , ,t1)
+(asn,t1, ,b)
+(bge,a,b,L0)
+(immed,1, ,t2)
+(output,t2,0, )
+(goto,L1, , )
+(label,L0, , )
+(immed,0, ,t3)
+(output,t3,0, )
+(label,L1, , )
+(endfun, , , )
+Intermediate code written to intermediate.txt
 
 ```
 
@@ -25,22 +47,102 @@ Implementa todas as correções identificadas nos problemas:
 - Passagem robusta de parâmetros
 =====================================================
 Lendo arquivo: intermediate.txt
-Quadruplas lidas: 0
+Quadruplas lidas: 17
 Primeira passada: mapeando labels...
 Segunda passada: gerando código...
-ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=128
+ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=136
 ADD_INSTRUCTION[1]: LI (op=27) rs=R0 rt=R29 rd=R0 imm=255
+DEBUG: Função 'main' detectada com 2 parâmetros totais
+ADD_INSTRUCTION[4]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[5]: SW (op=26) rs=R2 rt=R30 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R30, 0(R2)'
+ADD_INSTRUCTION[6]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=2
+ADD_INSTRUCTION[7]: MOVE (op=11) rs=R29 rt=R0 rd=R30 imm=0
+DEBUG: add_instruction MOVE[7]: rs=29, rt=0, rd=30 (Armazenado: rs=29, rd=30)
+DEBUG: Detectado parâmetro a na função main (param #1 de 2)
+DEBUG: Parâmetro a registrado com offset 0 na função main
+DEBUG: Detectado parâmetro b na função main (param #2 de 2)
+DEBUG: Parâmetro b registrado com offset 1 na função main
+DEBUG: get_register_for_variable('t0', 'main')
+DEBUG: Registrador livre encontrado: R1
+DEBUG: Alocando 't0' -> R1
+ADD_INSTRUCTION[8]: INPUT (op=34) rs=R0 rt=R0 rd=R1 imm=0
+ADD_INSTRUCTION[9]: OUTPUTREG (op=32) rs=R1 rt=R0 rd=R0 imm=0
+DEBUG: load_variable_to_register('t0', 'main')
+DEBUG: get_register_for_variable('t0', 'main')
+DEBUG: Variável 't0' já em R1 (reutilizando)
+DEBUG: Variável 't0' -> R1 (símbolo NÃO encontrado!)
+DEBUG: get_register_for_variable('a', 'main')
+DEBUG: Registrador livre encontrado: R2
+DEBUG: Alocando 'a' -> R2
+DEBUG: add_move_if_different(R1 -> R2)
+DEBUG: Gerando MOVE R2, R1
+ADD_INSTRUCTION[10]: MOVE (op=11) rs=R1 rt=R0 rd=R2 imm=0
+DEBUG: add_instruction MOVE[10]: rs=1, rt=0, rd=2 (Armazenado: rs=1, rd=2)
+ADD_INSTRUCTION[11]: SW (op=26) rs=R30 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R2, 0(R30)'
+DEBUG: get_register_for_variable('t1', 'main')
+DEBUG: Registrador livre encontrado: R3
+DEBUG: Alocando 't1' -> R3
+ADD_INSTRUCTION[12]: INPUT (op=34) rs=R0 rt=R0 rd=R3 imm=0
+ADD_INSTRUCTION[13]: OUTPUTREG (op=32) rs=R3 rt=R0 rd=R0 imm=0
+DEBUG: load_variable_to_register('t1', 'main')
+DEBUG: get_register_for_variable('t1', 'main')
+DEBUG: Variável 't1' já em R3 (reutilizando)
+DEBUG: Variável 't1' -> R3 (símbolo NÃO encontrado!)
+DEBUG: get_register_for_variable('b', 'main')
+DEBUG: Registrador livre encontrado: R4
+DEBUG: Alocando 'b' -> R4
+DEBUG: add_move_if_different(R3 -> R4)
+DEBUG: Gerando MOVE R4, R3
+ADD_INSTRUCTION[14]: MOVE (op=11) rs=R3 rt=R0 rd=R4 imm=0
+DEBUG: add_instruction MOVE[14]: rs=3, rt=0, rd=4 (Armazenado: rs=3, rd=4)
+ADD_INSTRUCTION[15]: SW (op=26) rs=R30 rt=R4 rd=R0 imm=1
+  MEM PREVIEW: Will output 'SW R4, 1(R30)'
+DEBUG: load_variable_to_register('a', 'main')
+DEBUG: get_register_for_variable('a', 'main')
+DEBUG: Variável 'a' já em R2 (reutilizando)
+DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[16]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R2, 0(R30)'
+
+DEBUG: load_variable_to_register('b', 'main')
+DEBUG: get_register_for_variable('b', 'main')
+DEBUG: Variável 'b' já em R4 (reutilizando)
+DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[17]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
+  MEM PREVIEW: Will output 'LW R4, 1(R30)'
+
+DEBUG: get_register_for_variable('t2', 'main')
+DEBUG: Registrador livre encontrado: R5
+DEBUG: Alocando 't2' -> R5
+ADD_INSTRUCTION[19]: LI (op=27) rs=R0 rt=R5 rd=R0 imm=1
+DEBUG: load_variable_to_register('t2', 'main')
+DEBUG: get_register_for_variable('t2', 'main')
+DEBUG: Variável 't2' já em R5 (reutilizando)
+DEBUG: Variável 't2' -> R5 (símbolo NÃO encontrado!)
+ADD_INSTRUCTION[20]: OUTPUTREG (op=32) rs=R5 rt=R0 rd=R0 imm=0
+DEBUG: get_register_for_variable('t3', 'main')
+DEBUG: Registrador livre encontrado: R6
+DEBUG: Alocando 't3' -> R6
+ADD_INSTRUCTION[23]: LI (op=27) rs=R0 rt=R6 rd=R0 imm=0
+DEBUG: load_variable_to_register('t3', 'main')
+DEBUG: get_register_for_variable('t3', 'main')
+DEBUG: Variável 't3' já em R6 (reutilizando)
+DEBUG: Variável 't3' -> R6 (símbolo NÃO encontrado!)
+ADD_INSTRUCTION[24]: OUTPUTREG (op=32) rs=R6 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[26]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
 Terceira passada: corrigindo endereços...
 Escrevendo arquivos de saída...
 === Estatísticas do Assembler Corrigido ===
-Quadruplas processadas: 0
-Instruções geradas: 2
-Labels: 0
-Símbolos: 0
+Quadruplas processadas: 17
+Instruções geradas: 27
+Labels: 3
+Símbolos: 2
 ==========================================
 === Tabela de Símbolos Corrigida ===
 Nome            Escopo          Offset  Global  Arg     Array   Tamanho
 ------------------------------------------------------------------------
+a               main            0       Não    Sim     Não    1      
+b               main            1       Não    Sim     Não    1      
 ====================================
 
 Arquivos gerados:
@@ -61,9 +163,9 @@ Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output_corrected.asm
 Entradas: [10, 5]
 Resultado esperado: None
 Traceback (most recent call last):
-  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 870, in <module>
+  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 872, in <module>
     main()
-  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 783, in main
+  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 785, in main
     simulator = MIPSSimulator(input_values=input_values)
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 58, in __init__
@@ -80,6 +182,6 @@ Saídas geradas: []
 Número de outputs: 0
 
 ### 📊 Resumo
-- Compilação: ❌ ERRO
+- Compilação: ✅ OK
 - Assembly: ✅ OK
 - Simulação: ❌ ERRO

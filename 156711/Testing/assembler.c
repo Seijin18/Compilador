@@ -1025,8 +1025,43 @@ void generate_assembly_second_pass() {
                     }
                 }
                 
+                // Salvar registradores caller-saved que estão em uso antes da chamada
+                int saved_regs[16];
+                int saved_count = 0;
+                
+                // Identificar registradores que precisam ser salvos (R2-R15, excluindo R1 e R4)
+                for (int i = 2; i <= 15; i++) {
+                    if (i == 4) continue; // R4 é usado para parâmetros, não precisa salvar
+                    // R1 é usado para return value, não deve ser salvo
+                    if (registers[i].is_busy && strlen(registers[i].variable) > 0) {
+                        printf("DEBUG: Salvando R%d (contém '%s') antes da chamada\n", i, registers[i].variable);
+                        // Salvar na pilha usando offset negativo do SP
+                        add_load_store_with_offset("SW", OP_SW, SP, i, -(saved_count + 1));
+                        saved_regs[saved_count] = i;
+                        saved_count++;
+                    }
+                }
+                
+                // Ajustar o SP para reservar espaço na pilha
+                if (saved_count > 0) {
+                    add_instruction("SUBI", OP_SUBI, SP, SP, 0, saved_count, NULL);
+                }
+                
                 // Chamada
                 add_instruction_with_label_fix("JAL", OP_JAL, 0, 0, 0, quad->arg1);
+                
+                // Restaurar registradores após a chamada
+                if (saved_count > 0) {
+                    // Restaurar SP
+                    add_instruction("ADDI", OP_ADDI, SP, SP, 0, saved_count, NULL);
+                    
+                    // Restaurar os registradores na ordem reversa
+                    for (int i = saved_count - 1; i >= 0; i--) {
+                        int reg = saved_regs[i];
+                        printf("DEBUG: Restaurando R%d (contém '%s') após a chamada\n", reg, registers[reg].variable);
+                        add_load_store_with_offset("LW", OP_LW, SP, reg, -(i + 1));
+                    }
+                }
                 
                 // Resultado
                 if (strlen(quad->arg3) > 0) {
@@ -1173,6 +1208,25 @@ void generate_assembly_second_pass() {
             add_instruction("LI", OP_LI, 0, R1, 0, 1, NULL);  // R1 = 1
             add_instruction("SUB", OP_SUB, R1, rd, rd, 0, NULL);  // rd = 1 - rd
             printf("DEBUG: Resultado >= invertido: R%d = 1 - R%d\n", rd, rd);
+            
+        } else if (strcmp(quad->op, "<=") == 0) {
+            printf("DEBUG: Processando comparação '<=' entre '%s' e '%s' -> '%s'\n", quad->arg1, quad->arg2, quad->arg3);
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            
+            printf("DEBUG: Registradores: '%s'->R%d, '%s'->R%d, resultado->R%d\n", 
+                   quad->arg1, rs, quad->arg2, rt, rd);
+            
+            // Implementar <= como NOT(>): rs <= rt equivale a NOT(rs > rt) = NOT(rt < rs)
+            // 1. Primeiro fazemos rt < rs (inverter argumentos para >)
+            add_instruction("SLT", OP_SLT, rt, rs, rd, 0, NULL);
+            printf("DEBUG: SLT R%d, R%d, R%d (rt < rs, ou seja, rs > rt)\n", rd, rt, rs);
+            
+            // 2. Depois invertemos o resultado (NOT): 1 se rs <= rt, 0 se rs > rt
+            add_instruction("LI", OP_LI, 0, R1, 0, 1, NULL);  // R1 = 1
+            add_instruction("SUB", OP_SUB, R1, rd, rd, 0, NULL);  // rd = 1 - rd
+            printf("DEBUG: Resultado <= invertido: R%d = 1 - R%d\n", rd, rd);
             
         } else if (strcmp(quad->op, "if_f") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
@@ -1450,14 +1504,14 @@ int main(int argc, char *argv[]) {
     fix_label_addresses();
     
     printf("Escrevendo arquivos de saída...\n");
-    write_assembly_file("assembly_output_corrected.asm");
-    write_binary_file("binary_output_corrected.txt");
+    write_assembly_file("assembly_output.asm");
+    write_binary_file("binary_output.txt");
     
     print_statistics();
     
     printf("\nArquivos gerados:\n");
-    printf("- assembly_output_corrected.asm\n");
-    printf("- binary_output_corrected.txt\n");
+    printf("- assembly_output.asm\n");
+    printf("- binary_output.txt\n");
     printf("\nAssembler corrigido executado com sucesso!\n");
     
     return 0;

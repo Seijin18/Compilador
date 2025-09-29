@@ -1,5 +1,5 @@
 # Relatório de Compilação - fat.c
-## Data: 2025-09-16 20:28:06
+## Data: 2025-09-23 12:21:37
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
@@ -113,11 +113,11 @@ DEBUG: add_instruction MOVE[13]: rs=3, rt=0, rd=1 (Armazenado: rs=3, rd=1)
 DEBUG: get_register_for_variable('t2', 'fat')
 DEBUG: Registrador livre encontrado: R4
 DEBUG: Alocando 't2' -> R4
-ADD_INSTRUCTION[15]: LI (op=27) rs=R0 rt=R4 rd=R0 imm=1
+ADD_INSTRUCTION[16]: LI (op=27) rs=R0 rt=R4 rd=R0 imm=1
 DEBUG: load_variable_to_register('x', 'fat')
 DEBUG: get_register_for_variable('x', 'fat')
 DEBUG: Variável 'x' já em R2 (reutilizando)
-DEBUG: Variável 'x' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[16]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+DEBUG: Variável 'x' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[17]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R2, 0(R30)'
 
 DEBUG: load_variable_to_register('t2', 'fat')
@@ -127,26 +127,26 @@ DEBUG: Variável 't2' -> R4 (símbolo NÃO encontrado!)
 DEBUG: get_register_for_variable('t3', 'fat')
 DEBUG: Registrador livre encontrado: R5
 DEBUG: Alocando 't3' -> R5
-ADD_INSTRUCTION[17]: SUB (op=1) rs=R2 rt=R4 rd=R5 imm=0
+ADD_INSTRUCTION[18]: SUB (op=1) rs=R2 rt=R4 rd=R5 imm=0
 DEBUG: Passando parâmetro 0: 't3'
 DEBUG: load_variable_to_register('t3', 'fat')
 DEBUG: get_register_for_variable('t3', 'fat')
 DEBUG: Variável 't3' já em R5 (reutilizando)
 DEBUG: Variável 't3' -> R5 (símbolo NÃO encontrado!)
 DEBUG: Parâmetro 0: 't3' de R5 para R4 (forçado)
-ADD_INSTRUCTION[18]: MOVE (op=11) rs=R5 rt=R0 rd=R4 imm=0
-DEBUG: add_instruction MOVE[18]: rs=5, rt=0, rd=4 (Armazenado: rs=5, rd=4)
+ADD_INSTRUCTION[19]: MOVE (op=11) rs=R5 rt=R0 rd=R4 imm=0
+DEBUG: add_instruction MOVE[19]: rs=5, rt=0, rd=4 (Armazenado: rs=5, rd=4)
 DEBUG: get_register_for_variable('t4', 'fat')
 DEBUG: Registrador livre encontrado: R6
 DEBUG: Alocando 't4' -> R6
 DEBUG: add_move_if_different(R1 -> R6)
 DEBUG: Gerando MOVE R6, R1
-ADD_INSTRUCTION[20]: MOVE (op=11) rs=R1 rt=R0 rd=R6 imm=0
-DEBUG: add_instruction MOVE[20]: rs=1, rt=0, rd=6 (Armazenado: rs=1, rd=6)
+ADD_INSTRUCTION[21]: MOVE (op=11) rs=R1 rt=R0 rd=R6 imm=0
+DEBUG: add_instruction MOVE[21]: rs=1, rt=0, rd=6 (Armazenado: rs=1, rd=6)
 DEBUG: load_variable_to_register('x', 'fat')
 DEBUG: get_register_for_variable('x', 'fat')
 DEBUG: Variável 'x' já em R2 (reutilizando)
-DEBUG: Variável 'x' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[21]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+DEBUG: Variável 'x' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[22]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R2, 0(R30)'
 
 DEBUG: load_variable_to_register('t4', 'fat')
@@ -156,42 +156,42 @@ DEBUG: Variável 't4' -> R6 (símbolo NÃO encontrado!)
 DEBUG: get_register_for_variable('t5', 'fat')
 DEBUG: Registrador livre encontrado: R7
 DEBUG: Alocando 't5' -> R7
-ADD_INSTRUCTION[22]: MULT (op=2) rs=R2 rt=R6 rd=R7 imm=0
+ADD_INSTRUCTION[23]: MULT (op=2) rs=R2 rt=R6 rd=R7 imm=0
 DEBUG: load_variable_to_register('t5', 'fat')
 DEBUG: get_register_for_variable('t5', 'fat')
 DEBUG: Variável 't5' já em R7 (reutilizando)
 DEBUG: Variável 't5' -> R7 (símbolo NÃO encontrado!)
 DEBUG: add_move_if_different(R7 -> R1)
 DEBUG: Gerando MOVE R1, R7
-ADD_INSTRUCTION[23]: MOVE (op=11) rs=R7 rt=R0 rd=R1 imm=0
-DEBUG: add_instruction MOVE[23]: rs=7, rt=0, rd=1 (Armazenado: rs=7, rd=1)
+ADD_INSTRUCTION[24]: MOVE (op=11) rs=R7 rt=R0 rd=R1 imm=0
+DEBUG: add_instruction MOVE[24]: rs=7, rt=0, rd=1 (Armazenado: rs=7, rd=1)
 DEBUG_RA: === INICIO EPILOGO FUNCAO ===
 DEBUG_RA: Restaurando RA do stack usando SP original
-ADD_INSTRUCTION[25]: LW (op=25) rs=R29 rt=R31 rd=R0 imm=7
+ADD_INSTRUCTION[28]: LW (op=25) rs=R29 rt=R31 rd=R0 imm=7
   MEM PREVIEW: Will output 'LW R31, 7(R29)'
 DEBUG_RA: Restaurando FP do stack usando SP original
-ADD_INSTRUCTION[26]: LW (op=25) rs=R29 rt=R30 rd=R0 imm=6
+ADD_INSTRUCTION[29]: LW (op=25) rs=R29 rt=R30 rd=R0 imm=6
   MEM PREVIEW: Will output 'LW R30, 6(R29)'
 DEBUG_RA: Restaurando SP para posição anterior (SP+8)
-ADD_INSTRUCTION[27]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=8
+ADD_INSTRUCTION[30]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=8
   ADDI PREVIEW: Will output 'ADDI R29, R29, 8'
 DEBUG_RA: Gerando JR RA para retorno
-ADD_INSTRUCTION[28]: JR (op=12) rs=R31 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[31]: JR (op=12) rs=R31 rt=R0 rd=R0 imm=0
 DEBUG_RA: === FIM EPILOGO FUNCAO ===
 DEBUG: Função 'main' detectada com 1 parâmetros totais
-ADD_INSTRUCTION[30]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
-ADD_INSTRUCTION[31]: SW (op=26) rs=R2 rt=R30 rd=R0 imm=0
+ADD_INSTRUCTION[33]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[34]: SW (op=26) rs=R2 rt=R30 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R30, 0(R2)'
-ADD_INSTRUCTION[32]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=2
-ADD_INSTRUCTION[33]: MOVE (op=11) rs=R29 rt=R0 rd=R30 imm=0
-DEBUG: add_instruction MOVE[33]: rs=29, rt=0, rd=30 (Armazenado: rs=29, rd=30)
+ADD_INSTRUCTION[35]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=2
+ADD_INSTRUCTION[36]: MOVE (op=11) rs=R29 rt=R0 rd=R30 imm=0
+DEBUG: add_instruction MOVE[36]: rs=29, rt=0, rd=30 (Armazenado: rs=29, rd=30)
 DEBUG: Detectado parâmetro x na função main (param #1 de 1)
 DEBUG: Parâmetro x registrado com offset 0 na função main
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Registrador livre encontrado: R8
 DEBUG: Alocando 't6' -> R8
-ADD_INSTRUCTION[34]: INPUT (op=34) rs=R0 rt=R0 rd=R8 imm=0
-ADD_INSTRUCTION[35]: OUTPUTREG (op=32) rs=R8 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[37]: INPUT (op=34) rs=R0 rt=R0 rd=R8 imm=0
+ADD_INSTRUCTION[38]: OUTPUTREG (op=32) rs=R8 rt=R0 rd=R0 imm=0
 DEBUG: load_variable_to_register('t6', 'main')
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Variável 't6' já em R8 (reutilizando)
@@ -200,41 +200,41 @@ DEBUG: get_register_for_variable('x', 'main')
 DEBUG: Variável 'x' já em R2 (reutilizando)
 DEBUG: add_move_if_different(R8 -> R2)
 DEBUG: Gerando MOVE R2, R8
-ADD_INSTRUCTION[36]: MOVE (op=11) rs=R8 rt=R0 rd=R2 imm=0
-DEBUG: add_instruction MOVE[36]: rs=8, rt=0, rd=2 (Armazenado: rs=8, rd=2)
-ADD_INSTRUCTION[37]: SW (op=26) rs=R30 rt=R2 rd=R0 imm=0
+ADD_INSTRUCTION[39]: MOVE (op=11) rs=R8 rt=R0 rd=R2 imm=0
+DEBUG: add_instruction MOVE[39]: rs=8, rt=0, rd=2 (Armazenado: rs=8, rd=2)
+ADD_INSTRUCTION[40]: SW (op=26) rs=R30 rt=R2 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R2, 0(R30)'
 DEBUG: Passando parâmetro 0: 'x'
 DEBUG: load_variable_to_register('x', 'main')
 DEBUG: get_register_for_variable('x', 'main')
 DEBUG: Variável 'x' já em R2 (reutilizando)
-DEBUG: Variável 'x' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[38]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+DEBUG: Variável 'x' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[41]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R2, 0(R30)'
 
 DEBUG: Parâmetro 0: 'x' de R2 para R4 (forçado)
-ADD_INSTRUCTION[39]: MOVE (op=11) rs=R2 rt=R0 rd=R4 imm=0
-DEBUG: add_instruction MOVE[39]: rs=2, rt=0, rd=4 (Armazenado: rs=2, rd=4)
+ADD_INSTRUCTION[42]: MOVE (op=11) rs=R2 rt=R0 rd=R4 imm=0
+DEBUG: add_instruction MOVE[42]: rs=2, rt=0, rd=4 (Armazenado: rs=2, rd=4)
 DEBUG: get_register_for_variable('t7', 'main')
 DEBUG: Registrador livre encontrado: R9
 DEBUG: Alocando 't7' -> R9
 DEBUG: add_move_if_different(R1 -> R9)
 DEBUG: Gerando MOVE R9, R1
-ADD_INSTRUCTION[41]: MOVE (op=11) rs=R1 rt=R0 rd=R9 imm=0
-DEBUG: add_instruction MOVE[41]: rs=1, rt=0, rd=9 (Armazenado: rs=1, rd=9)
-ADD_INSTRUCTION[42]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
-DEBUG: add_instruction MOVE[42]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
+ADD_INSTRUCTION[44]: MOVE (op=11) rs=R1 rt=R0 rd=R9 imm=0
+DEBUG: add_instruction MOVE[44]: rs=1, rt=0, rd=9 (Armazenado: rs=1, rd=9)
+ADD_INSTRUCTION[45]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
+DEBUG: add_instruction MOVE[45]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
 DEBUG: load_variable_to_register('t7', 'main')
 DEBUG: get_register_for_variable('t7', 'main')
 DEBUG: Variável 't7' já em R9 (reutilizando)
 DEBUG: Variável 't7' -> R9 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[43]: OUTPUTREG (op=32) rs=R9 rt=R0 rd=R0 imm=0
-ADD_INSTRUCTION[44]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[46]: OUTPUTREG (op=32) rs=R9 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[47]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
 Terceira passada: corrigindo endereços...
 Escrevendo arquivos de saída...
 === Estatísticas do Assembler Corrigido ===
 Quadruplas processadas: 24
-Instruções geradas: 45
-Labels: 4
+Instruções geradas: 48
+Labels: 5
 Símbolos: 2
 ==========================================
 === Tabela de Símbolos Corrigida ===
@@ -262,9 +262,9 @@ Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output_corrected.asm
 Entradas: [5]
 Resultado esperado: None
 Traceback (most recent call last):
-  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 870, in <module>
+  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 872, in <module>
     main()
-  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 783, in main
+  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 785, in main
     simulator = MIPSSimulator(input_values=input_values)
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 58, in __init__

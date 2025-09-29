@@ -496,12 +496,12 @@ static const yytype_int8 yyrhs[] =
 static const yytype_uint16 yyrline[] =
 {
        0,    52,    52,    58,    62,    65,    66,    69,    79,    93,
-      97,   103,   119,   120,   123,   127,   130,   139,   150,   160,
-     168,   171,   179,   182,   183,   184,   185,   186,   187,   188,
-     191,   198,   205,   206,   209,   214,   222,   229,   235,   245,
-     253,   258,   261,   272,   278,   284,   285,   286,   287,   288,
-     289,   292,   297,   302,   303,   306,   311,   316,   317,   320,
-     321,   322,   323,   326,   349,   372,   375,   383,   388,   398
+      97,   103,   119,   120,   123,   127,   130,   139,   150,   163,
+     171,   174,   182,   185,   186,   187,   188,   189,   190,   191,
+     194,   201,   208,   209,   212,   217,   225,   232,   238,   248,
+     256,   261,   264,   275,   281,   287,   288,   289,   290,   291,
+     292,   295,   300,   305,   306,   309,   314,   319,   320,   323,
+     324,   325,   326,   329,   352,   375,   378,   386,   391,   401
 };
 #endif
 
@@ -1660,11 +1660,14 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 150 "bison.y"
     {
+        (yyval.node) = newAASNodeStmt(KCompound);
         if ((yyvsp[(2) - (4)].node) != NULL) {
-            (yyval.node) = (yyvsp[(2) - (4)].node);
-            addAASNodeSibling((yyval.node), (yyvsp[(3) - (4)].node));
-        } else {
-            (yyval.node) = (yyvsp[(3) - (4)].node);
+            addAASNode((yyval.node), (yyvsp[(2) - (4)].node));
+            if ((yyvsp[(3) - (4)].node) != NULL) {
+                addAASNodeSibling((yyvsp[(2) - (4)].node), (yyvsp[(3) - (4)].node));
+            }
+        } else if ((yyvsp[(3) - (4)].node) != NULL) {
+            addAASNode((yyval.node), (yyvsp[(3) - (4)].node));
         }
     ;}
     break;
@@ -1672,7 +1675,7 @@ yyreduce:
   case 19:
 
 /* Line 1455 of yacc.c  */
-#line 160 "bison.y"
+#line 163 "bison.y"
     {
         if ((yyvsp[(1) - (2)].node) == NULL) {
             (yyval.node) = (yyvsp[(2) - (2)].node);
@@ -1686,14 +1689,14 @@ yyreduce:
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 168 "bison.y"
+#line 171 "bison.y"
     { (yyval.node) = NULL; ;}
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 171 "bison.y"
+#line 174 "bison.y"
     {
         if ((yyvsp[(1) - (2)].node) == NULL) {
             (yyval.node) = (yyvsp[(2) - (2)].node);
@@ -1707,63 +1710,63 @@ yyreduce:
   case 22:
 
 /* Line 1455 of yacc.c  */
-#line 179 "bison.y"
+#line 182 "bison.y"
     { (yyval.node) = NULL; ;}
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 182 "bison.y"
+#line 185 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 183 "bison.y"
+#line 186 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 184 "bison.y"
+#line 187 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 185 "bison.y"
+#line 188 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 186 "bison.y"
+#line 189 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 187 "bison.y"
+#line 190 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 188 "bison.y"
+#line 191 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 191 "bison.y"
+#line 194 "bison.y"
     {
         (yyval.node) = newAASNodeStmt(KInput);
         addAASNode((yyval.node), (yyvsp[(3) - (5)].node));
@@ -1774,7 +1777,7 @@ yyreduce:
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 198 "bison.y"
+#line 201 "bison.y"
     {
         (yyval.node) = newAASNodeStmt(KOutput);
         addAASNode((yyval.node), (yyvsp[(3) - (5)].node));
@@ -1785,21 +1788,21 @@ yyreduce:
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 205 "bison.y"
+#line 208 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (2)].node); ;}
     break;
 
   case 33:
 
 /* Line 1455 of yacc.c  */
-#line 206 "bison.y"
+#line 209 "bison.y"
     { (yyval.node) = NULL; ;}
     break;
 
   case 34:
 
 /* Line 1455 of yacc.c  */
-#line 209 "bison.y"
+#line 212 "bison.y"
     {
         (yyval.node) = newAASNodeStmt(KIf);
         addAASNode((yyval.node), (yyvsp[(3) - (5)].node));
@@ -1810,7 +1813,7 @@ yyreduce:
   case 35:
 
 /* Line 1455 of yacc.c  */
-#line 214 "bison.y"
+#line 217 "bison.y"
     {
         (yyval.node) = newAASNodeStmt(KIf);
         addAASNode((yyval.node), (yyvsp[(3) - (7)].node));
@@ -1822,7 +1825,7 @@ yyreduce:
   case 36:
 
 /* Line 1455 of yacc.c  */
-#line 222 "bison.y"
+#line 225 "bison.y"
     {
         (yyval.node) = newAASNodeStmt(KWhile);
         addAASNode((yyval.node), (yyvsp[(3) - (5)].node));
@@ -1833,7 +1836,7 @@ yyreduce:
   case 37:
 
 /* Line 1455 of yacc.c  */
-#line 229 "bison.y"
+#line 232 "bison.y"
     { 
         (yyval.node) = newAASNodeStmt(KReturn);
         (yyval.node)->name = copyString("void");
@@ -1845,7 +1848,7 @@ yyreduce:
   case 38:
 
 /* Line 1455 of yacc.c  */
-#line 235 "bison.y"
+#line 238 "bison.y"
     {
         (yyval.node) = newAASNodeStmt(KReturn);
         (yyval.node)->name = copyString("int");
@@ -1858,7 +1861,7 @@ yyreduce:
   case 39:
 
 /* Line 1455 of yacc.c  */
-#line 245 "bison.y"
+#line 248 "bison.y"
     {
         (yyval.node) = newAASNodeStmt(KAssign);
         (yyval.node)->name = copyString((yyvsp[(1) - (3)].node)->name);
@@ -1872,7 +1875,7 @@ yyreduce:
   case 40:
 
 /* Line 1455 of yacc.c  */
-#line 253 "bison.y"
+#line 256 "bison.y"
     {
         (yyval.node) = (yyvsp[(1) - (1)].node);
     ;}
@@ -1881,7 +1884,7 @@ yyreduce:
   case 41:
 
 /* Line 1455 of yacc.c  */
-#line 258 "bison.y"
+#line 261 "bison.y"
     { 
         (yyval.node) = (yyvsp[(1) - (1)].node);
     ;}
@@ -1890,7 +1893,7 @@ yyreduce:
   case 42:
 
 /* Line 1455 of yacc.c  */
-#line 261 "bison.y"
+#line 264 "bison.y"
     {
         (yyval.node) = newAASNodeExp(KVetId);
         (yyval.node)->type = (yyvsp[(1) - (4)].node)->type;
@@ -1905,7 +1908,7 @@ yyreduce:
   case 43:
 
 /* Line 1455 of yacc.c  */
-#line 272 "bison.y"
+#line 275 "bison.y"
     {
     (yyval.node) = (yyvsp[(2) - (3)].node);
     (yyval.node)->type = KInt;
@@ -1917,7 +1920,7 @@ yyreduce:
   case 44:
 
 /* Line 1455 of yacc.c  */
-#line 278 "bison.y"
+#line 281 "bison.y"
     {
         (yyval.node) = (yyvsp[(1) - (1)].node);
     ;}
@@ -1926,49 +1929,49 @@ yyreduce:
   case 45:
 
 /* Line 1455 of yacc.c  */
-#line 284 "bison.y"
+#line 287 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = LE; ;}
     break;
 
   case 46:
 
 /* Line 1455 of yacc.c  */
-#line 285 "bison.y"
+#line 288 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = LT; ;}
     break;
 
   case 47:
 
 /* Line 1455 of yacc.c  */
-#line 286 "bison.y"
+#line 289 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = GT; ;}
     break;
 
   case 48:
 
 /* Line 1455 of yacc.c  */
-#line 287 "bison.y"
+#line 290 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = GE; ;}
     break;
 
   case 49:
 
 /* Line 1455 of yacc.c  */
-#line 288 "bison.y"
+#line 291 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = COMP; ;}
     break;
 
   case 50:
 
 /* Line 1455 of yacc.c  */
-#line 289 "bison.y"
+#line 292 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = DIF; ;}
     break;
 
   case 51:
 
 /* Line 1455 of yacc.c  */
-#line 292 "bison.y"
+#line 295 "bison.y"
     {
     (yyval.node) = (yyvsp[(2) - (3)].node);
     addAASNode((yyval.node), (yyvsp[(1) - (3)].node));
@@ -1979,7 +1982,7 @@ yyreduce:
   case 52:
 
 /* Line 1455 of yacc.c  */
-#line 297 "bison.y"
+#line 300 "bison.y"
     {
         (yyval.node) = (yyvsp[(1) - (1)].node);
     ;}
@@ -1988,21 +1991,21 @@ yyreduce:
   case 53:
 
 /* Line 1455 of yacc.c  */
-#line 302 "bison.y"
+#line 305 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = SOMA; (yyval.node)->type = KInt; ;}
     break;
 
   case 54:
 
 /* Line 1455 of yacc.c  */
-#line 303 "bison.y"
+#line 306 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = SUB; (yyval.node)->type = KInt; ;}
     break;
 
   case 55:
 
 /* Line 1455 of yacc.c  */
-#line 306 "bison.y"
+#line 309 "bison.y"
     {
     (yyval.node) = (yyvsp[(2) - (3)].node);
     addAASNode((yyval.node), (yyvsp[(1) - (3)].node));
@@ -2013,7 +2016,7 @@ yyreduce:
   case 56:
 
 /* Line 1455 of yacc.c  */
-#line 311 "bison.y"
+#line 314 "bison.y"
     {
         (yyval.node) = (yyvsp[(1) - (1)].node);
     ;}
@@ -2022,49 +2025,49 @@ yyreduce:
   case 57:
 
 /* Line 1455 of yacc.c  */
-#line 316 "bison.y"
+#line 319 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = MULT; (yyval.node)->type = KInt; ;}
     break;
 
   case 58:
 
 /* Line 1455 of yacc.c  */
-#line 317 "bison.y"
+#line 320 "bison.y"
     { (yyval.node) = newAASNodeExp(KOp); (yyval.node)->token = DIV; (yyval.node)->type = KInt; ;}
     break;
 
   case 59:
 
 /* Line 1455 of yacc.c  */
-#line 320 "bison.y"
+#line 323 "bison.y"
     { (yyval.node) = (yyvsp[(2) - (3)].node); ;}
     break;
 
   case 60:
 
 /* Line 1455 of yacc.c  */
-#line 321 "bison.y"
+#line 324 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 61:
 
 /* Line 1455 of yacc.c  */
-#line 322 "bison.y"
+#line 325 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 62:
 
 /* Line 1455 of yacc.c  */
-#line 323 "bison.y"
+#line 326 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 63:
 
 /* Line 1455 of yacc.c  */
-#line 326 "bison.y"
+#line 329 "bison.y"
     {
     if (strcmp((yyvsp[(1) - (4)].node)->name, "input") == 0) {
         (yyval.node) = newAASNodeStmt(KInput);
@@ -2093,7 +2096,7 @@ yyreduce:
   case 64:
 
 /* Line 1455 of yacc.c  */
-#line 349 "bison.y"
+#line 352 "bison.y"
     {
     if (strcmp((yyvsp[(1) - (3)].node)->name, "input") == 0) {
         (yyval.node) = newAASNodeStmt(KInput);
@@ -2120,14 +2123,14 @@ yyreduce:
   case 65:
 
 /* Line 1455 of yacc.c  */
-#line 372 "bison.y"
+#line 375 "bison.y"
     { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
     break;
 
   case 66:
 
 /* Line 1455 of yacc.c  */
-#line 375 "bison.y"
+#line 378 "bison.y"
     {
         if ((yyvsp[(1) - (3)].node) == NULL) {
             (yyval.node) = (yyvsp[(3) - (3)].node);
@@ -2141,7 +2144,7 @@ yyreduce:
   case 67:
 
 /* Line 1455 of yacc.c  */
-#line 383 "bison.y"
+#line 386 "bison.y"
     {
         (yyval.node) = (yyvsp[(1) - (1)].node);
     ;}
@@ -2150,7 +2153,7 @@ yyreduce:
   case 68:
 
 /* Line 1455 of yacc.c  */
-#line 388 "bison.y"
+#line 391 "bison.y"
     {
         (yyval.node) = newAASNodeExp(KId);
         (yyval.node)->token = lex->token;
@@ -2164,7 +2167,7 @@ yyreduce:
   case 69:
 
 /* Line 1455 of yacc.c  */
-#line 398 "bison.y"
+#line 401 "bison.y"
     {
         (yyval.node) = newAASNodeExp(KConst);
         (yyval.node)->value = atoi(lex->lexema);
@@ -2178,7 +2181,7 @@ yyreduce:
 
 
 /* Line 1455 of yacc.c  */
-#line 2182 "bison.tab.c"
+#line 2185 "bison.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2390,7 +2393,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 407 "bison.y"
+#line 410 "bison.y"
 
 int yyerror(char *s) {
     if (lex->token == ER) {

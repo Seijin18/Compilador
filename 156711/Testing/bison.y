@@ -148,11 +148,14 @@ param: tipo_especificador id {
     ;
 
 composto_decl: ACHV local_declaracoes statement_lista FCHV {
+        $$ = newAASNodeStmt(KCompound);
         if ($2 != NULL) {
-            $$ = $2;
-            addAASNodeSibling($$, $3);
-        } else {
-            $$ = $3;
+            addAASNode($$, $2);
+            if ($3 != NULL) {
+                addAASNodeSibling($2, $3);
+            }
+        } else if ($3 != NULL) {
+            addAASNode($$, $3);
         }
     }
     ;

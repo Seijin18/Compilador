@@ -1,10 +1,10 @@
-# Relatório de Compilação - sort.c
-## Data: 2025-09-23 12:21:37
+# Relatório de Compilação - sort_5.c
+## Data: 2025-09-23 12:21:38
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
-Localização: CMinusCodes\sort.c
-Tamanho: 679 bytes
+Localização: CMinusCodes\sort_5.c
+Tamanho: 677 bytes
 
 ### 🔧 Compilação C-Minus
 ```
@@ -38,7 +38,7 @@ DEBUG: Child - node=0, stmt=4, exp=-1, name=sort
 DEBUG: Child - node=0, stmt=2, exp=-1, name=i
 DEBUG: Child - node=0, stmt=1, exp=-1, name=NULL
 (goto,main, , )
-(alloc,vet,10, )
+(alloc,vet,5, )
 (fun,minloc, , )
 (alloc,a,10, )
 (alloc,low,1, )
@@ -104,7 +104,7 @@ DEBUG: Child - node=0, stmt=1, exp=-1, name=NULL
 (immed,0, ,t16)
 (asn,t16, ,i)
 (label,L6, , )
-(immed,10, ,t17)
+(immed,5, ,t17)
 (<,i,t17,t18)
 (if_f,t18,L7, )
 (input, , ,t19)
@@ -115,7 +115,7 @@ DEBUG: Child - node=0, stmt=1, exp=-1, name=NULL
 (goto,L6, , )
 (label,L7, , )
 (immed,0, ,t22)
-(immed,10, ,t23)
+(immed,5, ,t23)
 (param,vet, , )
 (param,t22, , )
 (param,t23, , )
@@ -123,7 +123,7 @@ DEBUG: Child - node=0, stmt=1, exp=-1, name=NULL
 (immed,0, ,t25)
 (asn,t25, ,i)
 (label,L8, , )
-(immed,10, ,t26)
+(immed,5, ,t26)
 (<,i,t26,t27)
 (if_f,t27,L9, )
 (load,vet,i,t28)
@@ -151,7 +151,7 @@ Lendo arquivo: intermediate.txt
 Quadruplas lidas: 97
 Primeira passada: mapeando labels...
 Segunda passada: gerando código...
-ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=292
+ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=272
 ADD_INSTRUCTION[1]: LI (op=27) rs=R0 rt=R29 rd=R0 imm=255
 DEBUG: Função 'minloc' detectada com 6 parâmetros totais
 DEBUG_RA: === INICIO PROLOGO FUNCAO ===
@@ -848,7 +848,7 @@ ADD_INSTRUCTION[138]: SW (op=26) rs=R30 rt=R9 rd=R0 imm=0
 DEBUG: get_register_for_variable('t17', 'main')
 DEBUG: Liberando R17 (era t5)
 DEBUG: Alocando 't17' -> R17
-ADD_INSTRUCTION[140]: LI (op=27) rs=R0 rt=R17 rd=R0 imm=10
+ADD_INSTRUCTION[140]: LI (op=27) rs=R0 rt=R17 rd=R0 imm=5
 DEBUG: load_variable_to_register('i', 'main')
 DEBUG: get_register_for_variable('i', 'main')
 DEBUG: Variável 'i' já em R9 (reutilizando)
@@ -877,7 +877,7 @@ ADD_INSTRUCTION[145]: OUTPUTREG (op=32) rs=R18 rt=R0 rd=R0 imm=0
 
 === DEBUG ARRAY ACCESS ===
 Array: 'vet', Index: 'i', Result: 't19', STORE
-Symbol found: name='vet', offset=0, global=YES, is_array=YES, size=10
+Symbol found: name='vet', offset=0, global=YES, is_array=YES, size=5
 DEBUG: load_variable_to_register('i', 'main')
 DEBUG: get_register_for_variable('i', 'main')
 DEBUG: Variável 'i' já em R9 (reutilizando)
@@ -947,7 +947,7 @@ ADD_INSTRUCTION[158]: LI (op=27) rs=R0 rt=R22 rd=R0 imm=0
 DEBUG: get_register_for_variable('t23', 'main')
 DEBUG: Liberando R23 (era a)
 DEBUG: Alocando 't23' -> R23
-ADD_INSTRUCTION[159]: LI (op=27) rs=R0 rt=R23 rd=R0 imm=10
+ADD_INSTRUCTION[159]: LI (op=27) rs=R0 rt=R23 rd=R0 imm=5
 DEBUG: Passando parâmetro 0: 'vet'
 DEBUG: Parâmetro 0 é array, carregando endereço
 DEBUG: load_array_address_to_register('vet', 'main')
@@ -1004,7 +1004,7 @@ ADD_INSTRUCTION[169]: SW (op=26) rs=R30 rt=R9 rd=R0 imm=0
 DEBUG: get_register_for_variable('t26', 'main')
 DEBUG: Liberando R26 (era addr_reg_3)
 DEBUG: Alocando 't26' -> R26
-ADD_INSTRUCTION[171]: LI (op=27) rs=R0 rt=R26 rd=R0 imm=10
+ADD_INSTRUCTION[171]: LI (op=27) rs=R0 rt=R26 rd=R0 imm=5
 DEBUG: load_variable_to_register('i', 'main')
 DEBUG: get_register_for_variable('i', 'main')
 DEBUG: Variável 'i' já em R9 (reutilizando)
@@ -1028,7 +1028,7 @@ DEBUG: Variável 't27' -> R27 (símbolo NÃO encontrado!)
 
 === DEBUG ARRAY ACCESS ===
 Array: 'vet', Index: 'i', Result: 't28', LOAD
-Symbol found: name='vet', offset=0, global=YES, is_array=YES, size=10
+Symbol found: name='vet', offset=0, global=YES, is_array=YES, size=5
 DEBUG: load_variable_to_register('i', 'main')
 DEBUG: get_register_for_variable('i', 'main')
 DEBUG: Variável 'i' já em R9 (reutilizando)
@@ -1107,7 +1107,7 @@ Símbolos: 14
 === Tabela de Símbolos Corrigida ===
 Nome            Escopo          Offset  Global  Arg     Array   Tamanho
 ------------------------------------------------------------------------
-vet                             0       Sim     Não    Sim     10     
+vet                             0       Sim     Não    Sim     5      
 a               minloc          0       Não    Sim     Sim     1      
 low             minloc          1       Não    Sim     Não    1      
 high            minloc          2       Não    Sim     Não    1      

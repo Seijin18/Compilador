@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Script de Compilação Automática de Todos os Códigos C-Minus
 ===========================================================
@@ -128,8 +127,8 @@ class CMinusCompiler:
             )
             
             # Verifica se gerou assembly
-            assembly_file = self.base_dir / "assembly_output_corrected.asm"
-            binary_file = self.base_dir / "binary_output_corrected.txt"
+            assembly_file = self.base_dir / "assembly_output.asm"
+            binary_file = self.base_dir / "binary_output.txt"
             
             if assembly_file.exists():
                 return True, result.stdout + result.stderr
@@ -145,7 +144,7 @@ class CMinusCompiler:
         """Simula execução no simulador MIPS."""
         try:
             simulator_script = self.base_dir.parent.parent / "Utils" / "mips_simulator.py"
-            assembly_file = self.base_dir / "assembly_output_corrected.asm"
+            assembly_file = self.base_dir / "assembly_output.asm"
             
             if not simulator_script.exists():
                 return False, "Simulador não encontrado", []
@@ -205,7 +204,7 @@ class CMinusCompiler:
                 intermediate_dest.write_text(intermediate_src.read_text(encoding='latin-1'), encoding='utf-8')
         
         # 3. Assembly MIPS
-        assembly_src = self.base_dir / "assembly_output_corrected.asm"
+        assembly_src = self.base_dir / "assembly_output.asm"
         if assembly_src.exists():
             assembly_dest = self.results_dir / "03_ASSEMBLY_MIPS" / f"{file_base}_assembly.asm"
             try:
@@ -214,7 +213,7 @@ class CMinusCompiler:
                 assembly_dest.write_text(assembly_src.read_text(encoding='latin-1'), encoding='utf-8')
         
         # 4. Código binário
-        binary_src = self.base_dir / "binary_output_corrected.txt"
+        binary_src = self.base_dir / "binary_output.txt"
         if binary_src.exists():
             binary_dest = self.results_dir / "04_CODIGO_BINARIO" / f"{file_base}_binary.txt"
             try:
@@ -252,7 +251,7 @@ Número de outputs: {len(outputs)}
 
 ### 📊 Resumo
 - Compilação: {'✅ OK' if 'intermediate.txt' in compile_output else '❌ ERRO'}
-- Assembly: {'✅ OK' if 'assembly_output_corrected.asm' in assemble_output else '❌ ERRO'}
+- Assembly: {'✅ OK' if 'assembly_output.asm' in assemble_output else '❌ ERRO'}
 - Simulação: {'✅ OK' if outputs else '❌ ERRO'}
 """
         
@@ -268,7 +267,7 @@ Número de outputs: {len(outputs)}
                 "outputs": outputs,
                 "total_outputs": len(outputs),
                 "compilacao_ok": 'intermediate.txt' in compile_output,
-                "assembly_ok": 'assembly_output_corrected.asm' in assemble_output,
+                "assembly_ok": 'assembly_output.asm' in assemble_output,
                 "simulacao_ok": len(outputs) > 0
             }
             

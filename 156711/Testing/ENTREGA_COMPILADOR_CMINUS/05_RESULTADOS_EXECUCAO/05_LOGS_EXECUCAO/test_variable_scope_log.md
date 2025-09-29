@@ -1,5 +1,5 @@
 # Relatório de Compilação - test_variable_scope.c
-## Data: 2025-09-16 20:28:09
+## Data: 2025-09-23 12:21:39
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
@@ -173,30 +173,30 @@ ADD_INSTRUCTION[21]: MOVE (op=11) rs=R4 rt=R0 rd=R1 imm=0
 DEBUG: add_instruction MOVE[21]: rs=4, rt=0, rd=1 (Armazenado: rs=4, rd=1)
 DEBUG_RA: === INICIO EPILOGO FUNCAO ===
 DEBUG_RA: Restaurando RA do stack usando SP original
-ADD_INSTRUCTION[22]: LW (op=25) rs=R29 rt=R31 rd=R0 imm=7
+ADD_INSTRUCTION[24]: LW (op=25) rs=R29 rt=R31 rd=R0 imm=7
   MEM PREVIEW: Will output 'LW R31, 7(R29)'
 DEBUG_RA: Restaurando FP do stack usando SP original
-ADD_INSTRUCTION[23]: LW (op=25) rs=R29 rt=R30 rd=R0 imm=6
+ADD_INSTRUCTION[25]: LW (op=25) rs=R29 rt=R30 rd=R0 imm=6
   MEM PREVIEW: Will output 'LW R30, 6(R29)'
 DEBUG_RA: Restaurando SP para posição anterior (SP+8)
-ADD_INSTRUCTION[24]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=8
+ADD_INSTRUCTION[26]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=8
   ADDI PREVIEW: Will output 'ADDI R29, R29, 8'
 DEBUG_RA: Gerando JR RA para retorno
-ADD_INSTRUCTION[25]: JR (op=12) rs=R31 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[27]: JR (op=12) rs=R31 rt=R0 rd=R0 imm=0
 DEBUG_RA: === FIM EPILOGO FUNCAO ===
 DEBUG: Função 'main' detectada com 1 parâmetros totais
-ADD_INSTRUCTION[27]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
-ADD_INSTRUCTION[28]: SW (op=26) rs=R2 rt=R30 rd=R0 imm=0
+ADD_INSTRUCTION[29]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[30]: SW (op=26) rs=R2 rt=R30 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R30, 0(R2)'
-ADD_INSTRUCTION[29]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=2
-ADD_INSTRUCTION[30]: MOVE (op=11) rs=R29 rt=R0 rd=R30 imm=0
-DEBUG: add_instruction MOVE[30]: rs=29, rt=0, rd=30 (Armazenado: rs=29, rd=30)
+ADD_INSTRUCTION[31]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=2
+ADD_INSTRUCTION[32]: MOVE (op=11) rs=R29 rt=R0 rd=R30 imm=0
+DEBUG: add_instruction MOVE[32]: rs=29, rt=0, rd=30 (Armazenado: rs=29, rd=30)
 DEBUG: Detectado parâmetro localmain na função main (param #1 de 1)
 DEBUG: Parâmetro localmain registrado com offset 0 na função main
 DEBUG: get_register_for_variable('t4', 'main')
 DEBUG: Registrador livre encontrado: R8
 DEBUG: Alocando 't4' -> R8
-ADD_INSTRUCTION[31]: LI (op=27) rs=R0 rt=R8 rd=R0 imm=100
+ADD_INSTRUCTION[33]: LI (op=27) rs=R0 rt=R8 rd=R0 imm=100
 DEBUG: load_variable_to_register('t4', 'main')
 DEBUG: get_register_for_variable('t4', 'main')
 DEBUG: Variável 't4' já em R8 (reutilizando)
@@ -205,31 +205,31 @@ DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
 DEBUG: add_move_if_different(R8 -> R7)
 DEBUG: Gerando MOVE R7, R8
-ADD_INSTRUCTION[32]: MOVE (op=11) rs=R8 rt=R0 rd=R7 imm=0
-DEBUG: add_instruction MOVE[32]: rs=8, rt=0, rd=7 (Armazenado: rs=8, rd=7)
-ADD_INSTRUCTION[33]: SW (op=26) rs=R28 rt=R7 rd=R0 imm=0
+ADD_INSTRUCTION[34]: MOVE (op=11) rs=R8 rt=R0 rd=R7 imm=0
+DEBUG: add_instruction MOVE[34]: rs=8, rt=0, rd=7 (Armazenado: rs=8, rd=7)
+ADD_INSTRUCTION[35]: SW (op=26) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R7, 0(R28)'
 DEBUG: get_register_for_variable('t5', 'main')
 DEBUG: Registrador livre encontrado: R9
 DEBUG: Alocando 't5' -> R9
-ADD_INSTRUCTION[34]: LI (op=27) rs=R0 rt=R9 rd=R0 imm=10
+ADD_INSTRUCTION[36]: LI (op=27) rs=R0 rt=R9 rd=R0 imm=10
 DEBUG: Passando parâmetro 0: 't5'
 DEBUG: load_variable_to_register('t5', 'main')
 DEBUG: get_register_for_variable('t5', 'main')
 DEBUG: Variável 't5' já em R9 (reutilizando)
 DEBUG: Variável 't5' -> R9 (símbolo NÃO encontrado!)
 DEBUG: Parâmetro 0: 't5' de R9 para R4 (forçado)
-ADD_INSTRUCTION[35]: MOVE (op=11) rs=R9 rt=R0 rd=R4 imm=0
-DEBUG: add_instruction MOVE[35]: rs=9, rt=0, rd=4 (Armazenado: rs=9, rd=4)
+ADD_INSTRUCTION[37]: MOVE (op=11) rs=R9 rt=R0 rd=R4 imm=0
+DEBUG: add_instruction MOVE[37]: rs=9, rt=0, rd=4 (Armazenado: rs=9, rd=4)
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Registrador livre encontrado: R10
 DEBUG: Alocando 't6' -> R10
 DEBUG: add_move_if_different(R1 -> R10)
 DEBUG: Gerando MOVE R10, R1
-ADD_INSTRUCTION[37]: MOVE (op=11) rs=R1 rt=R0 rd=R10 imm=0
-DEBUG: add_instruction MOVE[37]: rs=1, rt=0, rd=10 (Armazenado: rs=1, rd=10)
-ADD_INSTRUCTION[38]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
-DEBUG: add_instruction MOVE[38]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
+ADD_INSTRUCTION[39]: MOVE (op=11) rs=R1 rt=R0 rd=R10 imm=0
+DEBUG: add_instruction MOVE[39]: rs=1, rt=0, rd=10 (Armazenado: rs=1, rd=10)
+ADD_INSTRUCTION[40]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
+DEBUG: add_instruction MOVE[40]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
 DEBUG: load_variable_to_register('t6', 'main')
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Variável 't6' já em R10 (reutilizando)
@@ -239,40 +239,40 @@ DEBUG: Registrador livre encontrado: R11
 DEBUG: Alocando 'localmain' -> R11
 DEBUG: add_move_if_different(R10 -> R11)
 DEBUG: Gerando MOVE R11, R10
-ADD_INSTRUCTION[39]: MOVE (op=11) rs=R10 rt=R0 rd=R11 imm=0
-DEBUG: add_instruction MOVE[39]: rs=10, rt=0, rd=11 (Armazenado: rs=10, rd=11)
-ADD_INSTRUCTION[40]: SW (op=26) rs=R30 rt=R11 rd=R0 imm=0
+ADD_INSTRUCTION[41]: MOVE (op=11) rs=R10 rt=R0 rd=R11 imm=0
+DEBUG: add_instruction MOVE[41]: rs=10, rt=0, rd=11 (Armazenado: rs=10, rd=11)
+ADD_INSTRUCTION[42]: SW (op=26) rs=R30 rt=R11 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R11, 0(R30)'
 DEBUG: load_variable_to_register('localmain', 'main')
 DEBUG: get_register_for_variable('localmain', 'main')
 DEBUG: Variável 'localmain' já em R11 (reutilizando)
-DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[41]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
+DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[43]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R11, 0(R30)'
 
-ADD_INSTRUCTION[42]: OUTPUTREG (op=32) rs=R11 rt=R0 rd=R0 imm=0
-DEBUG: load_variable_to_register('globalvar', 'main')
-DEBUG: get_register_for_variable('globalvar', 'main')
-DEBUG: Variável 'globalvar' já em R7 (reutilizando)
-DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[43]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
-  MEM PREVIEW: Will output 'LW R7, 0(R28)'
-
-ADD_INSTRUCTION[44]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[44]: OUTPUTREG (op=32) rs=R11 rt=R0 rd=R0 imm=0
 DEBUG: load_variable_to_register('globalvar', 'main')
 DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
 DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[45]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R7, 0(R28)'
 
+ADD_INSTRUCTION[46]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
+DEBUG: load_variable_to_register('globalvar', 'main')
+DEBUG: get_register_for_variable('globalvar', 'main')
+DEBUG: Variável 'globalvar' já em R7 (reutilizando)
+DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[47]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R7, 0(R28)'
+
 DEBUG: load_variable_to_register('localmain', 'main')
 DEBUG: get_register_for_variable('localmain', 'main')
 DEBUG: Variável 'localmain' já em R11 (reutilizando)
-DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[46]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
+DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[48]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R11, 0(R30)'
 
 DEBUG: get_register_for_variable('t7', 'main')
 DEBUG: Registrador livre encontrado: R12
 DEBUG: Alocando 't7' -> R12
-ADD_INSTRUCTION[47]: ADD (op=0) rs=R7 rt=R11 rd=R12 imm=0
+ADD_INSTRUCTION[49]: ADD (op=0) rs=R7 rt=R11 rd=R12 imm=0
   ADD PREVIEW: Will output 'ADD R12, R7, R11'
 DEBUG: load_variable_to_register('t7', 'main')
 DEBUG: get_register_for_variable('t7', 'main')
@@ -282,24 +282,24 @@ DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
 DEBUG: add_move_if_different(R12 -> R7)
 DEBUG: Gerando MOVE R7, R12
-ADD_INSTRUCTION[48]: MOVE (op=11) rs=R12 rt=R0 rd=R7 imm=0
-DEBUG: add_instruction MOVE[48]: rs=12, rt=0, rd=7 (Armazenado: rs=12, rd=7)
-ADD_INSTRUCTION[49]: SW (op=26) rs=R28 rt=R7 rd=R0 imm=0
+ADD_INSTRUCTION[50]: MOVE (op=11) rs=R12 rt=R0 rd=R7 imm=0
+DEBUG: add_instruction MOVE[50]: rs=12, rt=0, rd=7 (Armazenado: rs=12, rd=7)
+ADD_INSTRUCTION[51]: SW (op=26) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R7, 0(R28)'
 DEBUG: load_variable_to_register('globalvar', 'main')
 DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
-DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[50]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
+DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[52]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R7, 0(R28)'
 
-ADD_INSTRUCTION[51]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
-ADD_INSTRUCTION[52]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[53]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[54]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
 Terceira passada: corrigindo endereços...
 Escrevendo arquivos de saída...
 === Estatísticas do Assembler Corrigido ===
 Quadruplas processadas: 27
-Instruções geradas: 53
-Labels: 2
+Instruções geradas: 55
+Labels: 3
 Símbolos: 4
 ==========================================
 === Tabela de Símbolos Corrigida ===
@@ -329,9 +329,9 @@ Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output_corrected.asm
 Entradas: []
 Resultado esperado: None
 Traceback (most recent call last):
-  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 870, in <module>
+  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 872, in <module>
     main()
-  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 783, in main
+  File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 785, in main
     simulator = MIPSSimulator(input_values=input_values)
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "d:\Projetinhos\Compilador\Utils\mips_simulator.py", line 58, in __init__
