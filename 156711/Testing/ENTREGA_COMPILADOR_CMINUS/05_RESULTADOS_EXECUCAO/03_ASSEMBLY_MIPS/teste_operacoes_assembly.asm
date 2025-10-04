@@ -5,7 +5,7 @@
 # - Variáveis globais com $gp
 # - Passagem robusta de parâmetros
 
-  0: LI         GP, 140
+  0: LI         GP, 128
   1: LI         SP, 255
   2: J          3
 main:
@@ -44,42 +44,49 @@ main:
  35: OUTPUTREG  R6
  36: LW         R2, 0(FP)
  37: LW         R4, 1(FP)
- 38: BGTE       R2, R4, 42
- 39: LI         R9, 1
- 40: OUTPUTREG  R9
- 41: J          44
+ 38: DIV        R9, R2, R4
+ 39: MOVE       R6, R9
+ 40: SW         R6, 2(FP)
+ 41: LW         R6, 2(FP)
+ 42: OUTPUTREG  R6
+ 43: LW         R2, 0(FP)
+ 44: LW         R4, 1(FP)
+ 45: BGTE       R2, R4, 49
+ 46: LI         R10, 1
+ 47: OUTPUTREG  R10
+ 48: J          51
 L0:
- 42: LI         R10, 0
- 43: OUTPUTREG  R10
+ 49: LI         R11, 0
+ 50: OUTPUTREG  R11
 L1:
- 44: LW         R2, 0(FP)
- 45: LW         R4, 1(FP)
- 46: BLTE       R2, R4, 50
- 47: LI         R11, 1
- 48: OUTPUTREG  R11
- 49: J          52
+ 51: LW         R2, 0(FP)
+ 52: LW         R4, 1(FP)
+ 53: BLTE       R2, R4, 57
+ 54: LI         R12, 1
+ 55: OUTPUTREG  R12
+ 56: J          59
 L2:
- 50: LI         R12, 0
- 51: OUTPUTREG  R12
+ 57: LI         R13, 0
+ 58: OUTPUTREG  R13
 L3:
- 52: LW         R2, 0(FP)
- 53: LW         R4, 1(FP)
- 54: BNE        R2, R4, 58
- 55: LI         R13, 1
- 56: OUTPUTREG  R13
- 57: J          60
+ 59: LW         R2, 0(FP)
+ 60: LW         R4, 1(FP)
+ 61: BNE        R2, R4, 65
+ 62: LI         R14, 1
+ 63: OUTPUTREG  R14
+ 64: J          67
 L4:
- 58: LI         R14, 0
- 59: OUTPUTREG  R14
+ 65: LI         R15, 0
+ 66: OUTPUTREG  R15
 L5:
- 60: LW         R2, 0(FP)
- 61: LW         R4, 1(FP)
- 62: BEQ        R2, R4, 66
- 63: LI         R15, 1
- 64: OUTPUTREG  R15
- 65: J          68
+ 67: LW         R2, 0(FP)
+ 68: LW         R4, 1(FP)
+ 69: BEQ        R2, R4, 73
+ 70: LI         R16, 1
+ 71: OUTPUTREG  R16
+ 72: J          75
 L6:
- 66: LI         R16, 0
- 67: OUTPUTREG  R16
+ 73: LI         R17, 0
+ 74: OUTPUTREG  R17
 L7:
- 68: HALT      
+ 75: HALT      

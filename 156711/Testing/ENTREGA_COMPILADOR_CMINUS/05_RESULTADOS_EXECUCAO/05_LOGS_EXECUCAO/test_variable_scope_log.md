@@ -1,5 +1,5 @@
 # Relatório de Compilação - test_variable_scope.c
-## Data: 2025-09-23 12:21:39
+## Data: 2025-10-04 00:55:59
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
@@ -12,18 +12,9 @@ Tree written to tree.txt
 Symbol table written to symbol_table.txt
 DEBUG: Processing function testscope children:
 DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=0, stmt=2, exp=-1, name=localvar
-DEBUG: Child - node=0, stmt=2, exp=-1, name=globalvar
-DEBUG: Child - node=0, stmt=3, exp=-1, name=int
+DEBUG: Child - node=0, stmt=11, exp=-1, name=NULL
 DEBUG: Processing function main children:
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=0, stmt=2, exp=-1, name=globalvar
-DEBUG: Child - node=0, stmt=2, exp=-1, name=localmain
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
-DEBUG: Child - node=0, stmt=2, exp=-1, name=globalvar
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
+DEBUG: Child - node=0, stmt=11, exp=-1, name=NULL
 (goto,main, , )
 (alloc,globalvar,1, )
 (fun,testscope, , )
@@ -68,7 +59,7 @@ Lendo arquivo: intermediate.txt
 Quadruplas lidas: 27
 Primeira passada: mapeando labels...
 Segunda passada: gerando código...
-ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=144
+ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=128
 ADD_INSTRUCTION[1]: LI (op=27) rs=R0 rt=R29 rd=R0 imm=255
 DEBUG: Função 'testscope' detectada com 2 parâmetros totais
 DEBUG_RA: === INICIO PROLOGO FUNCAO ===
@@ -221,15 +212,74 @@ DEBUG: Variável 't5' -> R9 (símbolo NÃO encontrado!)
 DEBUG: Parâmetro 0: 't5' de R9 para R4 (forçado)
 ADD_INSTRUCTION[37]: MOVE (op=11) rs=R9 rt=R0 rd=R4 imm=0
 DEBUG: add_instruction MOVE[37]: rs=9, rt=0, rd=4 (Armazenado: rs=9, rd=4)
+DEBUG: Salvando R2 (contém 'param') antes da chamada
+ADD_INSTRUCTION[38]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=1
+ADD_INSTRUCTION[39]: SW (op=26) rs=R2 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R2, 0(R2)'
+DEBUG: Salvando R3 (contém 't1') antes da chamada
+ADD_INSTRUCTION[40]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[41]: SW (op=26) rs=R2 rt=R3 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R3, 0(R2)'
+DEBUG: Salvando R5 (contém 't2') antes da chamada
+ADD_INSTRUCTION[42]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=3
+ADD_INSTRUCTION[43]: SW (op=26) rs=R2 rt=R5 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R5, 0(R2)'
+DEBUG: Salvando R6 (contém 't3') antes da chamada
+ADD_INSTRUCTION[44]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=4
+ADD_INSTRUCTION[45]: SW (op=26) rs=R2 rt=R6 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R6, 0(R2)'
+DEBUG: Salvando R7 (contém 'globalvar') antes da chamada
+ADD_INSTRUCTION[46]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=5
+ADD_INSTRUCTION[47]: SW (op=26) rs=R2 rt=R7 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R7, 0(R2)'
+DEBUG: Salvando R8 (contém 't4') antes da chamada
+ADD_INSTRUCTION[48]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=6
+ADD_INSTRUCTION[49]: SW (op=26) rs=R2 rt=R8 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R8, 0(R2)'
+DEBUG: Salvando R9 (contém 't5') antes da chamada
+ADD_INSTRUCTION[50]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=7
+ADD_INSTRUCTION[51]: SW (op=26) rs=R2 rt=R9 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R9, 0(R2)'
+ADD_INSTRUCTION[52]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=7
+ADD_INSTRUCTION[54]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=7
+  ADDI PREVIEW: Will output 'ADDI R29, R29, 7'
+DEBUG: Restaurando R9 (contém 't5') após a chamada
+ADD_INSTRUCTION[55]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=7
+ADD_INSTRUCTION[56]: LW (op=25) rs=R2 rt=R9 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R9, 0(R2)'
+DEBUG: Restaurando R8 (contém 't4') após a chamada
+ADD_INSTRUCTION[57]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=6
+ADD_INSTRUCTION[58]: LW (op=25) rs=R2 rt=R8 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R8, 0(R2)'
+DEBUG: Restaurando R7 (contém 'globalvar') após a chamada
+ADD_INSTRUCTION[59]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=5
+ADD_INSTRUCTION[60]: LW (op=25) rs=R2 rt=R7 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R7, 0(R2)'
+DEBUG: Restaurando R6 (contém 't3') após a chamada
+ADD_INSTRUCTION[61]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=4
+ADD_INSTRUCTION[62]: LW (op=25) rs=R2 rt=R6 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R6, 0(R2)'
+DEBUG: Restaurando R5 (contém 't2') após a chamada
+ADD_INSTRUCTION[63]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=3
+ADD_INSTRUCTION[64]: LW (op=25) rs=R2 rt=R5 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R5, 0(R2)'
+DEBUG: Restaurando R3 (contém 't1') após a chamada
+ADD_INSTRUCTION[65]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[66]: LW (op=25) rs=R2 rt=R3 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R3, 0(R2)'
+DEBUG: Restaurando R2 (contém 'param') após a chamada
+ADD_INSTRUCTION[67]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=1
+ADD_INSTRUCTION[68]: LW (op=25) rs=R2 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R2, 0(R2)'
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Registrador livre encontrado: R10
 DEBUG: Alocando 't6' -> R10
 DEBUG: add_move_if_different(R1 -> R10)
 DEBUG: Gerando MOVE R10, R1
-ADD_INSTRUCTION[39]: MOVE (op=11) rs=R1 rt=R0 rd=R10 imm=0
-DEBUG: add_instruction MOVE[39]: rs=1, rt=0, rd=10 (Armazenado: rs=1, rd=10)
-ADD_INSTRUCTION[40]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
-DEBUG: add_instruction MOVE[40]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
+ADD_INSTRUCTION[69]: MOVE (op=11) rs=R1 rt=R0 rd=R10 imm=0
+DEBUG: add_instruction MOVE[69]: rs=1, rt=0, rd=10 (Armazenado: rs=1, rd=10)
+ADD_INSTRUCTION[70]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
+DEBUG: add_instruction MOVE[70]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
 DEBUG: load_variable_to_register('t6', 'main')
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Variável 't6' já em R10 (reutilizando)
@@ -239,40 +289,40 @@ DEBUG: Registrador livre encontrado: R11
 DEBUG: Alocando 'localmain' -> R11
 DEBUG: add_move_if_different(R10 -> R11)
 DEBUG: Gerando MOVE R11, R10
-ADD_INSTRUCTION[41]: MOVE (op=11) rs=R10 rt=R0 rd=R11 imm=0
-DEBUG: add_instruction MOVE[41]: rs=10, rt=0, rd=11 (Armazenado: rs=10, rd=11)
-ADD_INSTRUCTION[42]: SW (op=26) rs=R30 rt=R11 rd=R0 imm=0
+ADD_INSTRUCTION[71]: MOVE (op=11) rs=R10 rt=R0 rd=R11 imm=0
+DEBUG: add_instruction MOVE[71]: rs=10, rt=0, rd=11 (Armazenado: rs=10, rd=11)
+ADD_INSTRUCTION[72]: SW (op=26) rs=R30 rt=R11 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R11, 0(R30)'
 DEBUG: load_variable_to_register('localmain', 'main')
 DEBUG: get_register_for_variable('localmain', 'main')
 DEBUG: Variável 'localmain' já em R11 (reutilizando)
-DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[43]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
+DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[73]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R11, 0(R30)'
 
-ADD_INSTRUCTION[44]: OUTPUTREG (op=32) rs=R11 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[74]: OUTPUTREG (op=32) rs=R11 rt=R0 rd=R0 imm=0
 DEBUG: load_variable_to_register('globalvar', 'main')
 DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
-DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[45]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
+DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[75]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R7, 0(R28)'
 
-ADD_INSTRUCTION[46]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[76]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
 DEBUG: load_variable_to_register('globalvar', 'main')
 DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
-DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[47]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
+DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[77]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R7, 0(R28)'
 
 DEBUG: load_variable_to_register('localmain', 'main')
 DEBUG: get_register_for_variable('localmain', 'main')
 DEBUG: Variável 'localmain' já em R11 (reutilizando)
-DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[48]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
+DEBUG: Variável 'localmain' -> R11 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[78]: LW (op=25) rs=R30 rt=R11 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R11, 0(R30)'
 
 DEBUG: get_register_for_variable('t7', 'main')
 DEBUG: Registrador livre encontrado: R12
 DEBUG: Alocando 't7' -> R12
-ADD_INSTRUCTION[49]: ADD (op=0) rs=R7 rt=R11 rd=R12 imm=0
+ADD_INSTRUCTION[79]: ADD (op=0) rs=R7 rt=R11 rd=R12 imm=0
   ADD PREVIEW: Will output 'ADD R12, R7, R11'
 DEBUG: load_variable_to_register('t7', 'main')
 DEBUG: get_register_for_variable('t7', 'main')
@@ -282,23 +332,23 @@ DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
 DEBUG: add_move_if_different(R12 -> R7)
 DEBUG: Gerando MOVE R7, R12
-ADD_INSTRUCTION[50]: MOVE (op=11) rs=R12 rt=R0 rd=R7 imm=0
-DEBUG: add_instruction MOVE[50]: rs=12, rt=0, rd=7 (Armazenado: rs=12, rd=7)
-ADD_INSTRUCTION[51]: SW (op=26) rs=R28 rt=R7 rd=R0 imm=0
+ADD_INSTRUCTION[80]: MOVE (op=11) rs=R12 rt=R0 rd=R7 imm=0
+DEBUG: add_instruction MOVE[80]: rs=12, rt=0, rd=7 (Armazenado: rs=12, rd=7)
+ADD_INSTRUCTION[81]: SW (op=26) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R7, 0(R28)'
 DEBUG: load_variable_to_register('globalvar', 'main')
 DEBUG: get_register_for_variable('globalvar', 'main')
 DEBUG: Variável 'globalvar' já em R7 (reutilizando)
-DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[52]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
+DEBUG: Variável 'globalvar' -> R7 (símbolo encontrado: offset=0, global=1)ADD_INSTRUCTION[82]: LW (op=25) rs=R28 rt=R7 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R7, 0(R28)'
 
-ADD_INSTRUCTION[53]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
-ADD_INSTRUCTION[54]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[83]: OUTPUTREG (op=32) rs=R7 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[84]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
 Terceira passada: corrigindo endereços...
 Escrevendo arquivos de saída...
 === Estatísticas do Assembler Corrigido ===
 Quadruplas processadas: 27
-Instruções geradas: 55
+Instruções geradas: 85
 Labels: 3
 Símbolos: 4
 ==========================================
@@ -312,8 +362,8 @@ localmain       main            0       Não    Sim     Não    1
 ====================================
 
 Arquivos gerados:
-- assembly_output_corrected.asm
-- binary_output_corrected.txt
+- assembly_output.asm
+- binary_output.txt
 
 Assembler corrigido executado com sucesso!
 
@@ -325,7 +375,7 @@ Simulador MIPS Customizado - Vers�o Gen�rica
 ============================================================
 
 Configura��o:
-Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output_corrected.asm
+Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output.asm
 Entradas: []
 Resultado esperado: None
 Traceback (most recent call last):

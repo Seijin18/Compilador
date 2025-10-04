@@ -1,5 +1,5 @@
 # Relatório de Compilação - test_array_param.c
-## Data: 2025-09-23 12:21:38
+## Data: 2025-10-04 00:55:58
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
@@ -13,19 +13,9 @@ Symbol table written to symbol_table.txt
 DEBUG: Processing function sumarray children:
 DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
 DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=0, stmt=2, exp=-1, name=sum
-DEBUG: Child - node=0, stmt=2, exp=-1, name=i
-DEBUG: Child - node=0, stmt=1, exp=-1, name=NULL
-DEBUG: Child - node=0, stmt=3, exp=-1, name=int
+DEBUG: Child - node=0, stmt=11, exp=-1, name=NULL
 DEBUG: Processing function main children:
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=0, stmt=2, exp=-1, name=testarray
-DEBUG: Child - node=0, stmt=2, exp=-1, name=testarray
-DEBUG: Child - node=0, stmt=2, exp=-1, name=testarray
-DEBUG: Child - node=0, stmt=2, exp=-1, name=result
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
+DEBUG: Child - node=0, stmt=11, exp=-1, name=NULL
 (goto,main, , )
 (alloc,testarray,3, )
 (fun,sumarray, , )
@@ -85,7 +75,7 @@ Lendo arquivo: intermediate.txt
 Quadruplas lidas: 42
 Primeira passada: mapeando labels...
 Segunda passada: gerando código...
-ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=196
+ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=128
 ADD_INSTRUCTION[1]: LI (op=27) rs=R0 rt=R29 rd=R0 imm=255
 DEBUG: Função 'sumarray' detectada com 4 parâmetros totais
 DEBUG_RA: === INICIO PROLOGO FUNCAO ===
@@ -192,127 +182,122 @@ DEBUG: Variável 'i' -> R4 (símbolo encontrado: offset=2, global=0)ADD_INSTRUCT
   MEM PREVIEW: Will output 'LW R4, 2(R30)'
 
 Index register: R4 (loaded from 'i')
-DEBUG: get_register_for_variable('temp_reg_0', 'sumarray')
-DEBUG: Registrador livre encontrado: R7
-DEBUG: Alocando 'temp_reg_0' -> R7
 DEBUG: get_register_for_variable('addr_reg_0', 'sumarray')
-DEBUG: Registrador livre encontrado: R8
-DEBUG: Alocando 'addr_reg_0' -> R8
-Temp register: R7 (temp_reg_0), Address register: R8 (addr_reg_0)
-Generating: SLL R7, R4, 2 (index * 4)
-ADD_INSTRUCTION[24]: SLL (op=6) rs=R4 rt=R0 rd=R7 imm=2
+DEBUG: Registrador livre encontrado: R7
+DEBUG: Alocando 'addr_reg_0' -> R7
+Address register: R7 (addr_reg_0)
 Array parameter: FP=30, offset=0 (contains base address)
-Generating: LW R8, 0(FP) (load base address from parameter)
-ADD_INSTRUCTION[25]: LW (op=25) rs=R30 rt=R8 rd=R0 imm=0
-  MEM PREVIEW: Will output 'LW R8, 0(R30)'
-Generating: ADD R8, R8, R7 (final address = base + index*4)
-ADD_INSTRUCTION[26]: ADD (op=0) rs=R8 rt=R7 rd=R8 imm=0
-  ADD PREVIEW: Will output 'ADD R8, R8, R7'
+Generating: LW R7, 0(FP) (load base address from parameter)
+ADD_INSTRUCTION[24]: LW (op=25) rs=R30 rt=R7 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R7, 0(R30)'
+Generating: ADD R7, R7, R4 (final address = base + index)
+ADD_INSTRUCTION[25]: ADD (op=0) rs=R7 rt=R4 rd=R7 imm=0
+  ADD PREVIEW: Will output 'ADD R7, R7, R4'
 DEBUG: get_register_for_variable('t3', 'sumarray')
-DEBUG: Registrador livre encontrado: R9
-DEBUG: Alocando 't3' -> R9
-LOAD: Dest register R9 (to 't3')
-Generating: LW R9, 0(R8) (load value from address)
-ADD_INSTRUCTION[27]: LW (op=25) rs=R8 rt=R9 rd=R0 imm=0
-  MEM PREVIEW: Will output 'LW R9, 0(R8)'
+DEBUG: Registrador livre encontrado: R8
+DEBUG: Alocando 't3' -> R8
+LOAD: Dest register R8 (to 't3')
+Generating: LW R8, 0(R7) (load value from address)
+ADD_INSTRUCTION[26]: LW (op=25) rs=R7 rt=R8 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R8, 0(R7)'
 DEBUG: load_variable_to_register('sum', 'sumarray')
 DEBUG: get_register_for_variable('sum', 'sumarray')
 DEBUG: Variável 'sum' já em R2 (reutilizando)
-DEBUG: Variável 'sum' -> R2 (símbolo encontrado: offset=3, global=0)ADD_INSTRUCTION[28]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=3
+DEBUG: Variável 'sum' -> R2 (símbolo encontrado: offset=3, global=0)ADD_INSTRUCTION[27]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=3
   MEM PREVIEW: Will output 'LW R2, 3(R30)'
 
 DEBUG: load_variable_to_register('t3', 'sumarray')
 DEBUG: get_register_for_variable('t3', 'sumarray')
-DEBUG: Variável 't3' já em R9 (reutilizando)
-DEBUG: Variável 't3' -> R9 (símbolo NÃO encontrado!)
+DEBUG: Variável 't3' já em R8 (reutilizando)
+DEBUG: Variável 't3' -> R8 (símbolo NÃO encontrado!)
 DEBUG: get_register_for_variable('t4', 'sumarray')
-DEBUG: Registrador livre encontrado: R10
-DEBUG: Alocando 't4' -> R10
-ADD_INSTRUCTION[29]: ADD (op=0) rs=R2 rt=R9 rd=R10 imm=0
-  ADD PREVIEW: Will output 'ADD R10, R2, R9'
+DEBUG: Registrador livre encontrado: R9
+DEBUG: Alocando 't4' -> R9
+ADD_INSTRUCTION[28]: ADD (op=0) rs=R2 rt=R8 rd=R9 imm=0
+  ADD PREVIEW: Will output 'ADD R9, R2, R8'
 DEBUG: load_variable_to_register('t4', 'sumarray')
 DEBUG: get_register_for_variable('t4', 'sumarray')
-DEBUG: Variável 't4' já em R10 (reutilizando)
-DEBUG: Variável 't4' -> R10 (símbolo NÃO encontrado!)
+DEBUG: Variável 't4' já em R9 (reutilizando)
+DEBUG: Variável 't4' -> R9 (símbolo NÃO encontrado!)
 DEBUG: get_register_for_variable('sum', 'sumarray')
 DEBUG: Variável 'sum' já em R2 (reutilizando)
-DEBUG: add_move_if_different(R10 -> R2)
-DEBUG: Gerando MOVE R2, R10
-ADD_INSTRUCTION[30]: MOVE (op=11) rs=R10 rt=R0 rd=R2 imm=0
-DEBUG: add_instruction MOVE[30]: rs=10, rt=0, rd=2 (Armazenado: rs=10, rd=2)
-ADD_INSTRUCTION[31]: SW (op=26) rs=R30 rt=R2 rd=R0 imm=3
+DEBUG: add_move_if_different(R9 -> R2)
+DEBUG: Gerando MOVE R2, R9
+ADD_INSTRUCTION[29]: MOVE (op=11) rs=R9 rt=R0 rd=R2 imm=0
+DEBUG: add_instruction MOVE[29]: rs=9, rt=0, rd=2 (Armazenado: rs=9, rd=2)
+ADD_INSTRUCTION[30]: SW (op=26) rs=R30 rt=R2 rd=R0 imm=3
   MEM PREVIEW: Will output 'SW R2, 3(R30)'
 DEBUG: get_register_for_variable('t5', 'sumarray')
-DEBUG: Registrador livre encontrado: R11
-DEBUG: Alocando 't5' -> R11
-ADD_INSTRUCTION[32]: LI (op=27) rs=R0 rt=R11 rd=R0 imm=1
+DEBUG: Registrador livre encontrado: R10
+DEBUG: Alocando 't5' -> R10
+ADD_INSTRUCTION[31]: LI (op=27) rs=R0 rt=R10 rd=R0 imm=1
 DEBUG: load_variable_to_register('i', 'sumarray')
 DEBUG: get_register_for_variable('i', 'sumarray')
 DEBUG: Variável 'i' já em R4 (reutilizando)
-DEBUG: Variável 'i' -> R4 (símbolo encontrado: offset=2, global=0)ADD_INSTRUCTION[33]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=2
+DEBUG: Variável 'i' -> R4 (símbolo encontrado: offset=2, global=0)ADD_INSTRUCTION[32]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=2
   MEM PREVIEW: Will output 'LW R4, 2(R30)'
 
 DEBUG: load_variable_to_register('t5', 'sumarray')
 DEBUG: get_register_for_variable('t5', 'sumarray')
-DEBUG: Variável 't5' já em R11 (reutilizando)
-DEBUG: Variável 't5' -> R11 (símbolo NÃO encontrado!)
+DEBUG: Variável 't5' já em R10 (reutilizando)
+DEBUG: Variável 't5' -> R10 (símbolo NÃO encontrado!)
 DEBUG: get_register_for_variable('t6', 'sumarray')
-DEBUG: Registrador livre encontrado: R12
-DEBUG: Alocando 't6' -> R12
-ADD_INSTRUCTION[34]: ADD (op=0) rs=R4 rt=R11 rd=R12 imm=0
-  ADD PREVIEW: Will output 'ADD R12, R4, R11'
+DEBUG: Registrador livre encontrado: R11
+DEBUG: Alocando 't6' -> R11
+ADD_INSTRUCTION[33]: ADD (op=0) rs=R4 rt=R10 rd=R11 imm=0
+  ADD PREVIEW: Will output 'ADD R11, R4, R10'
 DEBUG: load_variable_to_register('t6', 'sumarray')
 DEBUG: get_register_for_variable('t6', 'sumarray')
-DEBUG: Variável 't6' já em R12 (reutilizando)
-DEBUG: Variável 't6' -> R12 (símbolo NÃO encontrado!)
+DEBUG: Variável 't6' já em R11 (reutilizando)
+DEBUG: Variável 't6' -> R11 (símbolo NÃO encontrado!)
 DEBUG: get_register_for_variable('i', 'sumarray')
 DEBUG: Variável 'i' já em R4 (reutilizando)
-DEBUG: add_move_if_different(R12 -> R4)
-DEBUG: Gerando MOVE R4, R12
-ADD_INSTRUCTION[35]: MOVE (op=11) rs=R12 rt=R0 rd=R4 imm=0
-DEBUG: add_instruction MOVE[35]: rs=12, rt=0, rd=4 (Armazenado: rs=12, rd=4)
-ADD_INSTRUCTION[36]: SW (op=26) rs=R30 rt=R4 rd=R0 imm=2
+DEBUG: add_move_if_different(R11 -> R4)
+DEBUG: Gerando MOVE R4, R11
+ADD_INSTRUCTION[34]: MOVE (op=11) rs=R11 rt=R0 rd=R4 imm=0
+DEBUG: add_instruction MOVE[34]: rs=11, rt=0, rd=4 (Armazenado: rs=11, rd=4)
+ADD_INSTRUCTION[35]: SW (op=26) rs=R30 rt=R4 rd=R0 imm=2
   MEM PREVIEW: Will output 'SW R4, 2(R30)'
 DEBUG: load_variable_to_register('sum', 'sumarray')
 DEBUG: get_register_for_variable('sum', 'sumarray')
 DEBUG: Variável 'sum' já em R2 (reutilizando)
-DEBUG: Variável 'sum' -> R2 (símbolo encontrado: offset=3, global=0)ADD_INSTRUCTION[39]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=3
+DEBUG: Variável 'sum' -> R2 (símbolo encontrado: offset=3, global=0)ADD_INSTRUCTION[38]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=3
   MEM PREVIEW: Will output 'LW R2, 3(R30)'
 
 DEBUG: add_move_if_different(R2 -> R1)
 DEBUG: Gerando MOVE R1, R2
-ADD_INSTRUCTION[40]: MOVE (op=11) rs=R2 rt=R0 rd=R1 imm=0
-DEBUG: add_instruction MOVE[40]: rs=2, rt=0, rd=1 (Armazenado: rs=2, rd=1)
+ADD_INSTRUCTION[39]: MOVE (op=11) rs=R2 rt=R0 rd=R1 imm=0
+DEBUG: add_instruction MOVE[39]: rs=2, rt=0, rd=1 (Armazenado: rs=2, rd=1)
 DEBUG_RA: === INICIO EPILOGO FUNCAO ===
 DEBUG_RA: Restaurando RA do stack usando SP original
-ADD_INSTRUCTION[43]: LW (op=25) rs=R29 rt=R31 rd=R0 imm=7
+ADD_INSTRUCTION[42]: LW (op=25) rs=R29 rt=R31 rd=R0 imm=7
   MEM PREVIEW: Will output 'LW R31, 7(R29)'
 DEBUG_RA: Restaurando FP do stack usando SP original
-ADD_INSTRUCTION[44]: LW (op=25) rs=R29 rt=R30 rd=R0 imm=6
+ADD_INSTRUCTION[43]: LW (op=25) rs=R29 rt=R30 rd=R0 imm=6
   MEM PREVIEW: Will output 'LW R30, 6(R29)'
 DEBUG_RA: Restaurando SP para posição anterior (SP+8)
-ADD_INSTRUCTION[45]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=8
+ADD_INSTRUCTION[44]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=8
   ADDI PREVIEW: Will output 'ADDI R29, R29, 8'
 DEBUG_RA: Gerando JR RA para retorno
-ADD_INSTRUCTION[46]: JR (op=12) rs=R31 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[45]: JR (op=12) rs=R31 rt=R0 rd=R0 imm=0
 DEBUG_RA: === FIM EPILOGO FUNCAO ===
 DEBUG: Função 'main' detectada com 1 parâmetros totais
-ADD_INSTRUCTION[48]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
-ADD_INSTRUCTION[49]: SW (op=26) rs=R2 rt=R30 rd=R0 imm=0
+ADD_INSTRUCTION[47]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[48]: SW (op=26) rs=R2 rt=R30 rd=R0 imm=0
   MEM PREVIEW: Will output 'SW R30, 0(R2)'
-ADD_INSTRUCTION[50]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=2
-ADD_INSTRUCTION[51]: MOVE (op=11) rs=R29 rt=R0 rd=R30 imm=0
-DEBUG: add_instruction MOVE[51]: rs=29, rt=0, rd=30 (Armazenado: rs=29, rd=30)
+ADD_INSTRUCTION[49]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=2
+ADD_INSTRUCTION[50]: MOVE (op=11) rs=R29 rt=R0 rd=R30 imm=0
+DEBUG: add_instruction MOVE[50]: rs=29, rt=0, rd=30 (Armazenado: rs=29, rd=30)
 DEBUG: Detectado parâmetro result na função main (param #1 de 1)
 DEBUG: Parâmetro result registrado com offset 0 na função main
 DEBUG: get_register_for_variable('t7', 'main')
-DEBUG: Registrador livre encontrado: R13
-DEBUG: Alocando 't7' -> R13
-ADD_INSTRUCTION[52]: LI (op=27) rs=R0 rt=R13 rd=R0 imm=5
+DEBUG: Registrador livre encontrado: R12
+DEBUG: Alocando 't7' -> R12
+ADD_INSTRUCTION[51]: LI (op=27) rs=R0 rt=R12 rd=R0 imm=5
 DEBUG: get_register_for_variable('t8', 'main')
-DEBUG: Registrador livre encontrado: R14
-DEBUG: Alocando 't8' -> R14
-ADD_INSTRUCTION[53]: LI (op=27) rs=R0 rt=R14 rd=R0 imm=0
+DEBUG: Registrador livre encontrado: R13
+DEBUG: Alocando 't8' -> R13
+ADD_INSTRUCTION[52]: LI (op=27) rs=R0 rt=R13 rd=R0 imm=0
 
 >>> PROCESSING QUAD: STORE t7 -> testarray[t8]
 
@@ -321,41 +306,36 @@ Array: 'testarray', Index: 't8', Result: 't7', STORE
 Symbol found: name='testarray', offset=0, global=YES, is_array=YES, size=3
 DEBUG: load_variable_to_register('t8', 'main')
 DEBUG: get_register_for_variable('t8', 'main')
-DEBUG: Variável 't8' já em R14 (reutilizando)
-DEBUG: Variável 't8' -> R14 (símbolo NÃO encontrado!)
-Index register: R14 (loaded from 't8')
-DEBUG: get_register_for_variable('temp_reg_1', 'main')
-DEBUG: Registrador livre encontrado: R15
-DEBUG: Alocando 'temp_reg_1' -> R15
+DEBUG: Variável 't8' já em R13 (reutilizando)
+DEBUG: Variável 't8' -> R13 (símbolo NÃO encontrado!)
+Index register: R13 (loaded from 't8')
 DEBUG: get_register_for_variable('addr_reg_1', 'main')
-DEBUG: Registrador livre encontrado: R16
-DEBUG: Alocando 'addr_reg_1' -> R16
-Temp register: R15 (temp_reg_1), Address register: R16 (addr_reg_1)
-Generating: SLL R15, R14, 2 (index * 4)
-ADD_INSTRUCTION[54]: SLL (op=6) rs=R14 rt=R0 rd=R15 imm=2
+DEBUG: Registrador livre encontrado: R14
+DEBUG: Alocando 'addr_reg_1' -> R14
+Address register: R14 (addr_reg_1)
 Global array: GP=28, offset=0
-Generating: ADDI R16, GP, 0 (base address)
-ADD_INSTRUCTION[55]: ADDI (op=15) rs=R28 rt=R16 rd=R0 imm=0
-  ADDI PREVIEW: Will output 'ADDI R16, R28, 0'
-Generating: ADD R16, R16, R15 (final address)
-ADD_INSTRUCTION[56]: ADD (op=0) rs=R16 rt=R15 rd=R16 imm=0
-  ADD PREVIEW: Will output 'ADD R16, R16, R15'
+Generating: ADDI R14, GP, 0 (base address)
+ADD_INSTRUCTION[53]: ADDI (op=15) rs=R28 rt=R14 rd=R0 imm=0
+  ADDI PREVIEW: Will output 'ADDI R14, R28, 0'
+Generating: ADD R14, R14, R13 (final address = base + index)
+ADD_INSTRUCTION[54]: ADD (op=0) rs=R14 rt=R13 rd=R14 imm=0
+  ADD PREVIEW: Will output 'ADD R14, R14, R13'
 DEBUG: load_variable_to_register('t7', 'main')
 DEBUG: get_register_for_variable('t7', 'main')
-DEBUG: Variável 't7' já em R13 (reutilizando)
-DEBUG: Variável 't7' -> R13 (símbolo NÃO encontrado!)
-STORE: Value register R13 (from 't7')
-Generating: SW R13, 0(R16) (store value at address)
-ADD_INSTRUCTION[57]: SW (op=26) rs=R16 rt=R13 rd=R0 imm=0
-  MEM PREVIEW: Will output 'SW R13, 0(R16)'
+DEBUG: Variável 't7' já em R12 (reutilizando)
+DEBUG: Variável 't7' -> R12 (símbolo NÃO encontrado!)
+STORE: Value register R12 (from 't7')
+Generating: SW R12, 0(R14) (store value at address)
+ADD_INSTRUCTION[55]: SW (op=26) rs=R14 rt=R12 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R12, 0(R14)'
 DEBUG: get_register_for_variable('t9', 'main')
-DEBUG: Registrador livre encontrado: R17
-DEBUG: Alocando 't9' -> R17
-ADD_INSTRUCTION[58]: LI (op=27) rs=R0 rt=R17 rd=R0 imm=10
+DEBUG: Registrador livre encontrado: R15
+DEBUG: Alocando 't9' -> R15
+ADD_INSTRUCTION[56]: LI (op=27) rs=R0 rt=R15 rd=R0 imm=10
 DEBUG: get_register_for_variable('t10', 'main')
-DEBUG: Registrador livre encontrado: R18
-DEBUG: Alocando 't10' -> R18
-ADD_INSTRUCTION[59]: LI (op=27) rs=R0 rt=R18 rd=R0 imm=1
+DEBUG: Registrador livre encontrado: R16
+DEBUG: Alocando 't10' -> R16
+ADD_INSTRUCTION[57]: LI (op=27) rs=R0 rt=R16 rd=R0 imm=1
 
 >>> PROCESSING QUAD: STORE t9 -> testarray[t10]
 
@@ -364,41 +344,36 @@ Array: 'testarray', Index: 't10', Result: 't9', STORE
 Symbol found: name='testarray', offset=0, global=YES, is_array=YES, size=3
 DEBUG: load_variable_to_register('t10', 'main')
 DEBUG: get_register_for_variable('t10', 'main')
-DEBUG: Variável 't10' já em R18 (reutilizando)
-DEBUG: Variável 't10' -> R18 (símbolo NÃO encontrado!)
-Index register: R18 (loaded from 't10')
-DEBUG: get_register_for_variable('temp_reg_2', 'main')
-DEBUG: Registrador livre encontrado: R19
-DEBUG: Alocando 'temp_reg_2' -> R19
+DEBUG: Variável 't10' já em R16 (reutilizando)
+DEBUG: Variável 't10' -> R16 (símbolo NÃO encontrado!)
+Index register: R16 (loaded from 't10')
 DEBUG: get_register_for_variable('addr_reg_2', 'main')
-DEBUG: Registrador livre encontrado: R20
-DEBUG: Alocando 'addr_reg_2' -> R20
-Temp register: R19 (temp_reg_2), Address register: R20 (addr_reg_2)
-Generating: SLL R19, R18, 2 (index * 4)
-ADD_INSTRUCTION[60]: SLL (op=6) rs=R18 rt=R0 rd=R19 imm=2
+DEBUG: Registrador livre encontrado: R17
+DEBUG: Alocando 'addr_reg_2' -> R17
+Address register: R17 (addr_reg_2)
 Global array: GP=28, offset=0
-Generating: ADDI R20, GP, 0 (base address)
-ADD_INSTRUCTION[61]: ADDI (op=15) rs=R28 rt=R20 rd=R0 imm=0
-  ADDI PREVIEW: Will output 'ADDI R20, R28, 0'
-Generating: ADD R20, R20, R19 (final address)
-ADD_INSTRUCTION[62]: ADD (op=0) rs=R20 rt=R19 rd=R20 imm=0
-  ADD PREVIEW: Will output 'ADD R20, R20, R19'
+Generating: ADDI R17, GP, 0 (base address)
+ADD_INSTRUCTION[58]: ADDI (op=15) rs=R28 rt=R17 rd=R0 imm=0
+  ADDI PREVIEW: Will output 'ADDI R17, R28, 0'
+Generating: ADD R17, R17, R16 (final address = base + index)
+ADD_INSTRUCTION[59]: ADD (op=0) rs=R17 rt=R16 rd=R17 imm=0
+  ADD PREVIEW: Will output 'ADD R17, R17, R16'
 DEBUG: load_variable_to_register('t9', 'main')
 DEBUG: get_register_for_variable('t9', 'main')
-DEBUG: Variável 't9' já em R17 (reutilizando)
-DEBUG: Variável 't9' -> R17 (símbolo NÃO encontrado!)
-STORE: Value register R17 (from 't9')
-Generating: SW R17, 0(R20) (store value at address)
-ADD_INSTRUCTION[63]: SW (op=26) rs=R20 rt=R17 rd=R0 imm=0
-  MEM PREVIEW: Will output 'SW R17, 0(R20)'
+DEBUG: Variável 't9' já em R15 (reutilizando)
+DEBUG: Variável 't9' -> R15 (símbolo NÃO encontrado!)
+STORE: Value register R15 (from 't9')
+Generating: SW R15, 0(R17) (store value at address)
+ADD_INSTRUCTION[60]: SW (op=26) rs=R17 rt=R15 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R15, 0(R17)'
 DEBUG: get_register_for_variable('t11', 'main')
-DEBUG: Registrador livre encontrado: R21
-DEBUG: Alocando 't11' -> R21
-ADD_INSTRUCTION[64]: LI (op=27) rs=R0 rt=R21 rd=R0 imm=15
+DEBUG: Registrador livre encontrado: R18
+DEBUG: Alocando 't11' -> R18
+ADD_INSTRUCTION[61]: LI (op=27) rs=R0 rt=R18 rd=R0 imm=15
 DEBUG: get_register_for_variable('t12', 'main')
-DEBUG: Registrador livre encontrado: R22
-DEBUG: Alocando 't12' -> R22
-ADD_INSTRUCTION[65]: LI (op=27) rs=R0 rt=R22 rd=R0 imm=2
+DEBUG: Registrador livre encontrado: R19
+DEBUG: Alocando 't12' -> R19
+ADD_INSTRUCTION[62]: LI (op=27) rs=R0 rt=R19 rd=R0 imm=2
 
 >>> PROCESSING QUAD: STORE t11 -> testarray[t12]
 
@@ -407,92 +382,194 @@ Array: 'testarray', Index: 't12', Result: 't11', STORE
 Symbol found: name='testarray', offset=0, global=YES, is_array=YES, size=3
 DEBUG: load_variable_to_register('t12', 'main')
 DEBUG: get_register_for_variable('t12', 'main')
-DEBUG: Variável 't12' já em R22 (reutilizando)
-DEBUG: Variável 't12' -> R22 (símbolo NÃO encontrado!)
-Index register: R22 (loaded from 't12')
-DEBUG: get_register_for_variable('temp_reg_3', 'main')
-DEBUG: Registrador livre encontrado: R23
-DEBUG: Alocando 'temp_reg_3' -> R23
+DEBUG: Variável 't12' já em R19 (reutilizando)
+DEBUG: Variável 't12' -> R19 (símbolo NÃO encontrado!)
+Index register: R19 (loaded from 't12')
 DEBUG: get_register_for_variable('addr_reg_3', 'main')
-DEBUG: Registrador livre encontrado: R24
-DEBUG: Alocando 'addr_reg_3' -> R24
-Temp register: R23 (temp_reg_3), Address register: R24 (addr_reg_3)
-Generating: SLL R23, R22, 2 (index * 4)
-ADD_INSTRUCTION[66]: SLL (op=6) rs=R22 rt=R0 rd=R23 imm=2
+DEBUG: Registrador livre encontrado: R20
+DEBUG: Alocando 'addr_reg_3' -> R20
+Address register: R20 (addr_reg_3)
 Global array: GP=28, offset=0
-Generating: ADDI R24, GP, 0 (base address)
-ADD_INSTRUCTION[67]: ADDI (op=15) rs=R28 rt=R24 rd=R0 imm=0
-  ADDI PREVIEW: Will output 'ADDI R24, R28, 0'
-Generating: ADD R24, R24, R23 (final address)
-ADD_INSTRUCTION[68]: ADD (op=0) rs=R24 rt=R23 rd=R24 imm=0
-  ADD PREVIEW: Will output 'ADD R24, R24, R23'
+Generating: ADDI R20, GP, 0 (base address)
+ADD_INSTRUCTION[63]: ADDI (op=15) rs=R28 rt=R20 rd=R0 imm=0
+  ADDI PREVIEW: Will output 'ADDI R20, R28, 0'
+Generating: ADD R20, R20, R19 (final address = base + index)
+ADD_INSTRUCTION[64]: ADD (op=0) rs=R20 rt=R19 rd=R20 imm=0
+  ADD PREVIEW: Will output 'ADD R20, R20, R19'
 DEBUG: load_variable_to_register('t11', 'main')
 DEBUG: get_register_for_variable('t11', 'main')
-DEBUG: Variável 't11' já em R21 (reutilizando)
-DEBUG: Variável 't11' -> R21 (símbolo NÃO encontrado!)
-STORE: Value register R21 (from 't11')
-Generating: SW R21, 0(R24) (store value at address)
-ADD_INSTRUCTION[69]: SW (op=26) rs=R24 rt=R21 rd=R0 imm=0
-  MEM PREVIEW: Will output 'SW R21, 0(R24)'
+DEBUG: Variável 't11' já em R18 (reutilizando)
+DEBUG: Variável 't11' -> R18 (símbolo NÃO encontrado!)
+STORE: Value register R18 (from 't11')
+Generating: SW R18, 0(R20) (store value at address)
+ADD_INSTRUCTION[65]: SW (op=26) rs=R20 rt=R18 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R18, 0(R20)'
 DEBUG: get_register_for_variable('t13', 'main')
-DEBUG: Registrador livre encontrado: R25
-DEBUG: Alocando 't13' -> R25
-ADD_INSTRUCTION[70]: LI (op=27) rs=R0 rt=R25 rd=R0 imm=3
+DEBUG: Registrador livre encontrado: R21
+DEBUG: Alocando 't13' -> R21
+ADD_INSTRUCTION[66]: LI (op=27) rs=R0 rt=R21 rd=R0 imm=3
 DEBUG: Passando parâmetro 0: 'testarray'
 DEBUG: Parâmetro 0 é array, carregando endereço
 DEBUG: load_array_address_to_register('testarray', 'main')
 DEBUG: get_register_for_variable('testarray', 'main')
-DEBUG: Registrador livre encontrado: R26
-DEBUG: Alocando 'testarray' -> R26
-DEBUG: Array 'testarray' -> R26 (símbolo encontrado: offset=0, global=1, is_arg=0, is_array=1)ADD_INSTRUCTION[71]: ADDI (op=15) rs=R28 rt=R26 rd=R0 imm=0
-  ADDI PREVIEW: Will output 'ADDI R26, R28, 0'
+DEBUG: Registrador livre encontrado: R22
+DEBUG: Alocando 'testarray' -> R22
+DEBUG: Array 'testarray' -> R22 (símbolo encontrado: offset=0, global=1, is_arg=0, is_array=1)ADD_INSTRUCTION[67]: ADDI (op=15) rs=R28 rt=R22 rd=R0 imm=0
+  ADDI PREVIEW: Will output 'ADDI R22, R28, 0'
 
-DEBUG: Parâmetro 0: 'testarray' de R26 para R4 (forçado)
-ADD_INSTRUCTION[72]: MOVE (op=11) rs=R26 rt=R0 rd=R4 imm=0
-DEBUG: add_instruction MOVE[72]: rs=26, rt=0, rd=4 (Armazenado: rs=26, rd=4)
+DEBUG: Parâmetro 0: 'testarray' de R22 para R4 (forçado)
+ADD_INSTRUCTION[68]: MOVE (op=11) rs=R22 rt=R0 rd=R4 imm=0
+DEBUG: add_instruction MOVE[68]: rs=22, rt=0, rd=4 (Armazenado: rs=22, rd=4)
 DEBUG: Passando parâmetro 1: 't13'
 DEBUG: load_variable_to_register('t13', 'main')
 DEBUG: get_register_for_variable('t13', 'main')
-DEBUG: Variável 't13' já em R25 (reutilizando)
-DEBUG: Variável 't13' -> R25 (símbolo NÃO encontrado!)
-DEBUG: Parâmetro 1: 't13' de R25 para R5 (forçado)
-ADD_INSTRUCTION[73]: MOVE (op=11) rs=R25 rt=R0 rd=R5 imm=0
-DEBUG: add_instruction MOVE[73]: rs=25, rt=0, rd=5 (Armazenado: rs=25, rd=5)
+DEBUG: Variável 't13' já em R21 (reutilizando)
+DEBUG: Variável 't13' -> R21 (símbolo NÃO encontrado!)
+DEBUG: Parâmetro 1: 't13' de R21 para R5 (forçado)
+ADD_INSTRUCTION[69]: MOVE (op=11) rs=R21 rt=R0 rd=R5 imm=0
+DEBUG: add_instruction MOVE[69]: rs=21, rt=0, rd=5 (Armazenado: rs=21, rd=5)
+DEBUG: Salvando R2 (contém 'sum') antes da chamada
+ADD_INSTRUCTION[70]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=1
+ADD_INSTRUCTION[71]: SW (op=26) rs=R2 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R2, 0(R2)'
+DEBUG: Salvando R3 (contém 't1') antes da chamada
+ADD_INSTRUCTION[72]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[73]: SW (op=26) rs=R2 rt=R3 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R3, 0(R2)'
+DEBUG: Salvando R5 (contém 'size') antes da chamada
+ADD_INSTRUCTION[74]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=3
+ADD_INSTRUCTION[75]: SW (op=26) rs=R2 rt=R5 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R5, 0(R2)'
+DEBUG: Salvando R6 (contém 't2') antes da chamada
+ADD_INSTRUCTION[76]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=4
+ADD_INSTRUCTION[77]: SW (op=26) rs=R2 rt=R6 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R6, 0(R2)'
+DEBUG: Salvando R7 (contém 'addr_reg_0') antes da chamada
+ADD_INSTRUCTION[78]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=5
+ADD_INSTRUCTION[79]: SW (op=26) rs=R2 rt=R7 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R7, 0(R2)'
+DEBUG: Salvando R8 (contém 't3') antes da chamada
+ADD_INSTRUCTION[80]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=6
+ADD_INSTRUCTION[81]: SW (op=26) rs=R2 rt=R8 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R8, 0(R2)'
+DEBUG: Salvando R9 (contém 't4') antes da chamada
+ADD_INSTRUCTION[82]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=7
+ADD_INSTRUCTION[83]: SW (op=26) rs=R2 rt=R9 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R9, 0(R2)'
+DEBUG: Salvando R10 (contém 't5') antes da chamada
+ADD_INSTRUCTION[84]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=8
+ADD_INSTRUCTION[85]: SW (op=26) rs=R2 rt=R10 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R10, 0(R2)'
+DEBUG: Salvando R11 (contém 't6') antes da chamada
+ADD_INSTRUCTION[86]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=9
+ADD_INSTRUCTION[87]: SW (op=26) rs=R2 rt=R11 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R11, 0(R2)'
+DEBUG: Salvando R12 (contém 't7') antes da chamada
+ADD_INSTRUCTION[88]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=10
+ADD_INSTRUCTION[89]: SW (op=26) rs=R2 rt=R12 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R12, 0(R2)'
+DEBUG: Salvando R13 (contém 't8') antes da chamada
+ADD_INSTRUCTION[90]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=11
+ADD_INSTRUCTION[91]: SW (op=26) rs=R2 rt=R13 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R13, 0(R2)'
+DEBUG: Salvando R14 (contém 'addr_reg_1') antes da chamada
+ADD_INSTRUCTION[92]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=12
+ADD_INSTRUCTION[93]: SW (op=26) rs=R2 rt=R14 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R14, 0(R2)'
+DEBUG: Salvando R15 (contém 't9') antes da chamada
+ADD_INSTRUCTION[94]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=13
+ADD_INSTRUCTION[95]: SW (op=26) rs=R2 rt=R15 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R15, 0(R2)'
+ADD_INSTRUCTION[96]: SUBI (op=16) rs=R29 rt=R29 rd=R0 imm=13
+ADD_INSTRUCTION[98]: ADDI (op=15) rs=R29 rt=R29 rd=R0 imm=13
+  ADDI PREVIEW: Will output 'ADDI R29, R29, 13'
+DEBUG: Restaurando R15 (contém 't9') após a chamada
+ADD_INSTRUCTION[99]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=13
+ADD_INSTRUCTION[100]: LW (op=25) rs=R2 rt=R15 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R15, 0(R2)'
+DEBUG: Restaurando R14 (contém 'addr_reg_1') após a chamada
+ADD_INSTRUCTION[101]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=12
+ADD_INSTRUCTION[102]: LW (op=25) rs=R2 rt=R14 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R14, 0(R2)'
+DEBUG: Restaurando R13 (contém 't8') após a chamada
+ADD_INSTRUCTION[103]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=11
+ADD_INSTRUCTION[104]: LW (op=25) rs=R2 rt=R13 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R13, 0(R2)'
+DEBUG: Restaurando R12 (contém 't7') após a chamada
+ADD_INSTRUCTION[105]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=10
+ADD_INSTRUCTION[106]: LW (op=25) rs=R2 rt=R12 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R12, 0(R2)'
+DEBUG: Restaurando R11 (contém 't6') após a chamada
+ADD_INSTRUCTION[107]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=9
+ADD_INSTRUCTION[108]: LW (op=25) rs=R2 rt=R11 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R11, 0(R2)'
+DEBUG: Restaurando R10 (contém 't5') após a chamada
+ADD_INSTRUCTION[109]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=8
+ADD_INSTRUCTION[110]: LW (op=25) rs=R2 rt=R10 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R10, 0(R2)'
+DEBUG: Restaurando R9 (contém 't4') após a chamada
+ADD_INSTRUCTION[111]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=7
+ADD_INSTRUCTION[112]: LW (op=25) rs=R2 rt=R9 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R9, 0(R2)'
+DEBUG: Restaurando R8 (contém 't3') após a chamada
+ADD_INSTRUCTION[113]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=6
+ADD_INSTRUCTION[114]: LW (op=25) rs=R2 rt=R8 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R8, 0(R2)'
+DEBUG: Restaurando R7 (contém 'addr_reg_0') após a chamada
+ADD_INSTRUCTION[115]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=5
+ADD_INSTRUCTION[116]: LW (op=25) rs=R2 rt=R7 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R7, 0(R2)'
+DEBUG: Restaurando R6 (contém 't2') após a chamada
+ADD_INSTRUCTION[117]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=4
+ADD_INSTRUCTION[118]: LW (op=25) rs=R2 rt=R6 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R6, 0(R2)'
+DEBUG: Restaurando R5 (contém 'size') após a chamada
+ADD_INSTRUCTION[119]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=3
+ADD_INSTRUCTION[120]: LW (op=25) rs=R2 rt=R5 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R5, 0(R2)'
+DEBUG: Restaurando R3 (contém 't1') após a chamada
+ADD_INSTRUCTION[121]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
+ADD_INSTRUCTION[122]: LW (op=25) rs=R2 rt=R3 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R3, 0(R2)'
+DEBUG: Restaurando R2 (contém 'sum') após a chamada
+ADD_INSTRUCTION[123]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=1
+ADD_INSTRUCTION[124]: LW (op=25) rs=R2 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R2, 0(R2)'
 DEBUG: get_register_for_variable('t14', 'main')
-DEBUG: Registrador livre encontrado: R27
-DEBUG: Alocando 't14' -> R27
-DEBUG: add_move_if_different(R1 -> R27)
-DEBUG: Gerando MOVE R27, R1
-ADD_INSTRUCTION[75]: MOVE (op=11) rs=R1 rt=R0 rd=R27 imm=0
-DEBUG: add_instruction MOVE[75]: rs=1, rt=0, rd=27 (Armazenado: rs=1, rd=27)
-ADD_INSTRUCTION[76]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
-DEBUG: add_instruction MOVE[76]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
+DEBUG: Registrador livre encontrado: R23
+DEBUG: Alocando 't14' -> R23
+DEBUG: add_move_if_different(R1 -> R23)
+DEBUG: Gerando MOVE R23, R1
+ADD_INSTRUCTION[125]: MOVE (op=11) rs=R1 rt=R0 rd=R23 imm=0
+DEBUG: add_instruction MOVE[125]: rs=1, rt=0, rd=23 (Armazenado: rs=1, rd=23)
+ADD_INSTRUCTION[126]: MOVE (op=11) rs=R1 rt=R0 rd=R7 imm=0
+DEBUG: add_instruction MOVE[126]: rs=1, rt=0, rd=7 (Armazenado: rs=1, rd=7)
 DEBUG: load_variable_to_register('t14', 'main')
 DEBUG: get_register_for_variable('t14', 'main')
-DEBUG: Variável 't14' já em R27 (reutilizando)
-DEBUG: Variável 't14' -> R27 (símbolo NÃO encontrado!)
+DEBUG: Variável 't14' já em R23 (reutilizando)
+DEBUG: Variável 't14' -> R23 (símbolo NÃO encontrado!)
 DEBUG: get_register_for_variable('result', 'main')
-DEBUG: Liberando R1 (era t0)
-DEBUG: Alocando 'result' -> R1
-DEBUG: add_move_if_different(R27 -> R1)
-DEBUG: Gerando MOVE R1, R27
-ADD_INSTRUCTION[77]: MOVE (op=11) rs=R27 rt=R0 rd=R1 imm=0
-DEBUG: add_instruction MOVE[77]: rs=27, rt=0, rd=1 (Armazenado: rs=27, rd=1)
-ADD_INSTRUCTION[78]: SW (op=26) rs=R30 rt=R1 rd=R0 imm=0
-  MEM PREVIEW: Will output 'SW R1, 0(R30)'
+DEBUG: Registrador livre encontrado: R24
+DEBUG: Alocando 'result' -> R24
+DEBUG: add_move_if_different(R23 -> R24)
+DEBUG: Gerando MOVE R24, R23
+ADD_INSTRUCTION[127]: MOVE (op=11) rs=R23 rt=R0 rd=R24 imm=0
+DEBUG: add_instruction MOVE[127]: rs=23, rt=0, rd=24 (Armazenado: rs=23, rd=24)
+ADD_INSTRUCTION[128]: SW (op=26) rs=R30 rt=R24 rd=R0 imm=0
+  MEM PREVIEW: Will output 'SW R24, 0(R30)'
 DEBUG: load_variable_to_register('result', 'main')
 DEBUG: get_register_for_variable('result', 'main')
-DEBUG: Variável 'result' já em R1 (reutilizando)
-DEBUG: Variável 'result' -> R1 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[79]: LW (op=25) rs=R30 rt=R1 rd=R0 imm=0
-  MEM PREVIEW: Will output 'LW R1, 0(R30)'
+DEBUG: Variável 'result' já em R24 (reutilizando)
+DEBUG: Variável 'result' -> R24 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[129]: LW (op=25) rs=R30 rt=R24 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R24, 0(R30)'
 
-ADD_INSTRUCTION[80]: OUTPUTREG (op=32) rs=R1 rt=R0 rd=R0 imm=0
-ADD_INSTRUCTION[81]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[130]: OUTPUTREG (op=32) rs=R24 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[131]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
 Terceira passada: corrigindo endereços...
 Escrevendo arquivos de saída...
 === Estatísticas do Assembler Corrigido ===
 Quadruplas processadas: 42
-Instruções geradas: 82
+Instruções geradas: 132
 Labels: 5
 Símbolos: 6
 ==========================================
@@ -508,8 +585,8 @@ result          main            0       Não    Sim     Não    1
 ====================================
 
 Arquivos gerados:
-- assembly_output_corrected.asm
-- binary_output_corrected.txt
+- assembly_output.asm
+- binary_output.txt
 
 Assembler corrigido executado com sucesso!
 
@@ -521,7 +598,7 @@ Simulador MIPS Customizado - Vers�o Gen�rica
 ============================================================
 
 Configura��o:
-Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output_corrected.asm
+Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output.asm
 Entradas: []
 Resultado esperado: None
 Traceback (most recent call last):

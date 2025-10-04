@@ -5,7 +5,7 @@
 # - Variáveis globais com $gp
 # - Passagem robusta de parâmetros
 
-  0: LI         GP, 144
+  0: LI         GP, 128
   1: LI         SP, 255
   2: J          3
 main:

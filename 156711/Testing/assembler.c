@@ -676,44 +676,43 @@ void process_array_access(const char *array_name, const char *index_var, const c
     printf("Index register: R%d (loaded from '%s')\n", index_reg, index_var);
     
     if (array_sym) {
-        // Calcular endereço: base_addr + (index * 4)
+        // OTIMIZAÇÃO: Calcular endereço: base_addr + index
+        // Não precisa multiplicar por 4 porque RAM endereça palavras de 32 bits, não bytes
+        // Cada posição da RAM já armazena uma palavra completa
         // Usar registradores únicos para evitar conflitos - gerar nomes únicos baseados em contador
         static int temp_counter = 0;
-        char temp_name[32], addr_name[32];
-        snprintf(temp_name, sizeof(temp_name), "temp_reg_%d", temp_counter);
+        char addr_name[32];
         snprintf(addr_name, sizeof(addr_name), "addr_reg_%d", temp_counter);
         temp_counter++;
         
-        int temp_reg = get_register_for_variable(temp_name, current_function); // registrador temporário único
         int addr_reg = get_register_for_variable(addr_name, current_function); // registrador para endereço único
-        printf("Temp register: R%d (%s), Address register: R%d (%s)\n", temp_reg, temp_name, addr_reg, addr_name);
+        printf("Address register: R%d (%s)\n", addr_reg, addr_name);
         
-        // Multiplicar índice por 4 (shift left 2 posições)
-        printf("Generating: SLL R%d, R%d, 2 (index * 4)\n", temp_reg, index_reg);
-        add_instruction("SLL", OP_SLL, index_reg, 0, temp_reg, 2, NULL);
+        // REMOVIDO: Multiplicação por 4 desnecessária (SLL por 2)
+        // A RAM já endereça palavras de 32 bits diretamente
         
-        // Calcular endereço final
+        // Calcular endereço final (otimizado: apenas soma índice, sem multiplicação)
         if (array_sym->is_global) {
-            // Array global: GP + offset + (index * 4)
+            // Array global: GP + offset + index
             printf("Global array: GP=%d, offset=%d\n", GP, array_sym->offset);
             printf("Generating: ADDI R%d, GP, %d (base address)\n", addr_reg, array_sym->offset);
             add_instruction("ADDI", OP_ADDI, GP, addr_reg, 0, array_sym->offset, NULL);
-            printf("Generating: ADD R%d, R%d, R%d (final address)\n", addr_reg, addr_reg, temp_reg);
-            add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
+            printf("Generating: ADD R%d, R%d, R%d (final address = base + index)\n", addr_reg, addr_reg, index_reg);
+            add_instruction("ADD", OP_ADD, addr_reg, index_reg, addr_reg, 0, NULL);
         } else if (array_sym->is_arg && array_sym->is_array && !array_sym->is_global) {
             // Array parâmetro (local): carregar endereço base do parâmetro e somar índice
             printf("Array parameter: FP=%d, offset=%d (contains base address)\n", FP, array_sym->offset);
             printf("Generating: LW R%d, %d(FP) (load base address from parameter)\n", addr_reg, array_sym->offset);
             add_instruction("LW", OP_LW, FP, addr_reg, 0, array_sym->offset, NULL);
-            printf("Generating: ADD R%d, R%d, R%d (final address = base + index*4)\n", addr_reg, addr_reg, temp_reg);
-            add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
+            printf("Generating: ADD R%d, R%d, R%d (final address = base + index)\n", addr_reg, addr_reg, index_reg);
+            add_instruction("ADD", OP_ADD, addr_reg, index_reg, addr_reg, 0, NULL);
         } else {
-            // Array local: FP + offset + (index * 4)
+            // Array local: FP + offset + index
             printf("Local array: FP=%d, offset=%d\n", FP, array_sym->offset);
             printf("Generating: ADDI R%d, FP, %d (base address)\n", addr_reg, array_sym->offset);
             add_instruction("ADDI", OP_ADDI, FP, addr_reg, 0, array_sym->offset, NULL);
-            printf("Generating: ADD R%d, R%d, R%d (final address)\n", addr_reg, addr_reg, temp_reg);
-            add_instruction("ADD", OP_ADD, addr_reg, temp_reg, addr_reg, 0, NULL);
+            printf("Generating: ADD R%d, R%d, R%d (final address = base + index)\n", addr_reg, addr_reg, index_reg);
+            add_instruction("ADD", OP_ADD, addr_reg, index_reg, addr_reg, 0, NULL);
         }
         
         if (is_store) {
@@ -731,15 +730,12 @@ void process_array_access(const char *array_name, const char *index_var, const c
         }
     } else {
         printf("ERRO: Símbolo do array '%s' não encontrado!\n", array_name);
-        // Fallback simples para arrays globais
+        // OTIMIZAÇÃO: Fallback simples para arrays (sem multiplicação por 4)
         int base_reg = load_variable_to_register(array_name, current_function);
-        int temp_reg = get_register_for_variable("", current_function);
         int dest_reg = get_register_for_variable(result_var, current_function);
         
-        // Multiplicar índice por 4
-        add_instruction("SLL", OP_SLL, index_reg, 0, temp_reg, 2, NULL);
-        // Somar base + offset
-        add_instruction("ADD", OP_ADD, base_reg, temp_reg, dest_reg, 0, NULL);
+        // OTIMIZADO: Apenas somar base + índice (RAM endereça palavras, não bytes)
+        add_instruction("ADD", OP_ADD, base_reg, index_reg, dest_reg, 0, NULL);
         
         if (is_store) {
             int value_reg = load_variable_to_register(result_var, current_function);
@@ -811,13 +807,17 @@ void generate_assembly_second_pass() {
             int size = atoi(quad->arg2);
             int is_global = (strcmp(current_function, "") == 0 || strcmp(current_function, "global") == 0);
             if (is_global) {
-                temp_global_offset += size * 4;
+                // OTIMIZAÇÃO: Cada elemento ocupa 1 posição de RAM (32 bits)
+                // RAM endereça palavras, não bytes individuais
+                temp_global_offset += size;  // Corrigido: era size * 4
             }
         }
     }
     
-    // Set GP to base address (128) plus space for global arrays
-    int gp_value = temp_global_offset;
+    // CORREÇÃO: GP deve ser FIXO em 0x80 (128), não dinâmico
+    // GP aponta para o início da área de variáveis globais
+    // Offsets são calculados relativos a 0x80
+    int gp_value = 0x80;  // Base fixa = 128 (início das variáveis globais)
     add_instruction("LI", OP_LI, 0, GP, 0, gp_value, NULL);
     
     add_instruction("LI", OP_LI, 0, SP, 0, 0xFF, NULL);
@@ -954,7 +954,9 @@ void generate_assembly_second_pass() {
                 // Para variáveis globais, calcule o offset atual na memória global
                 int current_global_offset = global_memory_offset - 0x80;
                 add_symbol(quad->arg1, current_function, current_global_offset, is_global, 0, size, is_array);
-                global_memory_offset += size * 4;
+                // OTIMIZAÇÃO: Cada elemento ocupa 1 posição de RAM (32 bits)
+                // RAM endereça palavras, não bytes individuais
+                global_memory_offset += size;  // Corrigido: era size * 4
             } else if (!is_param) {
                 add_symbol(quad->arg1, current_function, local_offset, is_global, 0, size, is_array);
                 local_offset += size;
@@ -1427,12 +1429,13 @@ void write_binary_file(const char *filename) {
         
         uint32_t machine_code = 0;
         
-        // Formato: [31:26] OPCODE | [25:20] RS | [19:14] RT | [13:8] RD | [7:0] IMMEDIATE
+        // Formato: [31:26] OPCODE | [25:20] RS | [19:14] RT | [13:8] RD | [11:0] IMMEDIATE/ADDRESS
+        // Atualizado para suportar endereços de 12 bits (0-4095) na ROM
         machine_code |= (instr->opcode & 0x3F) << 26;
         machine_code |= (instr->rs & 0x3F) << 20;
         machine_code |= (instr->rt & 0x3F) << 14;
         machine_code |= (instr->rd & 0x3F) << 8;
-        machine_code |= (instr->immediate & 0xFF);
+        machine_code |= (instr->immediate & 0xFFF);  // 12 bits para endereços (0-4095)
         
         for (int bit = 31; bit >= 0; bit--) {
             fprintf(file, "%d", (machine_code >> bit) & 1);

@@ -13,6 +13,7 @@
 (call,fibonacci,t5,t6)
 (+,t3,t6,t7)
 (ret,t7, , )
+(goto,L1, , )
 (label,L0, , )
 (ret,n, , )
 (label,L1, , )

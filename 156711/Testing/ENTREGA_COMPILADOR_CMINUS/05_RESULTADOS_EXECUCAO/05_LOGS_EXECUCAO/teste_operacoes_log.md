@@ -1,32 +1,18 @@
 # Relatório de Compilação - teste_operacoes.c
-## Data: 2025-09-23 12:21:38
+## Data: 2025-10-04 00:55:58
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
 Localização: CMinusCodes\teste_operacoes.c
-Tamanho: 651 bytes
+Tamanho: 702 bytes
 
 ### 🔧 Compilação C-Minus
 ```
-ERRO LEXICO: '' INVALIDO [linha: 43, coluna: 0]
+ERRO LEXICO: '' INVALIDO [linha: 45, coluna: 0]
 Tree written to tree.txt
 Symbol table written to symbol_table.txt
 DEBUG: Processing function main children:
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=0, stmt=2, exp=-1, name=a
-DEBUG: Child - node=0, stmt=2, exp=-1, name=b
-DEBUG: Child - node=0, stmt=2, exp=-1, name=resultado
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
-DEBUG: Child - node=0, stmt=2, exp=-1, name=resultado
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
-DEBUG: Child - node=0, stmt=2, exp=-1, name=resultado
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
-DEBUG: Child - node=0, stmt=0, exp=-1, name=NULL
-DEBUG: Child - node=0, stmt=0, exp=-1, name=NULL
-DEBUG: Child - node=0, stmt=0, exp=-1, name=NULL
-DEBUG: Child - node=0, stmt=0, exp=-1, name=NULL
+DEBUG: Child - node=0, stmt=11, exp=-1, name=NULL
 (goto,main, , )
 (fun,main, , )
 (alloc,a,1, )
@@ -45,37 +31,40 @@ DEBUG: Child - node=0, stmt=0, exp=-1, name=NULL
 (*,a,b,t4)
 (asn,t4, ,resultado)
 (output,resultado,0, )
+(/,a,b,t5)
+(asn,t5, ,resultado)
+(output,resultado,0, )
 (bge,a,b,L0)
-(immed,1, ,t5)
-(output,t5,0, )
+(immed,1, ,t6)
+(output,t6,0, )
 (goto,L1, , )
 (label,L0, , )
-(immed,0, ,t6)
-(output,t6,0, )
+(immed,0, ,t7)
+(output,t7,0, )
 (label,L1, , )
 (ble,a,b,L2)
-(immed,1, ,t7)
-(output,t7,0, )
+(immed,1, ,t8)
+(output,t8,0, )
 (goto,L3, , )
 (label,L2, , )
-(immed,0, ,t8)
-(output,t8,0, )
+(immed,0, ,t9)
+(output,t9,0, )
 (label,L3, , )
 (bne,a,b,L4)
-(immed,1, ,t9)
-(output,t9,0, )
+(immed,1, ,t10)
+(output,t10,0, )
 (goto,L5, , )
 (label,L4, , )
-(immed,0, ,t10)
-(output,t10,0, )
+(immed,0, ,t11)
+(output,t11,0, )
 (label,L5, , )
 (beq,a,b,L6)
-(immed,1, ,t11)
-(output,t11,0, )
+(immed,1, ,t12)
+(output,t12,0, )
 (goto,L7, , )
 (label,L6, , )
-(immed,0, ,t12)
-(output,t12,0, )
+(immed,0, ,t13)
+(output,t13,0, )
 (label,L7, , )
 (endfun, , , )
 Intermediate code written to intermediate.txt
@@ -92,10 +81,10 @@ Implementa todas as correções identificadas nos problemas:
 - Passagem robusta de parâmetros
 =====================================================
 Lendo arquivo: intermediate.txt
-Quadruplas lidas: 51
+Quadruplas lidas: 54
 Primeira passada: mapeando labels...
 Segunda passada: gerando código...
-ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=140
+ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=128
 ADD_INSTRUCTION[1]: LI (op=27) rs=R0 rt=R29 rd=R0 imm=255
 DEBUG: Função 'main' detectada com 3 parâmetros totais
 ADD_INSTRUCTION[4]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
@@ -268,117 +257,152 @@ DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCT
 DEBUG: get_register_for_variable('t5', 'main')
 DEBUG: Registrador livre encontrado: R9
 DEBUG: Alocando 't5' -> R9
-ADD_INSTRUCTION[40]: LI (op=27) rs=R0 rt=R9 rd=R0 imm=1
+ADD_INSTRUCTION[39]: DIV (op=3) rs=R2 rt=R4 rd=R9 imm=0
 DEBUG: load_variable_to_register('t5', 'main')
 DEBUG: get_register_for_variable('t5', 'main')
 DEBUG: Variável 't5' já em R9 (reutilizando)
 DEBUG: Variável 't5' -> R9 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[41]: OUTPUTREG (op=32) rs=R9 rt=R0 rd=R0 imm=0
+DEBUG: get_register_for_variable('resultado', 'main')
+DEBUG: Variável 'resultado' já em R6 (reutilizando)
+DEBUG: add_move_if_different(R9 -> R6)
+DEBUG: Gerando MOVE R6, R9
+ADD_INSTRUCTION[40]: MOVE (op=11) rs=R9 rt=R0 rd=R6 imm=0
+DEBUG: add_instruction MOVE[40]: rs=9, rt=0, rd=6 (Armazenado: rs=9, rd=6)
+ADD_INSTRUCTION[41]: SW (op=26) rs=R30 rt=R6 rd=R0 imm=2
+  MEM PREVIEW: Will output 'SW R6, 2(R30)'
+DEBUG: load_variable_to_register('resultado', 'main')
+DEBUG: get_register_for_variable('resultado', 'main')
+DEBUG: Variável 'resultado' já em R6 (reutilizando)
+DEBUG: Variável 'resultado' -> R6 (símbolo encontrado: offset=2, global=0)ADD_INSTRUCTION[42]: LW (op=25) rs=R30 rt=R6 rd=R0 imm=2
+  MEM PREVIEW: Will output 'LW R6, 2(R30)'
+
+ADD_INSTRUCTION[43]: OUTPUTREG (op=32) rs=R6 rt=R0 rd=R0 imm=0
+DEBUG: load_variable_to_register('a', 'main')
+DEBUG: get_register_for_variable('a', 'main')
+DEBUG: Variável 'a' já em R2 (reutilizando)
+DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[44]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R2, 0(R30)'
+
+DEBUG: load_variable_to_register('b', 'main')
+DEBUG: get_register_for_variable('b', 'main')
+DEBUG: Variável 'b' já em R4 (reutilizando)
+DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[45]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
+  MEM PREVIEW: Will output 'LW R4, 1(R30)'
+
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Registrador livre encontrado: R10
 DEBUG: Alocando 't6' -> R10
-ADD_INSTRUCTION[44]: LI (op=27) rs=R0 rt=R10 rd=R0 imm=0
+ADD_INSTRUCTION[47]: LI (op=27) rs=R0 rt=R10 rd=R0 imm=1
 DEBUG: load_variable_to_register('t6', 'main')
 DEBUG: get_register_for_variable('t6', 'main')
 DEBUG: Variável 't6' já em R10 (reutilizando)
 DEBUG: Variável 't6' -> R10 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[45]: OUTPUTREG (op=32) rs=R10 rt=R0 rd=R0 imm=0
-DEBUG: load_variable_to_register('a', 'main')
-DEBUG: get_register_for_variable('a', 'main')
-DEBUG: Variável 'a' já em R2 (reutilizando)
-DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[47]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
-  MEM PREVIEW: Will output 'LW R2, 0(R30)'
-
-DEBUG: load_variable_to_register('b', 'main')
-DEBUG: get_register_for_variable('b', 'main')
-DEBUG: Variável 'b' já em R4 (reutilizando)
-DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[48]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
-  MEM PREVIEW: Will output 'LW R4, 1(R30)'
-
+ADD_INSTRUCTION[48]: OUTPUTREG (op=32) rs=R10 rt=R0 rd=R0 imm=0
 DEBUG: get_register_for_variable('t7', 'main')
 DEBUG: Registrador livre encontrado: R11
 DEBUG: Alocando 't7' -> R11
-ADD_INSTRUCTION[50]: LI (op=27) rs=R0 rt=R11 rd=R0 imm=1
+ADD_INSTRUCTION[51]: LI (op=27) rs=R0 rt=R11 rd=R0 imm=0
 DEBUG: load_variable_to_register('t7', 'main')
 DEBUG: get_register_for_variable('t7', 'main')
 DEBUG: Variável 't7' já em R11 (reutilizando)
 DEBUG: Variável 't7' -> R11 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[51]: OUTPUTREG (op=32) rs=R11 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[52]: OUTPUTREG (op=32) rs=R11 rt=R0 rd=R0 imm=0
+DEBUG: load_variable_to_register('a', 'main')
+DEBUG: get_register_for_variable('a', 'main')
+DEBUG: Variável 'a' já em R2 (reutilizando)
+DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[54]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R2, 0(R30)'
+
+DEBUG: load_variable_to_register('b', 'main')
+DEBUG: get_register_for_variable('b', 'main')
+DEBUG: Variável 'b' já em R4 (reutilizando)
+DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[55]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
+  MEM PREVIEW: Will output 'LW R4, 1(R30)'
+
 DEBUG: get_register_for_variable('t8', 'main')
 DEBUG: Registrador livre encontrado: R12
 DEBUG: Alocando 't8' -> R12
-ADD_INSTRUCTION[54]: LI (op=27) rs=R0 rt=R12 rd=R0 imm=0
+ADD_INSTRUCTION[57]: LI (op=27) rs=R0 rt=R12 rd=R0 imm=1
 DEBUG: load_variable_to_register('t8', 'main')
 DEBUG: get_register_for_variable('t8', 'main')
 DEBUG: Variável 't8' já em R12 (reutilizando)
 DEBUG: Variável 't8' -> R12 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[55]: OUTPUTREG (op=32) rs=R12 rt=R0 rd=R0 imm=0
-DEBUG: load_variable_to_register('a', 'main')
-DEBUG: get_register_for_variable('a', 'main')
-DEBUG: Variável 'a' já em R2 (reutilizando)
-DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[57]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
-  MEM PREVIEW: Will output 'LW R2, 0(R30)'
-
-DEBUG: load_variable_to_register('b', 'main')
-DEBUG: get_register_for_variable('b', 'main')
-DEBUG: Variável 'b' já em R4 (reutilizando)
-DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[58]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
-  MEM PREVIEW: Will output 'LW R4, 1(R30)'
-
+ADD_INSTRUCTION[58]: OUTPUTREG (op=32) rs=R12 rt=R0 rd=R0 imm=0
 DEBUG: get_register_for_variable('t9', 'main')
 DEBUG: Registrador livre encontrado: R13
 DEBUG: Alocando 't9' -> R13
-ADD_INSTRUCTION[60]: LI (op=27) rs=R0 rt=R13 rd=R0 imm=1
+ADD_INSTRUCTION[61]: LI (op=27) rs=R0 rt=R13 rd=R0 imm=0
 DEBUG: load_variable_to_register('t9', 'main')
 DEBUG: get_register_for_variable('t9', 'main')
 DEBUG: Variável 't9' já em R13 (reutilizando)
 DEBUG: Variável 't9' -> R13 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[61]: OUTPUTREG (op=32) rs=R13 rt=R0 rd=R0 imm=0
-DEBUG: get_register_for_variable('t10', 'main')
-DEBUG: Registrador livre encontrado: R14
-DEBUG: Alocando 't10' -> R14
-ADD_INSTRUCTION[64]: LI (op=27) rs=R0 rt=R14 rd=R0 imm=0
-DEBUG: load_variable_to_register('t10', 'main')
-DEBUG: get_register_for_variable('t10', 'main')
-DEBUG: Variável 't10' já em R14 (reutilizando)
-DEBUG: Variável 't10' -> R14 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[65]: OUTPUTREG (op=32) rs=R14 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[62]: OUTPUTREG (op=32) rs=R13 rt=R0 rd=R0 imm=0
 DEBUG: load_variable_to_register('a', 'main')
 DEBUG: get_register_for_variable('a', 'main')
 DEBUG: Variável 'a' já em R2 (reutilizando)
-DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[67]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[64]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
   MEM PREVIEW: Will output 'LW R2, 0(R30)'
 
 DEBUG: load_variable_to_register('b', 'main')
 DEBUG: get_register_for_variable('b', 'main')
 DEBUG: Variável 'b' já em R4 (reutilizando)
-DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[68]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
+DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[65]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
   MEM PREVIEW: Will output 'LW R4, 1(R30)'
 
+DEBUG: get_register_for_variable('t10', 'main')
+DEBUG: Registrador livre encontrado: R14
+DEBUG: Alocando 't10' -> R14
+ADD_INSTRUCTION[67]: LI (op=27) rs=R0 rt=R14 rd=R0 imm=1
+DEBUG: load_variable_to_register('t10', 'main')
+DEBUG: get_register_for_variable('t10', 'main')
+DEBUG: Variável 't10' já em R14 (reutilizando)
+DEBUG: Variável 't10' -> R14 (símbolo NÃO encontrado!)
+ADD_INSTRUCTION[68]: OUTPUTREG (op=32) rs=R14 rt=R0 rd=R0 imm=0
 DEBUG: get_register_for_variable('t11', 'main')
 DEBUG: Registrador livre encontrado: R15
 DEBUG: Alocando 't11' -> R15
-ADD_INSTRUCTION[70]: LI (op=27) rs=R0 rt=R15 rd=R0 imm=1
+ADD_INSTRUCTION[71]: LI (op=27) rs=R0 rt=R15 rd=R0 imm=0
 DEBUG: load_variable_to_register('t11', 'main')
 DEBUG: get_register_for_variable('t11', 'main')
 DEBUG: Variável 't11' já em R15 (reutilizando)
 DEBUG: Variável 't11' -> R15 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[71]: OUTPUTREG (op=32) rs=R15 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[72]: OUTPUTREG (op=32) rs=R15 rt=R0 rd=R0 imm=0
+DEBUG: load_variable_to_register('a', 'main')
+DEBUG: get_register_for_variable('a', 'main')
+DEBUG: Variável 'a' já em R2 (reutilizando)
+DEBUG: Variável 'a' -> R2 (símbolo encontrado: offset=0, global=0)ADD_INSTRUCTION[74]: LW (op=25) rs=R30 rt=R2 rd=R0 imm=0
+  MEM PREVIEW: Will output 'LW R2, 0(R30)'
+
+DEBUG: load_variable_to_register('b', 'main')
+DEBUG: get_register_for_variable('b', 'main')
+DEBUG: Variável 'b' já em R4 (reutilizando)
+DEBUG: Variável 'b' -> R4 (símbolo encontrado: offset=1, global=0)ADD_INSTRUCTION[75]: LW (op=25) rs=R30 rt=R4 rd=R0 imm=1
+  MEM PREVIEW: Will output 'LW R4, 1(R30)'
+
 DEBUG: get_register_for_variable('t12', 'main')
 DEBUG: Registrador livre encontrado: R16
 DEBUG: Alocando 't12' -> R16
-ADD_INSTRUCTION[74]: LI (op=27) rs=R0 rt=R16 rd=R0 imm=0
+ADD_INSTRUCTION[77]: LI (op=27) rs=R0 rt=R16 rd=R0 imm=1
 DEBUG: load_variable_to_register('t12', 'main')
 DEBUG: get_register_for_variable('t12', 'main')
 DEBUG: Variável 't12' já em R16 (reutilizando)
 DEBUG: Variável 't12' -> R16 (símbolo NÃO encontrado!)
-ADD_INSTRUCTION[75]: OUTPUTREG (op=32) rs=R16 rt=R0 rd=R0 imm=0
-ADD_INSTRUCTION[77]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[78]: OUTPUTREG (op=32) rs=R16 rt=R0 rd=R0 imm=0
+DEBUG: get_register_for_variable('t13', 'main')
+DEBUG: Registrador livre encontrado: R17
+DEBUG: Alocando 't13' -> R17
+ADD_INSTRUCTION[81]: LI (op=27) rs=R0 rt=R17 rd=R0 imm=0
+DEBUG: load_variable_to_register('t13', 'main')
+DEBUG: get_register_for_variable('t13', 'main')
+DEBUG: Variável 't13' já em R17 (reutilizando)
+DEBUG: Variável 't13' -> R17 (símbolo NÃO encontrado!)
+ADD_INSTRUCTION[82]: OUTPUTREG (op=32) rs=R17 rt=R0 rd=R0 imm=0
+ADD_INSTRUCTION[84]: HALT (op=30) rs=R0 rt=R0 rd=R0 imm=0
 Terceira passada: corrigindo endereços...
 Escrevendo arquivos de saída...
 === Estatísticas do Assembler Corrigido ===
-Quadruplas processadas: 51
-Instruções geradas: 78
+Quadruplas processadas: 54
+Instruções geradas: 85
 Labels: 9
 Símbolos: 3
 ==========================================
@@ -391,8 +415,8 @@ resultado       main            2       Não    Sim     Não    1
 ====================================
 
 Arquivos gerados:
-- assembly_output_corrected.asm
-- binary_output_corrected.txt
+- assembly_output.asm
+- binary_output.txt
 
 Assembler corrigido executado com sucesso!
 
@@ -404,7 +428,7 @@ Simulador MIPS Customizado - Vers�o Gen�rica
 ============================================================
 
 Configura��o:
-Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output_corrected.asm
+Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output.asm
 Entradas: [10, 5]
 Resultado esperado: None
 Traceback (most recent call last):

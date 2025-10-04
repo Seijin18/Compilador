@@ -1,5 +1,5 @@
 # Relatório de Compilação - div.c
-## Data: 2025-09-23 12:21:36
+## Data: 2025-10-04 00:55:57
 ## Status: ✅ SUCESSO
 
 ### 📄 Arquivo Original
@@ -11,15 +11,7 @@ Tamanho: 201 bytes
 Tree written to tree.txt
 Symbol table written to symbol_table.txt
 DEBUG: Processing function main children:
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=1, stmt=-1, exp=3, name=NULL
-DEBUG: Child - node=0, stmt=2, exp=-1, name=x
-DEBUG: Child - node=0, stmt=2, exp=-1, name=y
-DEBUG: Child - node=0, stmt=2, exp=-1, name=z
-DEBUG: Child - node=0, stmt=1, exp=-1, name=NULL
-DEBUG: Child - node=0, stmt=10, exp=-1, name=output
+DEBUG: Child - node=0, stmt=11, exp=-1, name=NULL
 (goto,main, , )
 (fun,main, , )
 (alloc,x,1, )
@@ -61,7 +53,7 @@ Lendo arquivo: intermediate.txt
 Quadruplas lidas: 24
 Primeira passada: mapeando labels...
 Segunda passada: gerando código...
-ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=144
+ADD_INSTRUCTION[0]: LI (op=27) rs=R0 rt=R28 rd=R0 imm=128
 ADD_INSTRUCTION[1]: LI (op=27) rs=R0 rt=R29 rd=R0 imm=255
 DEBUG: Função 'main' detectada com 4 parâmetros totais
 ADD_INSTRUCTION[4]: SUBI (op=16) rs=R29 rt=R2 rd=R0 imm=2
@@ -242,8 +234,8 @@ i               main            3       Não    Sim     Não    1
 ====================================
 
 Arquivos gerados:
-- assembly_output_corrected.asm
-- binary_output_corrected.txt
+- assembly_output.asm
+- binary_output.txt
 
 Assembler corrigido executado com sucesso!
 
@@ -255,7 +247,7 @@ Simulador MIPS Customizado - Vers�o Gen�rica
 ============================================================
 
 Configura��o:
-Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output_corrected.asm
+Arquivo: d:\Projetinhos\Compilador\156711\Testing\assembly_output.asm
 Entradas: [15, 3]
 Resultado esperado: None
 Traceback (most recent call last):
