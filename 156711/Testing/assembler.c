@@ -107,7 +107,11 @@ typedef enum {
     OP_BNE = 0x14, OP_BGT = 0x15, OP_BGTE = 0x16, OP_BLT = 0x17,
     OP_BLTE = 0x18, OP_LW = 0x19, OP_SW = 0x1A, OP_LI = 0x1B,
     OP_J = 0x1C, OP_JAL = 0x1D, OP_HALT = 0x1E, OP_OUTPUTMEM = 0x1F,
-    OP_OUTPUTREG = 0x20, OP_OUTPUT_RESET = 0x21, OP_INPUT = 0x22
+    OP_OUTPUTREG = 0x20, OP_OUTPUT_RESET = 0x21, OP_INPUT = 0x22,
+    OP_RETI = 0x23, OP_SET_QUANTUM = 0x24, OP_ENABLE_TIMER = 0x25, OP_DISABLE_TIMER = 0x26,
+    OP_LCD_WRITE_CHAR = 0x27, OP_LCD_CLEAR = 0x28, OP_LCD_WRITE_OS_SELECTING = 0x29,
+    OP_LCD_WRITE_OS_RUNNING = 0x2A, OP_CALL_PROG = 0x2B, OP_LOAD_PROG = 0x2C,
+    OP_SAVE_CTX = 0x2D, OP_LOAD_CTX = 0x2E, OP_NOP_RESERVED = 0x2F
 } OpCode;
 
 // Variável global para controlar se HALT foi emitido para main
@@ -822,6 +826,15 @@ void generate_assembly_second_pass() {
     
     add_instruction("LI", OP_LI, 0, SP, 0, 0xFF, NULL);
     
+    // Jump to main (Reset Vector)
+    add_instruction_with_label_fix("J", OP_J, 0, 0, 0, "main");
+    
+    // Interrupt Vector Table (Address 4)
+    // Address 3: NOP (Padding)
+    add_instruction("ADD", OP_ADD, R0, R0, R0, 0, NULL); 
+    // Address 4: Jump to ISR
+    add_instruction_with_label_fix("J", OP_J, 0, 0, 0, "isr");
+    
     for (int i = 0; i < quad_count; i++) {
         Quad *quad = &quads[i];
         
@@ -983,6 +996,31 @@ void generate_assembly_second_pass() {
             if (strcmp(quad->arg1, "input") == 0) {
                 int rd = get_register_for_variable(quad->arg3, current_function);
                 add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
+            } else if (strcmp(quad->arg1, "reti") == 0) {
+                // Special handling for RETI (Return from Interrupt)
+                // We must manually restore the stack frame because RETI jumps out of the function
+                // bypassing the standard epilogue.
+                
+                // 1. Restore SP (SP = FP)
+                add_instruction("MOVE", OP_MOVE, FP, 0, SP, 0, NULL);
+                
+                // 2. Restore FP (LW FP, -1(SP))
+                add_load_store_with_offset("LW", OP_LW, SP, FP, -1);
+                
+                // 3. Execute RETI
+                add_instruction("RETI", OP_RETI, 0, 0, 0, 0, NULL);
+                
+            } else if (strcmp(quad->arg1, "enableTimer") == 0) {
+                add_instruction("ENABLE_TIMER", OP_ENABLE_TIMER, 0, 0, 0, 0, NULL);
+                
+            } else if (strcmp(quad->arg1, "disableTimer") == 0) {
+                add_instruction("DISABLE_TIMER", OP_DISABLE_TIMER, 0, 0, 0, 0, NULL);
+                
+            } else if (strcmp(quad->arg1, "setQuantum") == 0) {
+                // Argument is in quad->arg2
+                int rs = load_variable_to_register(quad->arg2, current_function);
+                add_instruction("SET_QUANTUM", OP_SET_QUANTUM, rs, 0, 0, 0, NULL);
+                
             } else {
                 int param_count = param_stack_top + 1;
                 Parameter temp_params[MAX_PARAMS];
@@ -1403,7 +1441,37 @@ void write_assembly_file(const char *filename) {
             } else if (strcmp(instr->mnemonic, "OUTPUTREG") == 0) {
                 fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rs));
+            } else if (strcmp(instr->mnemonic, "RETI") == 0) {
+                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
+            } else if (strcmp(instr->mnemonic, "SET_QUANTUM") == 0) {
+                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs));
+            } else if (strcmp(instr->mnemonic, "ENABLE_TIMER") == 0) {
+                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
+            } else if (strcmp(instr->mnemonic, "DISABLE_TIMER") == 0) {
+                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
             } else if (strcmp(instr->mnemonic, "HALT") == 0) {
+                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
+            } else if (strcmp(instr->mnemonic, "LCD_WRITE_CHAR") == 0) {
+                fprintf(file, "%3d: %-10s %s, %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs), get_register_name(instr->rt));
+            } else if (strcmp(instr->mnemonic, "LCD_CLEAR") == 0) {
+                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
+            } else if (strcmp(instr->mnemonic, "LCD_WRITE_OS_SELECTING") == 0) {
+                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs));
+            } else if (strcmp(instr->mnemonic, "LCD_WRITE_OS_RUNNING") == 0) {
+                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs));
+            } else if (strcmp(instr->mnemonic, "CALL_PROG") == 0) {
+                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs));
+            } else if (strcmp(instr->mnemonic, "LOAD_PROG") == 0) {
+                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs));
+            } else if (strcmp(instr->mnemonic, "SAVE_CTX") == 0) {
+                fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
+            } else if (strcmp(instr->mnemonic, "LOAD_CTX") == 0) {
                 fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
             } else {
                 fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);

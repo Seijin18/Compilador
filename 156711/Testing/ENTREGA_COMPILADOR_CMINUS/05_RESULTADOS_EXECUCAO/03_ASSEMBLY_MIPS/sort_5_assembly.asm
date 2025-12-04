@@ -7,289 +7,292 @@
 
   0: LI         GP, 128
   1: LI         SP, 255
-  2: J          168
+  2: J          171
+  3: ADD        R0, R0, R0
+  4: J          0
+  5: J          171
 minloc:
-  3: SUBI       SP, SP, 8
-  4: SW         RA, 7(SP)
-  5: SW         FP, 6(SP)
-  6: MOVE       FP, SP
-  7: SW         R4, 0(FP)
-  8: SW         R5, 1(FP)
-  9: SW         R6, 2(FP)
- 10: SW         R7, 3(FP)
- 11: LW         R1, 1(FP)
- 12: MOVE       R2, R1
- 13: SW         R2, 5(FP)
+  6: SUBI       SP, SP, 8
+  7: SW         RA, 7(SP)
+  8: SW         FP, 6(SP)
+  9: MOVE       FP, SP
+ 10: SW         R4, 0(FP)
+ 11: SW         R5, 1(FP)
+ 12: SW         R6, 2(FP)
+ 13: SW         R7, 3(FP)
  14: LW         R1, 1(FP)
- 15: LW         R3, 0(FP)
- 16: ADD        R3, R3, R1
- 17: LW         R4, 0(R3)
- 18: MOVE       R5, R4
- 19: SW         R5, 4(FP)
- 20: LI         R6, 1
- 21: LW         R1, 1(FP)
- 22: ADD        R7, R1, R6
- 23: MOVE       R8, R7
- 24: SW         R8, 3(FP)
+ 15: MOVE       R2, R1
+ 16: SW         R2, 5(FP)
+ 17: LW         R1, 1(FP)
+ 18: LW         R3, 0(FP)
+ 19: ADD        R3, R3, R1
+ 20: LW         R4, 0(R3)
+ 21: MOVE       R5, R4
+ 22: SW         R5, 4(FP)
+ 23: LI         R6, 1
+ 24: LW         R1, 1(FP)
+ 25: ADD        R7, R1, R6
+ 26: MOVE       R8, R7
+ 27: SW         R8, 3(FP)
 L0:
- 25: LW         R8, 3(FP)
- 26: LW         R9, 2(FP)
- 27: SLT        R10, R8, R9
- 28: BEQ        R10, R0, 51
- 29: LW         R8, 3(FP)
- 30: LW         R11, 0(FP)
- 31: ADD        R11, R11, R8
- 32: LW         R12, 0(R11)
- 33: LW         R5, 4(FP)
- 34: BGTE       R12, R5, 45
- 35: LW         R8, 3(FP)
- 36: LW         R13, 0(FP)
- 37: ADD        R13, R13, R8
- 38: LW         R14, 0(R13)
- 39: MOVE       R5, R14
- 40: SW         R5, 4(FP)
- 41: LW         R8, 3(FP)
- 42: MOVE       R2, R8
- 43: SW         R2, 5(FP)
- 44: J          45
+ 28: LW         R8, 3(FP)
+ 29: LW         R9, 2(FP)
+ 30: SLT        R10, R8, R9
+ 31: BEQ        R10, R0, 54
+ 32: LW         R8, 3(FP)
+ 33: LW         R11, 0(FP)
+ 34: ADD        R11, R11, R8
+ 35: LW         R12, 0(R11)
+ 36: LW         R5, 4(FP)
+ 37: BGTE       R12, R5, 48
+ 38: LW         R8, 3(FP)
+ 39: LW         R13, 0(FP)
+ 40: ADD        R13, R13, R8
+ 41: LW         R14, 0(R13)
+ 42: MOVE       R5, R14
+ 43: SW         R5, 4(FP)
+ 44: LW         R8, 3(FP)
+ 45: MOVE       R2, R8
+ 46: SW         R2, 5(FP)
+ 47: J          48
 L2:
 L3:
- 45: LI         R15, 1
- 46: LW         R8, 3(FP)
- 47: ADD        R16, R8, R15
- 48: MOVE       R8, R16
- 49: SW         R8, 3(FP)
- 50: J          25
+ 48: LI         R15, 1
+ 49: LW         R8, 3(FP)
+ 50: ADD        R16, R8, R15
+ 51: MOVE       R8, R16
+ 52: SW         R8, 3(FP)
+ 53: J          28
 L1:
- 51: LW         R2, 5(FP)
- 52: MOVE       R1, R2
- 53: J          54
+ 54: LW         R2, 5(FP)
+ 55: MOVE       R1, R2
+ 56: J          57
 minloc_epilogue:
- 54: LW         RA, 7(SP)
- 55: LW         FP, 6(SP)
- 56: ADDI       SP, SP, 8
- 57: JR         RA
+ 57: LW         RA, 7(SP)
+ 58: LW         FP, 6(SP)
+ 59: ADDI       SP, SP, 8
+ 60: JR         RA
 sort:
- 58: SUBI       SP, SP, 8
- 59: SW         RA, 7(SP)
- 60: SW         FP, 6(SP)
- 61: MOVE       FP, SP
- 62: SW         R4, 0(FP)
- 63: SW         R5, 1(FP)
- 64: SW         R6, 2(FP)
- 65: SW         R7, 3(FP)
- 66: LW         R1, 1(FP)
- 67: MOVE       R8, R1
- 68: SW         R8, 3(FP)
+ 61: SUBI       SP, SP, 8
+ 62: SW         RA, 7(SP)
+ 63: SW         FP, 6(SP)
+ 64: MOVE       FP, SP
+ 65: SW         R4, 0(FP)
+ 66: SW         R5, 1(FP)
+ 67: SW         R6, 2(FP)
+ 68: SW         R7, 3(FP)
+ 69: LW         R1, 1(FP)
+ 70: MOVE       R8, R1
+ 71: SW         R8, 3(FP)
 L4:
- 69: LI         R17, 1
- 70: LW         R9, 2(FP)
- 71: SUB        R18, R9, R17
- 72: LW         R8, 3(FP)
- 73: SLT        R19, R8, R18
- 74: BEQ        R19, R0, 164
- 75: LW         R20, 0(FP)
- 76: MOVE       R4, R20
- 77: LW         R8, 3(FP)
- 78: MOVE       R5, R8
- 79: LW         R9, 2(FP)
- 80: MOVE       R6, R9
- 81: SUBI       R2, SP, 1
- 82: SW         R2, 0(R2)
- 83: SUBI       R2, SP, 2
- 84: SW         R3, 0(R2)
- 85: SUBI       R2, SP, 3
- 86: SW         R5, 0(R2)
- 87: SUBI       R2, SP, 4
- 88: SW         R6, 0(R2)
- 89: SUBI       R2, SP, 5
- 90: SW         R7, 0(R2)
- 91: SUBI       R2, SP, 6
- 92: SW         R8, 0(R2)
- 93: SUBI       R2, SP, 7
- 94: SW         R9, 0(R2)
- 95: SUBI       R2, SP, 8
- 96: SW         R10, 0(R2)
- 97: SUBI       R2, SP, 9
- 98: SW         R11, 0(R2)
- 99: SUBI       R2, SP, 10
-100: SW         R12, 0(R2)
-101: SUBI       R2, SP, 11
-102: SW         R13, 0(R2)
-103: SUBI       R2, SP, 12
-104: SW         R14, 0(R2)
-105: SUBI       R2, SP, 13
-106: SW         R15, 0(R2)
-107: SUBI       SP, SP, 13
-108: JAL        3
-109: ADDI       SP, SP, 13
-110: SUBI       R2, SP, 13
-111: LW         R15, 0(R2)
-112: SUBI       R2, SP, 12
-113: LW         R14, 0(R2)
-114: SUBI       R2, SP, 11
-115: LW         R13, 0(R2)
-116: SUBI       R2, SP, 10
-117: LW         R12, 0(R2)
-118: SUBI       R2, SP, 9
-119: LW         R11, 0(R2)
-120: SUBI       R2, SP, 8
-121: LW         R10, 0(R2)
-122: SUBI       R2, SP, 7
-123: LW         R9, 0(R2)
-124: SUBI       R2, SP, 6
-125: LW         R8, 0(R2)
-126: SUBI       R2, SP, 5
-127: LW         R7, 0(R2)
-128: SUBI       R2, SP, 4
-129: LW         R6, 0(R2)
-130: SUBI       R2, SP, 3
-131: LW         R5, 0(R2)
-132: SUBI       R2, SP, 2
-133: LW         R3, 0(R2)
-134: SUBI       R2, SP, 1
-135: LW         R2, 0(R2)
-136: MOVE       R21, R1
-137: MOVE       R2, R21
-138: SW         R2, 4(FP)
-139: LW         R2, 4(FP)
-140: LW         R22, 0(FP)
-141: ADD        R22, R22, R2
-142: LW         R23, 0(R22)
-143: MOVE       R24, R23
-144: SW         R24, 6(FP)
-145: LW         R8, 3(FP)
-146: LW         R25, 0(FP)
-147: ADD        R25, R25, R8
-148: LW         R26, 0(R25)
-149: LW         R2, 4(FP)
-150: LW         R27, 0(FP)
-151: ADD        R27, R27, R2
-152: SW         R26, 0(R27)
-153: LW         R8, 3(FP)
-154: LW         R3, 0(FP)
-155: ADD        R3, R3, R8
-156: LW         R24, 6(FP)
-157: SW         R24, 0(R3)
-158: LI         R4, 1
-159: LW         R8, 3(FP)
-160: ADD        R6, R8, R4
-161: MOVE       R8, R6
-162: SW         R8, 3(FP)
-163: J          69
+ 72: LI         R17, 1
+ 73: LW         R9, 2(FP)
+ 74: SUB        R18, R9, R17
+ 75: LW         R8, 3(FP)
+ 76: SLT        R19, R8, R18
+ 77: BEQ        R19, R0, 167
+ 78: LW         R20, 0(FP)
+ 79: MOVE       R4, R20
+ 80: LW         R8, 3(FP)
+ 81: MOVE       R5, R8
+ 82: LW         R9, 2(FP)
+ 83: MOVE       R6, R9
+ 84: SUBI       R2, SP, 1
+ 85: SW         R2, 0(R2)
+ 86: SUBI       R2, SP, 2
+ 87: SW         R3, 0(R2)
+ 88: SUBI       R2, SP, 3
+ 89: SW         R5, 0(R2)
+ 90: SUBI       R2, SP, 4
+ 91: SW         R6, 0(R2)
+ 92: SUBI       R2, SP, 5
+ 93: SW         R7, 0(R2)
+ 94: SUBI       R2, SP, 6
+ 95: SW         R8, 0(R2)
+ 96: SUBI       R2, SP, 7
+ 97: SW         R9, 0(R2)
+ 98: SUBI       R2, SP, 8
+ 99: SW         R10, 0(R2)
+100: SUBI       R2, SP, 9
+101: SW         R11, 0(R2)
+102: SUBI       R2, SP, 10
+103: SW         R12, 0(R2)
+104: SUBI       R2, SP, 11
+105: SW         R13, 0(R2)
+106: SUBI       R2, SP, 12
+107: SW         R14, 0(R2)
+108: SUBI       R2, SP, 13
+109: SW         R15, 0(R2)
+110: SUBI       SP, SP, 13
+111: JAL        6
+112: ADDI       SP, SP, 13
+113: SUBI       R2, SP, 13
+114: LW         R15, 0(R2)
+115: SUBI       R2, SP, 12
+116: LW         R14, 0(R2)
+117: SUBI       R2, SP, 11
+118: LW         R13, 0(R2)
+119: SUBI       R2, SP, 10
+120: LW         R12, 0(R2)
+121: SUBI       R2, SP, 9
+122: LW         R11, 0(R2)
+123: SUBI       R2, SP, 8
+124: LW         R10, 0(R2)
+125: SUBI       R2, SP, 7
+126: LW         R9, 0(R2)
+127: SUBI       R2, SP, 6
+128: LW         R8, 0(R2)
+129: SUBI       R2, SP, 5
+130: LW         R7, 0(R2)
+131: SUBI       R2, SP, 4
+132: LW         R6, 0(R2)
+133: SUBI       R2, SP, 3
+134: LW         R5, 0(R2)
+135: SUBI       R2, SP, 2
+136: LW         R3, 0(R2)
+137: SUBI       R2, SP, 1
+138: LW         R2, 0(R2)
+139: MOVE       R21, R1
+140: MOVE       R2, R21
+141: SW         R2, 4(FP)
+142: LW         R2, 4(FP)
+143: LW         R22, 0(FP)
+144: ADD        R22, R22, R2
+145: LW         R23, 0(R22)
+146: MOVE       R24, R23
+147: SW         R24, 6(FP)
+148: LW         R8, 3(FP)
+149: LW         R25, 0(FP)
+150: ADD        R25, R25, R8
+151: LW         R26, 0(R25)
+152: LW         R2, 4(FP)
+153: LW         R27, 0(FP)
+154: ADD        R27, R27, R2
+155: SW         R26, 0(R27)
+156: LW         R8, 3(FP)
+157: LW         R3, 0(FP)
+158: ADD        R3, R3, R8
+159: LW         R24, 6(FP)
+160: SW         R24, 0(R3)
+161: LI         R4, 1
+162: LW         R8, 3(FP)
+163: ADD        R6, R8, R4
+164: MOVE       R8, R6
+165: SW         R8, 3(FP)
+166: J          72
 L5:
 sort_epilogue:
-164: LW         RA, 7(SP)
-165: LW         FP, 6(SP)
-166: ADDI       SP, SP, 8
-167: JR         RA
+167: LW         RA, 7(SP)
+168: LW         FP, 6(SP)
+169: ADDI       SP, SP, 8
+170: JR         RA
 main:
-168: SUBI       R2, SP, 2
-169: SW         FP, 0(R2)
-170: SUBI       SP, SP, 2
-171: MOVE       FP, SP
-172: LI         R7, 0
-173: MOVE       R8, R7
-174: SW         R8, 0(FP)
+171: SUBI       R2, SP, 2
+172: SW         FP, 0(R2)
+173: SUBI       SP, SP, 2
+174: MOVE       FP, SP
+175: LI         R7, 0
+176: MOVE       R8, R7
+177: SW         R8, 0(FP)
 L6:
-175: LI         R10, 5
-176: LW         R8, 0(FP)
-177: SLT        R11, R8, R10
-178: BEQ        R11, R0, 191
-179: INPUT      R12
-180: OUTPUTREG  R12
-181: LW         R8, 0(FP)
-182: ADDI       R13, GP, 0
-183: ADD        R13, R13, R8
-184: SW         R12, 0(R13)
-185: LI         R14, 1
-186: LW         R8, 0(FP)
-187: ADD        R5, R8, R14
-188: MOVE       R8, R5
-189: SW         R8, 0(FP)
-190: J          175
+178: LI         R10, 5
+179: LW         R8, 0(FP)
+180: SLT        R11, R8, R10
+181: BEQ        R11, R0, 194
+182: INPUT      R12
+183: OUTPUTREG  R12
+184: LW         R8, 0(FP)
+185: ADDI       R13, GP, 0
+186: ADD        R13, R13, R8
+187: SW         R12, 0(R13)
+188: LI         R14, 1
+189: LW         R8, 0(FP)
+190: ADD        R5, R8, R14
+191: MOVE       R8, R5
+192: SW         R8, 0(FP)
+193: J          178
 L7:
-191: LI         R15, 0
-192: LI         R16, 5
-193: ADDI       R1, GP, 0
-194: MOVE       R4, R1
-195: MOVE       R5, R15
-196: MOVE       R6, R16
-197: SUBI       R2, SP, 1
-198: SW         R2, 0(R2)
-199: SUBI       R2, SP, 2
-200: SW         R3, 0(R2)
-201: SUBI       R2, SP, 3
-202: SW         R5, 0(R2)
-203: SUBI       R2, SP, 4
-204: SW         R6, 0(R2)
-205: SUBI       R2, SP, 5
-206: SW         R7, 0(R2)
-207: SUBI       R2, SP, 6
-208: SW         R8, 0(R2)
-209: SUBI       R2, SP, 7
-210: SW         R9, 0(R2)
-211: SUBI       R2, SP, 8
-212: SW         R10, 0(R2)
-213: SUBI       R2, SP, 9
-214: SW         R11, 0(R2)
-215: SUBI       R2, SP, 10
-216: SW         R12, 0(R2)
-217: SUBI       R2, SP, 11
-218: SW         R13, 0(R2)
-219: SUBI       R2, SP, 12
-220: SW         R14, 0(R2)
-221: SUBI       R2, SP, 13
-222: SW         R15, 0(R2)
-223: SUBI       SP, SP, 13
-224: JAL        58
-225: ADDI       SP, SP, 13
-226: SUBI       R2, SP, 13
-227: LW         R15, 0(R2)
-228: SUBI       R2, SP, 12
-229: LW         R14, 0(R2)
-230: SUBI       R2, SP, 11
-231: LW         R13, 0(R2)
-232: SUBI       R2, SP, 10
-233: LW         R12, 0(R2)
-234: SUBI       R2, SP, 9
-235: LW         R11, 0(R2)
-236: SUBI       R2, SP, 8
-237: LW         R10, 0(R2)
-238: SUBI       R2, SP, 7
-239: LW         R9, 0(R2)
-240: SUBI       R2, SP, 6
-241: LW         R8, 0(R2)
-242: SUBI       R2, SP, 5
-243: LW         R7, 0(R2)
-244: SUBI       R2, SP, 4
-245: LW         R6, 0(R2)
-246: SUBI       R2, SP, 3
-247: LW         R5, 0(R2)
-248: SUBI       R2, SP, 2
-249: LW         R3, 0(R2)
-250: SUBI       R2, SP, 1
-251: LW         R2, 0(R2)
-252: MOVE       R17, R1
-253: MOVE       R7, R1
-254: LI         R18, 0
-255: MOVE       R8, R18
-256: SW         R8, 0(FP)
+194: LI         R15, 0
+195: LI         R16, 5
+196: ADDI       R1, GP, 0
+197: MOVE       R4, R1
+198: MOVE       R5, R15
+199: MOVE       R6, R16
+200: SUBI       R2, SP, 1
+201: SW         R2, 0(R2)
+202: SUBI       R2, SP, 2
+203: SW         R3, 0(R2)
+204: SUBI       R2, SP, 3
+205: SW         R5, 0(R2)
+206: SUBI       R2, SP, 4
+207: SW         R6, 0(R2)
+208: SUBI       R2, SP, 5
+209: SW         R7, 0(R2)
+210: SUBI       R2, SP, 6
+211: SW         R8, 0(R2)
+212: SUBI       R2, SP, 7
+213: SW         R9, 0(R2)
+214: SUBI       R2, SP, 8
+215: SW         R10, 0(R2)
+216: SUBI       R2, SP, 9
+217: SW         R11, 0(R2)
+218: SUBI       R2, SP, 10
+219: SW         R12, 0(R2)
+220: SUBI       R2, SP, 11
+221: SW         R13, 0(R2)
+222: SUBI       R2, SP, 12
+223: SW         R14, 0(R2)
+224: SUBI       R2, SP, 13
+225: SW         R15, 0(R2)
+226: SUBI       SP, SP, 13
+227: JAL        61
+228: ADDI       SP, SP, 13
+229: SUBI       R2, SP, 13
+230: LW         R15, 0(R2)
+231: SUBI       R2, SP, 12
+232: LW         R14, 0(R2)
+233: SUBI       R2, SP, 11
+234: LW         R13, 0(R2)
+235: SUBI       R2, SP, 10
+236: LW         R12, 0(R2)
+237: SUBI       R2, SP, 9
+238: LW         R11, 0(R2)
+239: SUBI       R2, SP, 8
+240: LW         R10, 0(R2)
+241: SUBI       R2, SP, 7
+242: LW         R9, 0(R2)
+243: SUBI       R2, SP, 6
+244: LW         R8, 0(R2)
+245: SUBI       R2, SP, 5
+246: LW         R7, 0(R2)
+247: SUBI       R2, SP, 4
+248: LW         R6, 0(R2)
+249: SUBI       R2, SP, 3
+250: LW         R5, 0(R2)
+251: SUBI       R2, SP, 2
+252: LW         R3, 0(R2)
+253: SUBI       R2, SP, 1
+254: LW         R2, 0(R2)
+255: MOVE       R17, R1
+256: MOVE       R7, R1
+257: LI         R18, 0
+258: MOVE       R8, R18
+259: SW         R8, 0(FP)
 L8:
-257: LI         R19, 5
-258: LW         R8, 0(FP)
-259: SLT        R20, R8, R19
-260: BEQ        R20, R0, 272
+260: LI         R19, 5
 261: LW         R8, 0(FP)
-262: ADDI       R9, GP, 0
-263: ADD        R9, R9, R8
-264: LW         R21, 0(R9)
-265: OUTPUTREG  R21
-266: LI         R22, 1
-267: LW         R8, 0(FP)
-268: ADD        R23, R8, R22
-269: MOVE       R8, R23
-270: SW         R8, 0(FP)
-271: J          257
+262: SLT        R20, R8, R19
+263: BEQ        R20, R0, 275
+264: LW         R8, 0(FP)
+265: ADDI       R9, GP, 0
+266: ADD        R9, R9, R8
+267: LW         R21, 0(R9)
+268: OUTPUTREG  R21
+269: LI         R22, 1
+270: LW         R8, 0(FP)
+271: ADD        R23, R8, R22
+272: MOVE       R8, R23
+273: SW         R8, 0(FP)
+274: J          260
 L9:
-272: HALT      
+275: HALT      

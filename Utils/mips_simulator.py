@@ -14,8 +14,8 @@ class MIPSSimulator:
         # Banco de registradores (32 registradores)
         self.registers = [0] * 32
 
-        # Memória RAM (256 words de 32 bits cada)
-        self.memory = [0] * 256
+        # Memória RAM (1024 words de 32 bits cada)
+        self.memory = [0] * 1024
 
         # Program Counter
         self.pc = 0
@@ -281,9 +281,9 @@ class MIPSSimulator:
             if "(" in offset_str:
                 offset = self.get_immediate_value(offset_str)
                 rs = self.get_register_number(offset_str.split("(")[1].replace(")", ""))
-                address = (self.registers[rs] + offset) & 0xFF
+                address = (self.registers[rs] + offset) & 0x3FF
             else:
-                address = self.get_immediate_value(offset_str) & 0xFF
+                address = self.get_immediate_value(offset_str) & 0x3FF
 
             self.memory[address] = (
                 self.registers[rt] & self.max_value
@@ -300,9 +300,9 @@ class MIPSSimulator:
             if "(" in offset_str:
                 offset = self.get_immediate_value(offset_str)
                 rs = self.get_register_number(offset_str.split("(")[1].replace(")", ""))
-                address = (self.registers[rs] + offset) & 0xFF
+                address = (self.registers[rs] + offset) & 0x3FF
             else:
-                address = self.get_immediate_value(offset_str) & 0xFF
+                address = self.get_immediate_value(offset_str) & 0x3FF
 
             self.registers[rt] = self.memory[address] & self.max_value
             result_msg = f"R{rt} = MEM[{address}] = {self.registers[rt]}"

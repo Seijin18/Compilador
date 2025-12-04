@@ -1,0 +1,5 @@
+instrução de troca de contexto para ser feita toda em software (utilizar uma sequencia de lw para salvar os registradores na memória e sw para restaurá-los depois)
+// Cada programa tem 128 palavras na RAM alocados
+
+Instrução de limpeza de programa (clearProg) que zera a área de memória do programa atual na RAM
+// Cada programa tem 128 palavras na RAM alocados
