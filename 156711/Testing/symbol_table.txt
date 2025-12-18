@@ -1,7 +1,13 @@
 Formato da Tabela de Simbolos:
 Nome;	Escopo;	Tipo;	Tipo de Identificador;	Linha
-main;	global;	void;	Function;		1
-a;	main;	int;	Variable;		3
-b;	main;	int;	Variable;		4
-a;	main;	int;	Function;		6
-b;	main;	int;	Function;		7
+x;	global;	int;	Variable;		1
+preemption;	global;	int;	Variable;		2
+progs;	global;	int;	Variable;		3
+scheduler;	global;	void;	Function;		5
+counter;	scheduler;	int;	Variable;		6
+found;	scheduler;	int;	Variable;		7
+counter;	scheduler;	int;	Function;		8
+found;	scheduler;	int;	Function;		9
+x;	scheduler;	int;	Function;		11
+progs;	scheduler;	int;	Variable;		12
+Função não declarada: set_program [linha: 13]

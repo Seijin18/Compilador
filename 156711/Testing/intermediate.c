@@ -309,6 +309,70 @@ static char* genNode(AASNode* node, FILE* out) {
                     }
                     for (int i = 0; i < argCount; i++)
                         emitQuad("param", args[i], " ", " ");
+                    // Check for built-in/system calls and emit dedicated quads
+                    if (node->name && (
+                        strcmp(node->name, "save_ctx") == 0 || strcmp(node->name, "save_context") == 0 ||
+                        strcmp(node->name, "load_ctx") == 0 || strcmp(node->name, "restore_context") == 0 ||
+                        strcmp(node->name, "set_quantum") == 0 || strcmp(node->name, "set_timer") == 0 ||
+                        strcmp(node->name, "enable_timer") == 0 ||
+                        strcmp(node->name, "disable_timer") == 0 || strcmp(node->name, "lcd_write") == 0 ||
+                        strcmp(node->name, "lcd_clear") == 0 || strcmp(node->name, "lcd_write_os_selecting") == 0 ||
+                        strcmp(node->name, "lcd_write_os_running") == 0 || strcmp(node->name, "call_prog") == 0 || strcmp(node->name, "set_program") == 0 ||
+                        strcmp(node->name, "load_prog") == 0 || strcmp(node->name, "nop") == 0 ||
+                        strcmp(node->name, "output_reset") == 0 || strcmp(node->name, "reti") == 0 || strcmp(node->name, "RETI") == 0)) {
+
+                        // Emit a specific quad for the builtin using lowercase op names
+                        if (strcmp(node->name, "set_quantum") == 0 || strcmp(node->name, "set_timer") == 0) {
+                            // takes one argument (value)
+                            emitQuad("set_quantum", argCount > 0 ? args[0] : " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "lcd_write") == 0) {
+                            // lcd_write(addr, value) or (value)
+                            emitQuad("lcd_write", argCount > 0 ? args[0] : " ", argCount > 1 ? args[1] : " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "lcd_clear") == 0) {
+                            emitQuad("lcd_clear", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "lcd_write_os_selecting") == 0) {
+                            emitQuad("lcd_write_os_selecting", argCount > 0 ? args[0] : " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "lcd_write_os_running") == 0) {
+                            emitQuad("lcd_write_os_running", argCount > 0 ? args[0] : " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "enable_timer") == 0) {
+                            emitQuad("enable_timer", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "disable_timer") == 0) {
+                            emitQuad("disable_timer", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "set_program") == 0) {
+                            emitQuad("set_program", argCount > 0 ? args[0] : " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "call_prog") == 0) {
+                            emitQuad("call_prog", argCount > 0 ? args[0] : " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "load_prog") == 0) {
+                            emitQuad("load_prog", argCount > 0 ? args[0] : " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "save_ctx") == 0 || strcmp(node->name, "save_context") == 0) {
+                            emitQuad("save_ctx", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "load_ctx") == 0 || strcmp(node->name, "restore_context") == 0) {
+                            emitQuad("load_ctx", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "output_reset") == 0) {
+                            emitQuad("output_reset", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "nop") == 0) {
+                            emitQuad("nop", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "reti") == 0 || strcmp(node->name, "RETI") == 0) {
+                            emitQuad("reti", " ", " ", " ");
+                            return NULL;
+                        }
+                    }
+
+                    // Default: regular function call
                     char* temp = newTemp();
                     emitQuad("call", node->name, argCount == 0 ? "0" : args[0], temp); // argCount in arg2 if needed
                     return temp;

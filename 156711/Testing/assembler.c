@@ -97,6 +97,10 @@ typedef enum {
     SP = 29, FP = 30, GP = 28, RA = 31
 } Register;
 
+// Dedicated scratch register used by helper routines to compute addresses
+// Avoids accidental collision with caller-specified target registers
+#define SCRATCH_REG R26
+
 // Opcodes das instruções do processador
 typedef enum {
     OP_ADD = 0x00, OP_SUB = 0x01, OP_MULT = 0x02, OP_DIV = 0x03,
@@ -107,7 +111,12 @@ typedef enum {
     OP_BNE = 0x14, OP_BGT = 0x15, OP_BGTE = 0x16, OP_BLT = 0x17,
     OP_BLTE = 0x18, OP_LW = 0x19, OP_SW = 0x1A, OP_LI = 0x1B,
     OP_J = 0x1C, OP_JAL = 0x1D, OP_HALT = 0x1E, OP_OUTPUTMEM = 0x1F,
-    OP_OUTPUTREG = 0x20, OP_OUTPUT_RESET = 0x21, OP_INPUT = 0x22
+    OP_OUTPUTREG = 0x20, OP_OUTPUT_RESET = 0x21, OP_INPUT = 0x22,
+    OP_RETI = 0x23, OP_SET_QUANTUM = 0x24, OP_ENABLE_TIMER = 0x25,
+    OP_DISABLE_TIMER = 0x26, OP_LCD_WRITE_CHAR = 0x27, OP_LCD_CLEAR = 0x28,
+    OP_LCD_WRITE_OS_SELECTING = 0x29, OP_LCD_WRITE_OS_RUNNING = 0x2A,
+    OP_CALL_PROG = 0x2B, OP_LOAD_PROG = 0x2C, OP_SAVE_CTX = 0x2D,
+    OP_LOAD_CTX = 0x2E, OP_NOP = 0x2F, OP_SET_PROG = 0x30
 } OpCode;
 
 // Variável global para controlar se HALT foi emitido para main
@@ -390,7 +399,7 @@ int get_register_for_variable(const char *var_name, const char *scope) {
     printf("DEBUG: get_register_for_variable('%s', '%s')\n", var_name, scope);
     
     // Verificar se a variável já está em um registrador
-    for (int i = 1; i <= 27; i++) { // R1-R27, excluindo R0, R28(GP), R29(SP), R30(FP), R31(RA)
+    for (int i = 1; i <= 26; i++) { // R1-R26, excluindo R0, R28(GP), R29(SP), R30(FP), R31(RA) - reservando R27
         if (registers[i].is_busy && strcmp(registers[i].variable, var_name) == 0) {
             registers[i].last_used = time_counter++;
             printf("DEBUG: Variável '%s' já em R%d (reutilizando)\n", var_name, i);
@@ -402,7 +411,7 @@ int get_register_for_variable(const char *var_name, const char *scope) {
     int best_reg = 1;
     int oldest_time = registers[1].last_used;
     
-    for (int i = 1; i <= 27; i++) { // R1-R27, protegendo registradores especiais
+    for (int i = 1; i <= 26; i++) { // R1-R26, protegendo registradores especiais - reservando R27
         if (!registers[i].is_busy) {
             best_reg = i;
             printf("DEBUG: Registrador livre encontrado: R%d\n", i);
@@ -450,15 +459,33 @@ int load_variable_to_register(const char *var_name, const char *scope) {
     
     // Para variáveis, carregar da memória
     Symbol *sym = find_symbol(var_name, scope);
-    int reg = get_register_for_variable(var_name, scope);
+    // Primeiro, procurar se já existe um registrador que contém a variável
+    // e que esteja 'limpo' (is_dirty == 0). Reutilizamos esse registrador sem
+    // emitir um LW adicional.
+    int reg = -1;
+    for (int i = 1; i <= 25; i++) { // R1-R25 (reservando R26+ para outras finalidades)
+        if (registers[i].is_busy && strcmp(registers[i].variable, var_name) == 0 && registers[i].is_dirty == 0) {
+            reg = i;
+            registers[i].last_used = time_counter++;
+            printf("DEBUG: Reutilizando registrador limpo R%d para '%s'\n", reg, var_name);
+            break;
+        }
+    }
+    if (reg == -1) {
+        reg = get_register_for_variable(var_name, scope);
+    }
     
     printf("DEBUG: Variável '%s' -> R%d", var_name, reg);
     if (sym) {
         printf(" (símbolo encontrado: offset=%d, global=%d)", sym->offset, sym->is_global);
         if (sym->is_global) {
             add_load_store_with_offset("LW", OP_LW, GP, reg, sym->offset);
+            // Após carregar da memória, o registrador está sincronizado com a memória
+            // (valor limpo).
+            registers[reg].is_dirty = 0;
         } else {
             add_load_store_with_offset("LW", OP_LW, FP, reg, sym->offset);  // Usar FP como base
+            registers[reg].is_dirty = 0;
         }
     } else {
         printf(" (símbolo NÃO encontrado!)");
@@ -609,11 +636,19 @@ void add_load_store_with_offset(const char *mnemonic, int opcode, int base_reg, 
     if (offset >= 0) {
         add_instruction(mnemonic, opcode, base_reg, target_reg, 0, offset, NULL);
     } else {
-        int temp_reg = R2; // Usar R2 como registrador temporário
-        
+        // Use a dedicated scratch register to compute addresses to avoid
+        // collisions with the target register. If SCRATCH_REG equals the
+        // target register, pick a small fallback (R1 or R2) that is unlikely
+        // to be used as the base in these helpers.
+        int temp_reg = SCRATCH_REG; // preferred dedicated scratch
+        if (temp_reg == target_reg) {
+            // pick a fallback that is not the same as target_reg
+            temp_reg = (target_reg == R1) ? R2 : R1;
+        }
+
         // SUBI temp_reg, base_reg, |offset|
         add_instruction("SUBI", OP_SUBI, base_reg, temp_reg, 0, -offset, NULL);
-        
+
         // LW/SW target_reg, 0(temp_reg)
         add_instruction(mnemonic, opcode, temp_reg, target_reg, 0, 0, NULL);
     }
@@ -1097,10 +1132,37 @@ void generate_assembly_second_pass() {
 
             Symbol *dst_sym = find_symbol(quad->arg3, current_function);
             if (dst_sym) {
-                if (dst_sym->is_global) {
-                    add_load_store_with_offset("SW", OP_SW, GP, dst_reg, dst_sym->offset);
+                // Lookahead optimization: se a variável for sobrescrita antes de qualquer leitura
+                // (nos próximos 5 quads), podemos omitir o SW atual (store-elimination).
+                int lookahead_limit = 5;
+                int skip_store = 0;
+                for (int j = i + 1; j < quad_count && j <= i + lookahead_limit; j++) {
+                    Quad *future = &quads[j];
+                    // Se houver escrita (asn) para a mesma variável antes de qualquer leitura,
+                    // então podemos omitir a store atual.
+                    if (strcmp(future->op, "asn") == 0 && strcmp(future->arg3, quad->arg3) == 0) {
+                        skip_store = 1;
+                        break;
+                    }
+                    // Se houver uma leitura do destino (aparece em arg1 ou arg2), então não podemos omitir.
+                    if ((strlen(future->arg1) > 0 && strcmp(future->arg1, quad->arg3) == 0) ||
+                        (strlen(future->arg2) > 0 && strcmp(future->arg2, quad->arg3) == 0)) {
+                        break;
+                    }
+                }
+
+                if (!skip_store) {
+                    if (dst_sym->is_global) {
+                        add_load_store_with_offset("SW", OP_SW, GP, dst_reg, dst_sym->offset);
+                    } else {
+                        add_load_store_with_offset("SW", OP_SW, FP, dst_reg, dst_sym->offset);
+                    }
+                    // Após armazenar na memória, o registrador está sincronizado (limpo)
+                    registers[dst_reg].is_dirty = 0;
                 } else {
-                    add_load_store_with_offset("SW", OP_SW, FP, dst_reg, dst_sym->offset);
+                    // Não armazenamos; registrar que o registrador contém um valor não-sincronizado
+                    registers[dst_reg].is_dirty = 1;
+                    printf("DEBUG: Omitindo SW para '%s' (store-elim)\n", quad->arg3);
                 }
             }
             
@@ -1186,11 +1248,38 @@ void generate_assembly_second_pass() {
                 add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
             }
             
+        } else if (strcmp(quad->op, "!=") == 0) {
+            printf("DEBUG: Processando comparação '!=' entre '%s' e '%s' -> '%s'\n", quad->arg1, quad->arg2, quad->arg3);
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            
+            printf("DEBUG: Registradores: '%s'->R%d, '%s'->R%d, resultado->R%d\n", 
+                   quad->arg1, rs, quad->arg2, rt, rd);
+            
+            // Implementar != como SUB e depois verificar se resultado != 0
+            // SUB produz 0 se são iguais, != 0 se são diferentes
+            add_instruction("SUB", OP_SUB, rs, rt, rd, 0, NULL);
+            printf("DEBUG: SUB R%d, R%d, R%d (diferença)\n", rd, rs, rt);
+            
         } else if (strcmp(quad->op, "<") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
             int rt = load_variable_to_register(quad->arg2, current_function);
             int rd = get_register_for_variable(quad->arg3, current_function);
             add_instruction("SLT", OP_SLT, rs, rt, rd, 0, NULL);
+            
+        } else if (strcmp(quad->op, ">") == 0) {
+            printf("DEBUG: Processando comparação '>' entre '%s' e '%s' -> '%s'\n", quad->arg1, quad->arg2, quad->arg3);
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = load_variable_to_register(quad->arg2, current_function);
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            
+            printf("DEBUG: Registradores: '%s'->R%d, '%s'->R%d, resultado->R%d\n", 
+                   quad->arg1, rs, quad->arg2, rt, rd);
+            
+            // Implementar > como inverter argumentos do <: rs > rt equivale a rt < rs
+            add_instruction("SLT", OP_SLT, rt, rs, rd, 0, NULL);
+            printf("DEBUG: SLT R%d, R%d, R%d (rt < rs, ou seja, rs > rt)\n", rd, rt, rs);
             
         } else if (strcmp(quad->op, ">=") == 0) {
             printf("DEBUG: Processando comparação '>=' entre '%s' e '%s' -> '%s'\n", quad->arg1, quad->arg2, quad->arg3);
@@ -1229,6 +1318,65 @@ void generate_assembly_second_pass() {
             add_instruction("LI", OP_LI, 0, R1, 0, 1, NULL);  // R1 = 1
             add_instruction("SUB", OP_SUB, R1, rd, rd, 0, NULL);  // rd = 1 - rd
             printf("DEBUG: Resultado <= invertido: R%d = 1 - R%d\n", rd, rd);
+            
+        } else if (strcmp(quad->op, "set_quantum") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            add_instruction("SET_QUANTUM", OP_SET_QUANTUM, rs, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "lcd_write") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            int rt = 0;
+            if (strlen(quad->arg2) > 0 && strcmp(quad->arg2, " ") != 0) {
+                rt = load_variable_to_register(quad->arg2, current_function);
+            }
+            add_instruction("LCD_WRITE_CHAR", OP_LCD_WRITE_CHAR, rs, rt, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "lcd_clear") == 0) {
+            add_instruction("LCD_CLEAR", OP_LCD_CLEAR, 0, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "lcd_write_os_selecting") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            add_instruction("LCD_WRITE_OS_SELECTING", OP_LCD_WRITE_OS_SELECTING, rs, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "lcd_write_os_running") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            add_instruction("LCD_WRITE_OS_RUNNING", OP_LCD_WRITE_OS_RUNNING, rs, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "enable_timer") == 0) {
+            add_instruction("ENABLE_TIMER", OP_ENABLE_TIMER, 0, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "disable_timer") == 0) {
+            add_instruction("DISABLE_TIMER", OP_DISABLE_TIMER, 0, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "set_program") == 0) {
+            // set_program: emit a MOVE of the provided register into R27.
+            // R27 is reserved as the OS-visible program index (maps to regs[59]).
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            // Use MOVE: opcode OP_MOVE, rs=source, rd=destination(27)
+            add_instruction("MOVE", OP_MOVE, rs, 0, 27, 0, NULL);
+
+        } else if (strcmp(quad->op, "call_prog") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            add_instruction("CALL_PROG", OP_CALL_PROG, rs, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "load_prog") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            add_instruction("LOAD_PROG", OP_LOAD_PROG, rs, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "save_ctx") == 0) {
+            add_instruction("SAVE_CTX", OP_SAVE_CTX, 0, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "load_ctx") == 0) {
+            add_instruction("LOAD_CTX", OP_LOAD_CTX, 0, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "output_reset") == 0) {
+            add_instruction("OUTPUT_RESET", OP_OUTPUT_RESET, 0, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "nop") == 0) {
+            add_instruction("NOP", OP_NOP, 0, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "reti") == 0) {
+            add_instruction("RETI", OP_RETI, 0, 0, 0, 0, NULL);
             
         } else if (strcmp(quad->op, "if_f") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
@@ -1403,7 +1551,26 @@ void write_assembly_file(const char *filename) {
             } else if (strcmp(instr->mnemonic, "OUTPUTREG") == 0) {
                 fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rs));
-            } else if (strcmp(instr->mnemonic, "HALT") == 0) {
+                } else if (strcmp(instr->mnemonic, "SET_QUANTUM") == 0 || 
+                       strcmp(instr->mnemonic, "LCD_WRITE_OS_SELECTING") == 0 ||
+                       strcmp(instr->mnemonic, "LCD_WRITE_OS_RUNNING") == 0 ||
+                       strcmp(instr->mnemonic, "CALL_PROG") == 0 ||
+                       strcmp(instr->mnemonic, "LOAD_PROG") == 0 ||
+                       strcmp(instr->mnemonic, "SET_PROG") == 0) {
+                fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs));
+            } else if (strcmp(instr->mnemonic, "LCD_WRITE_CHAR") == 0) {
+                fprintf(file, "%3d: %-10s %s, %s\n", real_line, instr->mnemonic, 
+                        get_register_name(instr->rs), get_register_name(instr->rt));
+            } else if (strcmp(instr->mnemonic, "HALT") == 0 || 
+                       strcmp(instr->mnemonic, "RETI") == 0 ||
+                       strcmp(instr->mnemonic, "ENABLE_TIMER") == 0 ||
+                       strcmp(instr->mnemonic, "DISABLE_TIMER") == 0 ||
+                       strcmp(instr->mnemonic, "LCD_CLEAR") == 0 ||
+                       strcmp(instr->mnemonic, "SAVE_CTX") == 0 ||
+                       strcmp(instr->mnemonic, "LOAD_CTX") == 0 ||
+                       strcmp(instr->mnemonic, "NOP") == 0 ||
+                       strcmp(instr->mnemonic, "OUTPUT_RESET") == 0) {
                 fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
             } else {
                 fprintf(file, "%3d: %-10s\n", real_line, instr->mnemonic);
@@ -1434,8 +1601,29 @@ void write_binary_file(const char *filename) {
         machine_code |= (instr->opcode & 0x3F) << 26;
         machine_code |= (instr->rs & 0x3F) << 20;
         machine_code |= (instr->rt & 0x3F) << 14;
-        machine_code |= (instr->rd & 0x3F) << 8;
-        machine_code |= (instr->immediate & 0xFFF);  // 12 bits para endereços (0-4095)
+        
+        // Lógica de codificação baseada no tipo de instrução
+        if (instr->opcode == OP_J || instr->opcode == OP_JAL) {
+            // Jumps usam 16 bits de imediato (bits 0-15)
+            machine_code |= (instr->immediate & 0xFFFF);
+        } else if (instr->opcode == OP_ADDI || instr->opcode == OP_SUBI || 
+                   instr->opcode == OP_ANDI || instr->opcode == OP_ORI || 
+                   instr->opcode == OP_LI || instr->opcode == OP_LA ||
+                   instr->opcode == OP_SLL || instr->opcode == OP_SRL ||
+                   instr->opcode == OP_LW || instr->opcode == OP_SW ||
+                   instr->opcode == OP_BEQ || instr->opcode == OP_BNE ||
+                   instr->opcode == OP_BGT || instr->opcode == OP_BGTE ||
+                   instr->opcode == OP_BLT || instr->opcode == OP_BLTE) {
+            // Instruções tipo I e Branches usam 14 bits de imediato (bits 0-13)
+            machine_code |= (instr->immediate & 0x3FFF);
+        } else {
+            // Instruções tipo R usam RD (bits 8-13)
+            machine_code |= (instr->rd & 0x3F) << 8;
+            // Imediato geralmente é 0, mas se houver, usa bits 0-11 (compatibilidade)
+            if (instr->immediate != 0) {
+                machine_code |= (instr->immediate & 0xFFF);
+            }
+        }
         
         for (int bit = 31; bit >= 0; bit--) {
             fprintf(file, "%d", (machine_code >> bit) & 1);

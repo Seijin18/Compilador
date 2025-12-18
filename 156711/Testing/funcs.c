@@ -222,7 +222,7 @@ int is_symbol(char ch) // Verifica se é um símbolo
 
 int is_char(char ch) // Verifica se é uma letra
 {
-    if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z'))
+    if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_')
     {
         return 1;
     }
