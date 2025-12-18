@@ -319,7 +319,8 @@ static char* genNode(AASNode* node, FILE* out) {
                         strcmp(node->name, "lcd_clear") == 0 || strcmp(node->name, "lcd_write_os_selecting") == 0 ||
                         strcmp(node->name, "lcd_write_os_running") == 0 || strcmp(node->name, "call_prog") == 0 || strcmp(node->name, "set_program") == 0 ||
                         strcmp(node->name, "load_prog") == 0 || strcmp(node->name, "nop") == 0 ||
-                        strcmp(node->name, "output_reset") == 0 || strcmp(node->name, "reti") == 0 || strcmp(node->name, "RETI") == 0)) {
+                        strcmp(node->name, "output_reset") == 0 || strcmp(node->name, "reti") == 0 || strcmp(node->name, "RETI") == 0 ||
+                        strcmp(node->name, "set_sp") == 0)) {
 
                         // Emit a specific quad for the builtin using lowercase op names
                         if (strcmp(node->name, "set_quantum") == 0 || strcmp(node->name, "set_timer") == 0) {
@@ -368,6 +369,9 @@ static char* genNode(AASNode* node, FILE* out) {
                             return NULL;
                         } else if (strcmp(node->name, "reti") == 0 || strcmp(node->name, "RETI") == 0) {
                             emitQuad("reti", " ", " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "set_sp") == 0) {
+                            emitQuad("set_sp", argCount > 0 ? args[0] : " ", " ", " ");
                             return NULL;
                         }
                     }

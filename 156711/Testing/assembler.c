@@ -116,7 +116,7 @@ typedef enum {
     OP_DISABLE_TIMER = 0x26, OP_LCD_WRITE_CHAR = 0x27, OP_LCD_CLEAR = 0x28,
     OP_LCD_WRITE_OS_SELECTING = 0x29, OP_LCD_WRITE_OS_RUNNING = 0x2A,
     OP_CALL_PROG = 0x2B, OP_LOAD_PROG = 0x2C, OP_SAVE_CTX = 0x2D,
-    OP_LOAD_CTX = 0x2E, OP_NOP = 0x2F, OP_SET_PROG = 0x30
+    OP_LOAD_CTX = 0x2E, OP_NOP = 0x2F, OP_SET_PROG = 0x30, OP_SET_SP = 0x31
 } OpCode;
 
 // Variável global para controlar se HALT foi emitido para main
@@ -1362,6 +1362,11 @@ void generate_assembly_second_pass() {
         } else if (strcmp(quad->op, "load_prog") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
             add_instruction("LOAD_PROG", OP_LOAD_PROG, rs, 0, 0, 0, NULL);
+            
+        } else if (strcmp(quad->op, "set_sp") == 0) {
+            // set_sp(value): Load value to R29 (OS stack pointer)
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            add_instruction("MOVE", OP_MOVE, rs, 0, 29, 0, NULL);
             
         } else if (strcmp(quad->op, "save_ctx") == 0) {
             add_instruction("SAVE_CTX", OP_SAVE_CTX, 0, 0, 0, 0, NULL);
