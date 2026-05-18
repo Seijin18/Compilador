@@ -1,13 +1,5 @@
 Formato da Tabela de Simbolos:
 Nome;	Escopo;	Tipo;	Tipo de Identificador;	Linha
-x;	global;	int;	Variable;		1
-preemption;	global;	int;	Variable;		2
-progs;	global;	int;	Variable;		3
-scheduler;	global;	void;	Function;		5
-counter;	scheduler;	int;	Variable;		6
-found;	scheduler;	int;	Variable;		7
-counter;	scheduler;	int;	Function;		8
-found;	scheduler;	int;	Function;		9
-x;	scheduler;	int;	Function;		11
-progs;	scheduler;	int;	Variable;		12
-Função não declarada: set_program [linha: 13]
+main;	global;	void;	Function;		1
+key;	main;	int;	Variable;		2
+Função não declarada: read_keypad [linha: 3]

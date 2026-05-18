@@ -2479,6 +2479,11 @@ int main(int argc, char *argv[]) {
     outputFunc->type = KVoid;
     outputFunc->escopo = copyString("global");
     insertTabSimb(simbTable, outputFunc);
+    AASNode *readKeypadFunc = newAASNodeStmt(KFunc);
+    readKeypadFunc->name = copyString("read_keypad");
+    readKeypadFunc->type = KInt;
+    readKeypadFunc->escopo = copyString("global");
+    insertTabSimb(simbTable, readKeypadFunc);
 
     if (run_all) {
         yyparse();

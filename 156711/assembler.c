@@ -116,7 +116,7 @@ typedef enum {
     OP_DISABLE_TIMER = 0x26, OP_LCD_WRITE_CHAR = 0x27, OP_LCD_CLEAR = 0x28,
     OP_LCD_WRITE_OS_SELECTING = 0x29, OP_LCD_WRITE_OS_RUNNING = 0x2A,
     OP_CALL_PROG = 0x2B, OP_LOAD_PROG = 0x2C, OP_SAVE_CTX = 0x2D,
-    OP_LOAD_CTX = 0x2E, OP_NOP = 0x2F, OP_SET_PROG = 0x30, OP_SET_SP = 0x31
+    OP_LOAD_CTX = 0x2E, OP_NOP = 0x2F, OP_READ_KEYPAD = 0x30, OP_SET_SP = 0x31
 } OpCode;
 
 // Variável global para controlar se HALT foi emitido para main
@@ -868,6 +868,10 @@ void generate_assembly_second_pass() {
             add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
             add_instruction("OUTPUTREG", OP_OUTPUTREG, rd, 0, 0, 0, NULL);
 
+        } else if (strcmp(quad->op, "call") == 0 && strcmp(quad->arg1, "read_keypad") == 0) {
+            int rd = get_register_for_variable(quad->arg3, current_function);
+            add_instruction("READ_KEYPAD", OP_READ_KEYPAD, 0, 0, rd, 0, NULL);
+
         } else if (strcmp(quad->op, "fun") == 0) {
             add_label(quad->arg1, current_line);
             strcpy(current_function, quad->arg1);
@@ -1018,6 +1022,9 @@ void generate_assembly_second_pass() {
             if (strcmp(quad->arg1, "input") == 0) {
                 int rd = get_register_for_variable(quad->arg3, current_function);
                 add_instruction("INPUT", OP_INPUT, 0, 0, rd, 0, NULL);
+            } else if (strcmp(quad->arg1, "read_keypad") == 0) {
+                int rd = get_register_for_variable(quad->arg3, current_function);
+                add_instruction("READ_KEYPAD", OP_READ_KEYPAD, 0, 0, rd, 0, NULL);
             } else {
                 int param_count = param_stack_top + 1;
                 Parameter temp_params[MAX_PARAMS];
