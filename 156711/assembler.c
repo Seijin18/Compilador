@@ -1337,6 +1337,10 @@ void generate_assembly_second_pass() {
                 rt = load_variable_to_register(quad->arg2, current_function);
             }
             add_instruction("LCD_WRITE_CHAR", OP_LCD_WRITE_CHAR, rs, rt, 0, 0, NULL);
+
+        } else if (strcmp(quad->op, "serial_write") == 0) {
+            int rs = load_variable_to_register(quad->arg1, current_function);
+            add_instruction("LCD_WRITE_CHAR", OP_LCD_WRITE_CHAR, rs, 0, 0, 0, NULL);
             
         } else if (strcmp(quad->op, "lcd_clear") == 0) {
             add_instruction("LCD_CLEAR", OP_LCD_CLEAR, 0, 0, 0, 0, NULL);

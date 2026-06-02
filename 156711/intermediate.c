@@ -316,6 +316,7 @@ static char* genNode(AASNode* node, FILE* out) {
                         strcmp(node->name, "set_quantum") == 0 || strcmp(node->name, "set_timer") == 0 ||
                         strcmp(node->name, "enable_timer") == 0 ||
                         strcmp(node->name, "disable_timer") == 0 || strcmp(node->name, "lcd_write") == 0 ||
+                        strcmp(node->name, "serial_write") == 0 ||
                         strcmp(node->name, "lcd_clear") == 0 || strcmp(node->name, "lcd_write_os_selecting") == 0 ||
                         strcmp(node->name, "lcd_write_os_running") == 0 || strcmp(node->name, "call_prog") == 0 || strcmp(node->name, "set_program") == 0 ||
                         strcmp(node->name, "load_prog") == 0 || strcmp(node->name, "nop") == 0 ||
@@ -330,6 +331,9 @@ static char* genNode(AASNode* node, FILE* out) {
                         } else if (strcmp(node->name, "lcd_write") == 0) {
                             // lcd_write(addr, value) or (value)
                             emitQuad("lcd_write", argCount > 0 ? args[0] : " ", argCount > 1 ? args[1] : " ", " ");
+                            return NULL;
+                        } else if (strcmp(node->name, "serial_write") == 0) {
+                            emitQuad("serial_write", argCount > 0 ? args[0] : " ", " ", " ");
                             return NULL;
                         } else if (strcmp(node->name, "lcd_clear") == 0) {
                             emitQuad("lcd_clear", " ", " ", " ");

@@ -497,6 +497,11 @@ int main(int argc, char *argv[]) {
     readKeypadFunc->type = KInt;
     readKeypadFunc->escopo = copyString("global");
     insertTabSimb(simbTable, readKeypadFunc);
+    AASNode *serialWriteFunc = newAASNodeStmt(KFunc);
+    serialWriteFunc->name = copyString("serial_write");
+    serialWriteFunc->type = KVoid;
+    serialWriteFunc->escopo = copyString("global");
+    insertTabSimb(simbTable, serialWriteFunc);
 
     if (run_all) {
         yyparse();

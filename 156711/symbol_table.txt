@@ -2,4 +2,6 @@ Formato da Tabela de Simbolos:
 Nome;	Escopo;	Tipo;	Tipo de Identificador;	Linha
 main;	global;	void;	Function;		1
 key;	main;	int;	Variable;		2
-Função não declarada: read_keypad [linha: 3]
+last;	main;	int;	Variable;		3
+last;	main;	int;	Function;		4
+Função não declarada: read_keypad [linha: 6]

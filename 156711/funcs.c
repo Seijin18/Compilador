@@ -706,7 +706,7 @@ int buildTabSimb(SimbCell *tabSimb, AASNode *node, FILE *out) // Constroi a tabe
         }
         else if (k == 1) // Insere na tabela de símbolos
         {
-            if (child->stmt == KFunc && (strcmp(child->name, "input") == 0 || strcmp(child->name, "output") == 0 || strcmp(child->name, "read_keypad") == 0)) {
+            if (child->stmt == KFunc && (strcmp(child->name, "input") == 0 || strcmp(child->name, "output") == 0 || strcmp(child->name, "read_keypad") == 0 || strcmp(child->name, "serial_write") == 0)) {
                 // skip
             } else if (child->stmt == KVar || child->stmt == KVet || child->exp == KVarId || child->exp == KVetId || child->exp == KId) // Verifica o tipo de identificador
             {
@@ -936,7 +936,7 @@ int insertTabSimb(SimbCell *tab, AASNode *node) // Insere na tabela de símbolos
         else if (node->stmt == KFunc) // Verifica se é uma função
         {
             // Não insere nem imprime input/output como funções do usuário
-            if ((strcmp(node->name, "input") == 0 || strcmp(node->name, "output") == 0 || strcmp(node->name, "read_keypad") == 0)) {
+            if ((strcmp(node->name, "input") == 0 || strcmp(node->name, "output") == 0 || strcmp(node->name, "read_keypad") == 0 || strcmp(node->name, "serial_write") == 0)) {
                 return 0;
             }
             if (searchTabSimb(tab, node->name, "global") != NULL) // Verifica se a função já foi declarada
