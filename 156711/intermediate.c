@@ -315,10 +315,12 @@ static char* genNode(AASNode* node, FILE* out) {
                         strcmp(node->name, "load_ctx") == 0 || strcmp(node->name, "restore_context") == 0 ||
                         strcmp(node->name, "set_quantum") == 0 || strcmp(node->name, "set_timer") == 0 ||
                         strcmp(node->name, "enable_timer") == 0 ||
-                        strcmp(node->name, "disable_timer") == 0 || strcmp(node->name, "lcd_write") == 0 ||
+                        strcmp(node->name, "disable_timer") == 0 || strcmp(node->name, "uart_write") == 0 ||
                         strcmp(node->name, "serial_write") == 0 ||
-                        strcmp(node->name, "lcd_clear") == 0 || strcmp(node->name, "lcd_write_os_selecting") == 0 ||
-                        strcmp(node->name, "lcd_write_os_running") == 0 || strcmp(node->name, "call_prog") == 0 || strcmp(node->name, "set_program") == 0 ||
+                        strcmp(node->name, "uart_clear") == 0 ||
+                        strcmp(node->name, "uart_write_os_selecting") == 0 ||
+                        strcmp(node->name, "uart_write_os_running") == 0 ||
+                        strcmp(node->name, "call_prog") == 0 || strcmp(node->name, "set_program") == 0 ||
                         strcmp(node->name, "load_prog") == 0 || strcmp(node->name, "nop") == 0 ||
                         strcmp(node->name, "output_reset") == 0 || strcmp(node->name, "reti") == 0 || strcmp(node->name, "RETI") == 0 ||
                         strcmp(node->name, "set_sp") == 0)) {
@@ -328,21 +330,20 @@ static char* genNode(AASNode* node, FILE* out) {
                             // takes one argument (value)
                             emitQuad("set_quantum", argCount > 0 ? args[0] : " ", " ", " ");
                             return NULL;
-                        } else if (strcmp(node->name, "lcd_write") == 0) {
-                            // lcd_write(addr, value) or (value)
-                            emitQuad("lcd_write", argCount > 0 ? args[0] : " ", argCount > 1 ? args[1] : " ", " ");
+                        } else if (strcmp(node->name, "uart_write") == 0) {
+                            emitQuad("uart_write", argCount > 0 ? args[0] : " ", argCount > 1 ? args[1] : " ", " ");
                             return NULL;
                         } else if (strcmp(node->name, "serial_write") == 0) {
                             emitQuad("serial_write", argCount > 0 ? args[0] : " ", " ", " ");
                             return NULL;
-                        } else if (strcmp(node->name, "lcd_clear") == 0) {
-                            emitQuad("lcd_clear", " ", " ", " ");
+                        } else if (strcmp(node->name, "uart_clear") == 0) {
+                            emitQuad("uart_clear", " ", " ", " ");
                             return NULL;
-                        } else if (strcmp(node->name, "lcd_write_os_selecting") == 0) {
-                            emitQuad("lcd_write_os_selecting", argCount > 0 ? args[0] : " ", " ", " ");
+                        } else if (strcmp(node->name, "uart_write_os_selecting") == 0) {
+                            emitQuad("uart_write_os_selecting", argCount > 0 ? args[0] : " ", " ", " ");
                             return NULL;
-                        } else if (strcmp(node->name, "lcd_write_os_running") == 0) {
-                            emitQuad("lcd_write_os_running", argCount > 0 ? args[0] : " ", " ", " ");
+                        } else if (strcmp(node->name, "uart_write_os_running") == 0) {
+                            emitQuad("uart_write_os_running", argCount > 0 ? args[0] : " ", " ", " ");
                             return NULL;
                         } else if (strcmp(node->name, "enable_timer") == 0) {
                             emitQuad("enable_timer", " ", " ", " ");

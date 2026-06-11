@@ -113,8 +113,8 @@ typedef enum {
     OP_J = 0x1C, OP_JAL = 0x1D, OP_HALT = 0x1E, OP_OUTPUTMEM = 0x1F,
     OP_OUTPUTREG = 0x20, OP_OUTPUT_RESET = 0x21, OP_INPUT = 0x22,
     OP_RETI = 0x23, OP_SET_QUANTUM = 0x24, OP_ENABLE_TIMER = 0x25,
-    OP_DISABLE_TIMER = 0x26, OP_LCD_WRITE_CHAR = 0x27, OP_LCD_CLEAR = 0x28,
-    OP_LCD_WRITE_OS_SELECTING = 0x29, OP_LCD_WRITE_OS_RUNNING = 0x2A,
+    OP_DISABLE_TIMER = 0x26, OP_UART_WRITE_CHAR = 0x27, OP_UART_CLEAR = 0x28,
+    OP_UART_WRITE_OS_SELECTING = 0x29, OP_UART_WRITE_OS_RUNNING = 0x2A,
     OP_CALL_PROG = 0x2B, OP_LOAD_PROG = 0x2C, OP_SAVE_CTX = 0x2D,
     OP_LOAD_CTX = 0x2E, OP_NOP = 0x2F, OP_READ_KEYPAD = 0x30, OP_SET_SP = 0x31
 } OpCode;
@@ -1330,28 +1330,28 @@ void generate_assembly_second_pass() {
             int rs = load_variable_to_register(quad->arg1, current_function);
             add_instruction("SET_QUANTUM", OP_SET_QUANTUM, rs, 0, 0, 0, NULL);
             
-        } else if (strcmp(quad->op, "lcd_write") == 0) {
+        } else if (strcmp(quad->op, "uart_write") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
             int rt = 0;
             if (strlen(quad->arg2) > 0 && strcmp(quad->arg2, " ") != 0) {
                 rt = load_variable_to_register(quad->arg2, current_function);
             }
-            add_instruction("LCD_WRITE_CHAR", OP_LCD_WRITE_CHAR, rs, rt, 0, 0, NULL);
+            add_instruction("UART_WRITE_CHAR", OP_UART_WRITE_CHAR, rs, rt, 0, 0, NULL);
 
         } else if (strcmp(quad->op, "serial_write") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
-            add_instruction("LCD_WRITE_CHAR", OP_LCD_WRITE_CHAR, rs, 0, 0, 0, NULL);
+            add_instruction("UART_WRITE_CHAR", OP_UART_WRITE_CHAR, rs, 0, 0, 0, NULL);
             
-        } else if (strcmp(quad->op, "lcd_clear") == 0) {
-            add_instruction("LCD_CLEAR", OP_LCD_CLEAR, 0, 0, 0, 0, NULL);
+        } else if (strcmp(quad->op, "uart_clear") == 0) {
+            add_instruction("UART_CLEAR", OP_UART_CLEAR, 0, 0, 0, 0, NULL);
             
-        } else if (strcmp(quad->op, "lcd_write_os_selecting") == 0) {
+        } else if (strcmp(quad->op, "uart_write_os_selecting") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
-            add_instruction("LCD_WRITE_OS_SELECTING", OP_LCD_WRITE_OS_SELECTING, rs, 0, 0, 0, NULL);
+            add_instruction("UART_WRITE_OS_SELECTING", OP_UART_WRITE_OS_SELECTING, rs, 0, 0, 0, NULL);
             
-        } else if (strcmp(quad->op, "lcd_write_os_running") == 0) {
+        } else if (strcmp(quad->op, "uart_write_os_running") == 0) {
             int rs = load_variable_to_register(quad->arg1, current_function);
-            add_instruction("LCD_WRITE_OS_RUNNING", OP_LCD_WRITE_OS_RUNNING, rs, 0, 0, 0, NULL);
+            add_instruction("UART_WRITE_OS_RUNNING", OP_UART_WRITE_OS_RUNNING, rs, 0, 0, 0, NULL);
             
         } else if (strcmp(quad->op, "enable_timer") == 0) {
             add_instruction("ENABLE_TIMER", OP_ENABLE_TIMER, 0, 0, 0, 0, NULL);
@@ -1568,21 +1568,21 @@ void write_assembly_file(const char *filename) {
                 fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rs));
                 } else if (strcmp(instr->mnemonic, "SET_QUANTUM") == 0 || 
-                       strcmp(instr->mnemonic, "LCD_WRITE_OS_SELECTING") == 0 ||
-                       strcmp(instr->mnemonic, "LCD_WRITE_OS_RUNNING") == 0 ||
+                       strcmp(instr->mnemonic, "UART_WRITE_OS_SELECTING") == 0 ||
+                       strcmp(instr->mnemonic, "UART_WRITE_OS_RUNNING") == 0 ||
                        strcmp(instr->mnemonic, "CALL_PROG") == 0 ||
                        strcmp(instr->mnemonic, "LOAD_PROG") == 0 ||
                        strcmp(instr->mnemonic, "SET_PROG") == 0) {
                 fprintf(file, "%3d: %-10s %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rs));
-            } else if (strcmp(instr->mnemonic, "LCD_WRITE_CHAR") == 0) {
+            } else if (strcmp(instr->mnemonic, "UART_WRITE_CHAR") == 0) {
                 fprintf(file, "%3d: %-10s %s, %s\n", real_line, instr->mnemonic, 
                         get_register_name(instr->rs), get_register_name(instr->rt));
             } else if (strcmp(instr->mnemonic, "HALT") == 0 || 
                        strcmp(instr->mnemonic, "RETI") == 0 ||
                        strcmp(instr->mnemonic, "ENABLE_TIMER") == 0 ||
                        strcmp(instr->mnemonic, "DISABLE_TIMER") == 0 ||
-                       strcmp(instr->mnemonic, "LCD_CLEAR") == 0 ||
+                       strcmp(instr->mnemonic, "UART_CLEAR") == 0 ||
                        strcmp(instr->mnemonic, "SAVE_CTX") == 0 ||
                        strcmp(instr->mnemonic, "LOAD_CTX") == 0 ||
                        strcmp(instr->mnemonic, "NOP") == 0 ||
