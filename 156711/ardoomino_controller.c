@@ -8,10 +8,10 @@ void main(void) {
             if (last != 0) {
                 serial_write(32);
             }
-            if (key == 512) {
+            if (key == 2) {
                 serial_write(87);
             } else {
-                if (key == 2) {
+                if (key == 32) {
                     serial_write(83);
                 } else {
                     if (key == 16) {
@@ -20,16 +20,16 @@ void main(void) {
                         if (key == 64) {
                             serial_write(68);
                         } else {
-                            if (key == 256) {
+                            if (key == 1) {
                                 serial_write(81);
                             } else {
-                                if (key == 1024) {
+                                if (key == 4) {
                                     serial_write(69);
                                 } else {
-                                    if (key == 4096) {
+                                    if (key == 16384) {
                                         serial_write(70);
                                     } else {
-                                        if (key == 16384) {
+                                        if (key == 4096) {
                                             serial_write(82);
                                         }
                                     }

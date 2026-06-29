@@ -29,64 +29,64 @@ L0:
  19: LW         R2, 1(FP)
  20: BEQ        R2, R6, 24
  21: LI         R7, 32
- 22: LCD_WRITE_CHAR R7, R0
+ 22: UART_WRITE_CHAR R7, R0
  23: J          24
 L4:
 L5:
- 24: LI         R8, 512
+ 24: LI         R8, 2
  25: LW         R5, 0(FP)
  26: BNE        R5, R8, 30
  27: LI         R9, 87
- 28: LCD_WRITE_CHAR R9, R0
+ 28: UART_WRITE_CHAR R9, R0
  29: J          72
 L6:
- 30: LI         R10, 2
+ 30: LI         R10, 32
  31: LW         R5, 0(FP)
  32: BNE        R5, R10, 36
  33: LI         R11, 83
- 34: LCD_WRITE_CHAR R11, R0
+ 34: UART_WRITE_CHAR R11, R0
  35: J          72
 L8:
  36: LI         R12, 16
  37: LW         R5, 0(FP)
  38: BNE        R5, R12, 42
  39: LI         R13, 65
- 40: LCD_WRITE_CHAR R13, R0
+ 40: UART_WRITE_CHAR R13, R0
  41: J          72
 L10:
  42: LI         R14, 64
  43: LW         R5, 0(FP)
  44: BNE        R5, R14, 48
  45: LI         R15, 68
- 46: LCD_WRITE_CHAR R15, R0
+ 46: UART_WRITE_CHAR R15, R0
  47: J          72
 L12:
- 48: LI         R16, 256
+ 48: LI         R16, 1
  49: LW         R5, 0(FP)
  50: BNE        R5, R16, 54
  51: LI         R17, 81
- 52: LCD_WRITE_CHAR R17, R0
+ 52: UART_WRITE_CHAR R17, R0
  53: J          72
 L14:
- 54: LI         R18, 1024
+ 54: LI         R18, 4
  55: LW         R5, 0(FP)
  56: BNE        R5, R18, 60
  57: LI         R19, 69
- 58: LCD_WRITE_CHAR R19, R0
+ 58: UART_WRITE_CHAR R19, R0
  59: J          72
 L16:
- 60: LI         R20, 4096
+ 60: LI         R20, 16384
  61: LW         R5, 0(FP)
  62: BNE        R5, R20, 66
  63: LI         R21, 70
- 64: LCD_WRITE_CHAR R21, R0
+ 64: UART_WRITE_CHAR R21, R0
  65: J          72
 L18:
- 66: LI         R22, 16384
+ 66: LI         R22, 4096
  67: LW         R5, 0(FP)
  68: BNE        R5, R22, 72
  69: LI         R23, 82
- 70: LCD_WRITE_CHAR R23, R0
+ 70: UART_WRITE_CHAR R23, R0
  71: J          72
 L20:
 L21:
