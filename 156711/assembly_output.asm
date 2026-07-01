@@ -75,17 +75,17 @@ L14:
  58: UART_WRITE_CHAR R19, R0
  59: J          72
 L16:
- 60: LI         R20, 16384
+ 60: LI         R20, 4096
  61: LW         R5, 0(FP)
  62: BNE        R5, R20, 66
- 63: LI         R21, 70
+ 63: LI         R21, 82
  64: UART_WRITE_CHAR R21, R0
  65: J          72
 L18:
- 66: LI         R22, 4096
+ 66: LI         R22, 0
  67: LW         R5, 0(FP)
- 68: BNE        R5, R22, 72
- 69: LI         R23, 82
+ 68: BEQ        R5, R22, 72
+ 69: LI         R23, 70
  70: UART_WRITE_CHAR R23, R0
  71: J          72
 L20:

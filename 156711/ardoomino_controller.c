@@ -26,11 +26,11 @@ void main(void) {
                                 if (key == 4) {
                                     serial_write(69);
                                 } else {
-                                    if (key == 16384) {
-                                        serial_write(70);
+                                    if (key == 4096) {
+                                        serial_write(82);
                                     } else {
-                                        if (key == 4096) {
-                                            serial_write(82);
+                                        if (key != 0) {
+                                            serial_write(70);
                                         }
                                     }
                                 }
