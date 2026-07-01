@@ -21,10 +21,10 @@ void main(void) {
                             serial_write(68);
                         } else {
                             if (key == 1) {
-                                serial_write(81);
+                                serial_write(69);
                             } else {
                                 if (key == 4) {
-                                    serial_write(69);
+                                    serial_write(81);
                                 } else {
                                     if (key == 4096) {
                                         serial_write(82);

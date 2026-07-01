@@ -64,14 +64,14 @@ L12:
  48: LI         R16, 1
  49: LW         R5, 0(FP)
  50: BNE        R5, R16, 54
- 51: LI         R17, 81
+ 51: LI         R17, 69
  52: UART_WRITE_CHAR R17, R0
  53: J          72
 L14:
  54: LI         R18, 4
  55: LW         R5, 0(FP)
  56: BNE        R5, R18, 60
- 57: LI         R19, 69
+ 57: LI         R19, 81
  58: UART_WRITE_CHAR R19, R0
  59: J          72
 L16:
